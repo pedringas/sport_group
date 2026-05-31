@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx impeccable *)",
+      "PowerShell(Get-ChildItem -Path \"C:\\\\Users\\\\Pedro\\\\sports_groups_app\" -Force | Select-Object Name, @{Name=\"Type\"; Expression={if\\($_.PSIsContainer\\){\"Dir\"}else{\"File\"}}} | Format-Table -AutoSize)",
+      "PowerShell(Get-ChildItem -Path \"C:\\\\Users\\\\Pedro\\\\sports_groups_app\\\\lib\" -Recurse -Depth 2 | Where-Object {$_.PSIsContainer} | Select-Object -First 20 FullName)",
+      "PowerShell(Get-ChildItem \"C:\\\\Users\\\\Pedro\\\\sports_groups_app\\\\functions\" -Recurse -File | Where-Object { $_.FullName -notmatch \"node_modules\" } | Select-Object -ExpandProperty FullName)",
+      "Bash(Remove-Item *)",
+      "PowerShell(flutter analyze *)",
+      "Bash(claude mcp *)",
+      "PowerShell(claude mcp *)",
+      "PowerShell(Get-Process *)",
+      "PowerShell(Start-Sleep 5; Invoke-WebRequest -Uri \"http://localhost:3000\" -TimeoutSec 5 -UseBasicParsing 2>&1 | Select-Object -ExpandProperty StatusCode)",
+      "PowerShell(netstat *)",
+      "PowerShell(Get-CimInstance *)",
+      "PowerShell(cd \"C:\\\\Users\\\\Pedro\\\\sports_groups_app\"; $env:PYTHONIOENCODING='utf-8'; python fix_faq2.py 2>&1)",
+      "PowerShell(cd \"C:\\\\Users\\\\Pedro\\\\sports_groups_app\"; $env:PYTHONIOENCODING='utf-8'; python fix_faq3.py 2>&1)"
+    ]
+  }
+}

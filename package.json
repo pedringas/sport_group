@@ -1,0 +1,7 @@
+{
+  "devDependencies": {
+    "@google-cloud/storage": "^7.19.0",
+    "playwright": "^1.60.0",
+    "ws": "^8.21.0"
+  }
+}

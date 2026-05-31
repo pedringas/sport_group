@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "310356848577",
+    "project_id": "sports-groups-app",
+    "storage_bucket": "sports-groups-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:310356848577:android:62ce1159a8df93cc4fc940",
+        "android_client_info": {
+          "package_name": "com.tuempresa.sports_groups_app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "310356848577-4oclo49uj5pnkdl3g048jpcll807m6tk.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.tuempresa.sports_groups_app",
+            "certificate_hash": "2a1ad225921f738b89d6383eacd7a315135c817b"
+          }
+        },
+        {
+          "client_id": "310356848577-601sngqrvveueqo16l1k6llg64atkf1l.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC54eOzhzzdxx5nk-xelTjV9cGcMxCCfUY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "310356848577-601sngqrvveueqo16l1k6llg64atkf1l.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "310356848577-9mrued65auvbegtjlptu13s6mknfoeb0.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.tuempresa.sportsGroupsApp"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

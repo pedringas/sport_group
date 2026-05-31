@@ -1,0 +1,209 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── Helpers ──────────────────────────────────────────────────────────────
+
+    function isAuth() {
+      return request.auth != null;
+    }
+
+    function isSelf(uid) {
+      return isAuth() && request.auth.uid == uid;
+    }
+
+    function hasRol(grupoId, rol) {
+      return isAuth() &&
+        exists(/databases/$(database)/documents/grupos/$(grupoId)/miembros/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/grupos/$(grupoId)/miembros/$(request.auth.uid)).data.rol == rol &&
+        get(/databases/$(database)/documents/grupos/$(grupoId)/miembros/$(request.auth.uid)).data.estado == 'activo';
+    }
+
+    function isActiveMember(grupoId) {
+      return isAuth() &&
+        exists(/databases/$(database)/documents/grupos/$(grupoId)/miembros/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/grupos/$(grupoId)/miembros/$(request.auth.uid)).data.estado == 'activo';
+    }
+
+    function isAdminOrMod(grupoId) {
+      return hasRol(grupoId, 'administrador') || hasRol(grupoId, 'moderador');
+    }
+
+    function isAdmin(grupoId) {
+      return hasRol(grupoId, 'administrador');
+    }
+
+    // ── CRITICAL: collectionGroup wildcard for miembros ───────────────────────
+    // Required for collectionGroup('miembros') queries on web and mobile.
+    // Without this, web clients return permission-denied on collectionGroup queries
+    // even when the nested rule (inside /grupos) allows reading.
+    match /{path=**}/miembros/{uid} {
+      allow read: if isAuth();
+    }
+
+    // ── usuarios ─────────────────────────────────────────────────────────────
+
+    match /usuarios/{uid} {
+      allow read: if isAuth();
+      allow create: if isSelf(uid);
+      allow update: if isSelf(uid);
+      allow delete: if false;
+
+      // Role & system notifications for a user — written only by Cloud Functions.
+      match /notificaciones/{notifId} {
+        allow read: if isSelf(uid);
+        allow create: if false;             // server-side only via Admin SDK
+        allow update: if isSelf(uid);       // owner marks as read
+        allow delete: if false;
+      }
+    }
+
+    // ── grupos ───────────────────────────────────────────────────────────────
+
+    match /grupos/{grupoId} {
+      allow read: if isAuth();
+      allow create: if isAuth();
+      // Admins can update anything.
+      // Any auth'd user can increment miembrosCount by 1 (joining).
+      // Any active member can decrement miembrosCount by 1 (leaving).
+      allow update: if isAdmin(grupoId)
+        || (isAuth()
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['miembrosCount'])
+            && request.resource.data.miembrosCount == resource.data.miembrosCount + 1)
+        || (isActiveMember(grupoId)
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['miembrosCount'])
+            && request.resource.data.miembrosCount == resource.data.miembrosCount - 1);
+      allow delete: if isAdmin(grupoId);
+
+      match /miembros/{uid} {
+        allow read: if isAuth();
+        allow create: if isAdmin(grupoId) || isSelf(uid); // self-join or admin-add
+        allow update: if isAdmin(grupoId) || isSelf(uid);
+        allow delete: if isAdmin(grupoId) || isSelf(uid);
+      }
+
+      match /noticias/{noticiaId} {
+        allow read: if isActiveMember(grupoId);
+        allow create: if isAdminOrMod(grupoId) || hasRol(grupoId, 'delegado');
+        allow update: if isAdminOrMod(grupoId);
+        allow delete: if isAdminOrMod(grupoId);
+
+        // Read tracking — only admins/mods can list; any member can mark their own
+        match /lecturas/{uid} {
+          allow read: if isAdminOrMod(grupoId);
+          allow create, update: if isSelf(uid) && isActiveMember(grupoId);
+          allow delete: if false;
+        }
+
+        // Attendance — all members can read; each member manages their own entry
+        match /asistencia/{uid} {
+          allow read: if isActiveMember(grupoId);
+          allow create, update: if isSelf(uid) && isActiveMember(grupoId);
+          allow delete: if isSelf(uid) && isActiveMember(grupoId);
+        }
+
+        // Comments — all members can read and post; only owner or admin/mod can delete
+        match /comentarios/{comentarioId} {
+          allow read: if isActiveMember(grupoId);
+          allow create: if isActiveMember(grupoId)
+                        && request.resource.data.uid == request.auth.uid;
+          allow delete: if isActiveMember(grupoId)
+                        && (resource.data.uid == request.auth.uid
+                            || isAdminOrMod(grupoId));
+          allow update: if false;
+        }
+      }
+
+      match /cuotas/{cuotaId} {
+        allow read: if isActiveMember(grupoId);
+        allow create: if hasRol(grupoId, 'tesorero') || isAdmin(grupoId);
+        allow update: if hasRol(grupoId, 'tesorero') || isAdmin(grupoId);
+        allow delete: if isAdmin(grupoId);
+      }
+
+      match /campanas/{campanaId} {
+        allow read: if isActiveMember(grupoId);
+        allow create: if hasRol(grupoId, 'tesorero') || isAdmin(grupoId);
+        allow update: if hasRol(grupoId, 'tesorero') || isAdmin(grupoId);
+        allow delete: if isAdmin(grupoId);
+
+        match /aportes/{aporteId} {
+          allow read: if isActiveMember(grupoId);
+          allow create: if isActiveMember(grupoId)
+                        && request.resource.data.usuarioUid == request.auth.uid;
+          allow update: if hasRol(grupoId, 'tesorero') || isAdmin(grupoId);
+          allow delete: if hasRol(grupoId, 'tesorero') || isAdmin(grupoId);
+        }
+      }
+
+      match /solicitudes/{solicitudId} {
+        allow read: if isAdminOrMod(grupoId) || isSelf(solicitudId);
+        allow create: if isAuth();
+        allow update: if isAdminOrMod(grupoId);
+        allow delete: if isAdminOrMod(grupoId) || isSelf(solicitudId);
+      }
+
+      match /recursos/{recursoId} {
+        allow read: if isActiveMember(grupoId);
+        allow create: if isAdminOrMod(grupoId) || hasRol(grupoId, 'delegado');
+        allow update: if isAdminOrMod(grupoId);
+        allow delete: if isAdminOrMod(grupoId);
+      }
+
+      match /gastos/{gastoId} {
+        allow read: if isActiveMember(grupoId);
+        allow create: if isActiveMember(grupoId)
+                      && request.resource.data.pagadorUid == request.auth.uid;
+        allow update: if resource.data.pagadorUid == request.auth.uid || isAdmin(grupoId);
+        allow delete: if resource.data.pagadorUid == request.auth.uid || isAdmin(grupoId);
+      }
+
+      match /liquidaciones/{liqId} {
+        allow read: if isActiveMember(grupoId);
+        allow create: if isActiveMember(grupoId);
+        allow update: if isAdmin(grupoId);
+        allow delete: if isAdmin(grupoId) || hasRol(grupoId, 'tesorero');
+      }
+
+      match /gruposGasto/{grupoGastoId} {
+        allow read: if isActiveMember(grupoId);
+        allow create: if hasRol(grupoId, 'tesorero') || isAdminOrMod(grupoId);
+        allow update: if hasRol(grupoId, 'tesorero') || isAdminOrMod(grupoId);
+        allow delete: if hasRol(grupoId, 'tesorero') || isAdmin(grupoId);
+      }
+
+      match /tareas/{tareaId} {
+        allow read: if isActiveMember(grupoId);
+        allow create: if isActiveMember(grupoId);
+        allow update: if isActiveMember(grupoId);
+        allow delete: if resource.data.creadoPorUid == request.auth.uid
+                      || isAdminOrMod(grupoId)
+                      || hasRol(grupoId, 'delegado');
+      }
+
+      // Group activity feed — join events written by Cloud Functions via Admin SDK.
+      match /actividad/{actId} {
+        allow read: if isActiveMember(grupoId);
+        allow create: if isActiveMember(grupoId);
+        allow update: if false;
+        allow delete: if isAdmin(grupoId);
+      }
+    }
+
+    // ── pagos ─────────────────────────────────────────────────────────────────
+
+    match /pagos/{pagoId} {
+      allow read: if isAuth() && (
+        resource.data.usuarioUid == request.auth.uid ||
+        isActiveMember(resource.data.grupoId)
+      );
+      allow create: if isAuth() && request.resource.data.usuarioUid == request.auth.uid;
+      allow update: if isAuth() && (
+        resource.data.usuarioUid == request.auth.uid ||
+        hasRol(resource.data.grupoId, 'tesorero') ||
+        isAdmin(resource.data.grupoId)
+      );
+      allow delete: if false;
+    }
+  }
+}
