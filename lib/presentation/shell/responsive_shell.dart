@@ -358,18 +358,18 @@ class _SideGroupRow extends StatelessWidget {
 
 // â”€â”€ Top bar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-class _DeskTopBar extends StatelessWidget {
+class _DeskTopBar extends ConsumerWidget {
   final String location;
   final WidgetRef ref;
   const _DeskTopBar({required this.location, required this.ref});
 
-  String get _title {
+  String _title(WidgetRef r) {
     if (location == '/home') return 'Inicio';
     if (location == '/profile') return 'Mi perfil';
     if (location == '/search') return 'Buscar grupos';
     if (location == '/create-group') return 'Crear grupo';
     if (location == '/faq') return 'Ayuda y soporte';
-    if (location.contains('/noticias')) return 'Noticias';
+    if (location.contains('/noticias')) return 'Novedades';
     if (location.contains('/cuotas/crear')) return 'Nueva suscripción';
     if (location.contains('/cuotas')) return 'Suscripciones';
     if (location.contains('/gastos/crear')) return 'Nuevo gasto';
@@ -385,12 +385,20 @@ class _DeskTopBar extends StatelessWidget {
     if (location.contains('/tesorero')) return 'Panel Tesorero';
     if (location.contains('/moderador')) return 'Panel Moderador';
     if (location.contains('/comentarios')) return 'Comentarios';
-    if (location.contains('/group/')) return 'Grupo';
+    if (location.contains('/group/')) {
+      // Extract grupoId and show group name
+      final match = RegExp(r'/group/([^/]+)').firstMatch(location);
+      if (match != null) {
+        final nombre = r.watch(grupoProvider(match.group(1)!)).valueOrNull?.nombre;
+        if (nombre != null) return nombre;
+      }
+      return 'Grupo';
+    }
     return 'SportGroups';
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Container(
       height: 64,
       padding: const EdgeInsets.symmetric(horizontal: 28),
@@ -403,7 +411,7 @@ class _DeskTopBar extends StatelessWidget {
           // â”€â”€ Title
           Expanded(
             child: Text(
-              _title,
+              _title(ref),
               style: GoogleFonts.bricolageGrotesque(
                 fontWeight: FontWeight.w700,
                 fontSize: 22,

@@ -5,6 +5,7 @@ import '../../presentation/auth/pages/splash_page.dart';
 import '../../presentation/auth/pages/login_page.dart';
 import '../../presentation/auth/pages/register_page.dart';
 import '../../presentation/auth/pages/otp_page.dart';
+import '../../presentation/auth/pages/forgot_password_page.dart';
 import '../../presentation/home/pages/home_shell.dart';
 import '../../presentation/home/pages/agenda_page.dart';
 import '../../presentation/perfil/pages/perfil_page.dart';
@@ -80,7 +81,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       final loc = state.matchedLocation;
       if (loc.startsWith('/join/')) return null;
       final onAuthScreen =
-          ['/splash', '/login', '/register', '/otp']
+          ['/splash', '/login', '/register', '/otp', '/forgot-password']
               .contains(loc);
       if (isAuth && onAuthScreen && loc != '/splash') {
         // After login, honour a ?redirect param (e.g. /login?redirect=/join/abc)
@@ -95,6 +96,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/splash', builder: (_, __) => const SplashPage()),
       GoRoute(path: '/login', builder: (_, __) => const LoginPage()),
       GoRoute(path: '/register', builder: (_, __) => const RegisterPage()),
+      GoRoute(path: '/forgot-password', builder: (_, __) => const ForgotPasswordPage()),
       GoRoute(
         path: '/otp',
         builder: (_, state) =>

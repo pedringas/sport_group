@@ -172,6 +172,8 @@ class _GrupoPageState extends ConsumerState<GrupoPage>
   }
 
   Widget _buildTabBar(BuildContext context, Color gc) {
+    // Hide bottom nav on desktop — sidebar already provides navigation
+    if (MediaQuery.sizeOf(context).width >= 900) return const SizedBox.shrink();
     final tabs = [
       (label: 'Resumen', icon: Icons.home_outlined, filled: Icons.home_rounded),
       (label: 'Novedades', icon: Icons.newspaper_outlined, filled: Icons.newspaper_rounded),
