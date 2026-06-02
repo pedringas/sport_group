@@ -119,12 +119,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           // ── Home (shell with bottom nav + 5 tabs)
           GoRoute(
             path: '/home',
-            builder: (_, state) {
-              final tab = int.tryParse(
-                      state.uri.queryParameters['tab'] ?? '') ??
-                  0;
-              return HomeShell(initialTab: tab);
-            },
+            builder: (_, __) => const HomeShell(),
           ),
           GoRoute(
               path: '/notificaciones',

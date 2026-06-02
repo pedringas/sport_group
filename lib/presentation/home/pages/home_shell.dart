@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_theme.dart';
 import 'home_feed_page.dart';
 import 'grupos_list_page.dart';
@@ -7,76 +8,48 @@ import 'agenda_page.dart';
 import 'caja_page.dart';
 import '../../perfil/pages/perfil_page.dart';
 
-// â”€â”€ Bottom nav index â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Shell ─────────────────────────────────────────────────────────────────────
 
-enum _Tab { inicio, grupos, agenda, caja, yo }
+class HomeShell extends ConsumerWidget {
+  const HomeShell({super.key});
 
-// â”€â”€ Shell â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  static const _kDesktopBreakpoint = 900.0;
 
-class HomeShell extends ConsumerStatefulWidget {
-  /// Optional initial tab index passed via query param.
-  final int initialTab;
-  const HomeShell({super.key, this.initialTab = 0});
-
-  @override
-  ConsumerState<HomeShell> createState() => _HomeShellState();
-}
-
-class _HomeShellState extends ConsumerState<HomeShell> {
-  late int _currentIndex;
-
-  static const _tabs = [
-    _Tab.inicio,
-    _Tab.grupos,
-    _Tab.agenda,
-    _Tab.caja,
-    _Tab.yo,
-  ];
-
-  @override
-  void initState() {
-    super.initState();
-    _currentIndex = widget.initialTab.clamp(0, _tabs.length - 1);
-  }
-
-  Widget _buildPage(int index) {
-    switch (_tabs[index]) {
-      case _Tab.inicio:
-        return const HomeFeedPage();
-      case _Tab.grupos:
-        return const GruposListPage();
-      case _Tab.agenda:
-        return const AgendaPage();
-      case _Tab.caja:
-        return const CajaPage();
-      case _Tab.yo:
-        return const PerfilPage(showBackButton: false);
+  static Widget _buildPage(int index) {
+    switch (index) {
+      case 1: return const GruposListPage();
+      case 2: return const AgendaPage();
+      case 3: return const CajaPage();
+      case 4: return const PerfilPage(showBackButton: false);
+      default: return const HomeFeedPage();
     }
   }
 
-  static const double _kDesktopBreakpoint = 900;
-
   @override
-  Widget build(BuildContext context) {
-    final isDesktop =
-        MediaQuery.sizeOf(context).width >= _kDesktopBreakpoint;
+  Widget build(BuildContext context, WidgetRef ref) {
+    final tab = int.tryParse(
+          GoRouterState.of(context).uri.queryParameters['tab'] ?? '') ??
+        0;
+    final currentIndex = tab.clamp(0, 4);
+    final isDesktop = MediaQuery.sizeOf(context).width >= _kDesktopBreakpoint;
+
     return Scaffold(
       backgroundColor: AppTheme.bg(context),
       body: IndexedStack(
-        index: _currentIndex,
-        children: List.generate(_tabs.length, _buildPage),
+        index: currentIndex,
+        children: List.generate(5, _buildPage),
       ),
       bottomNavigationBar: isDesktop
           ? null
           : _BottomNav(
-              currentIndex: _currentIndex,
-              onTap: (i) => setState(() => _currentIndex = i),
+              currentIndex: currentIndex,
+              onTap: (i) => context.go('/home?tab=$i'),
             ),
     );
   }
 }
 
-// â”€â”€ Bottom nav bar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Bottom nav bar ────────────────────────────────────────────────────────────
 
 class _BottomNav extends StatelessWidget {
   final int currentIndex;

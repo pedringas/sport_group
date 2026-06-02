@@ -84,7 +84,33 @@ class NoticiasTab extends ConsumerWidget {
             : null,
         body: noticiasAsync.when(
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (e, _) => Center(child: Text('Error: $e')),
+          error: (e, _) {
+            final isPermissionDenied = e.toString().contains('permission-denied');
+            return Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    isPermissionDenied
+                        ? Icons.lock_outline_rounded
+                        : Icons.error_outline_rounded,
+                    size: 48,
+                    color: AppTheme.textMuted,
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    isPermissionDenied
+                        ? 'Sin acceso a este grupo'
+                        : 'No se pudo cargar',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w600,
+                      color: AppTheme.textMuted,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
           data: (_) {
             if (!hasPasadas) {
               // No expired noticias — single list, no tabs

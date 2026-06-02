@@ -32,7 +32,9 @@ class _DesktopShell extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final location = GoRouterState.of(context).matchedLocation;
+    final routerState = GoRouterState.of(context);
+    final location = routerState.matchedLocation;
+    final queryParams = routerState.uri.queryParameters;
     final grupos = ref.watch(userGruposProvider).valueOrNull ?? [];
     final user = ref.watch(currentUserProvider).valueOrNull;
 
@@ -41,13 +43,13 @@ class _DesktopShell extends ConsumerWidget {
       body: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _DeskSidebar(location: location, grupos: grupos, userName: user?.nombreCompleto ?? ''),
+          _DeskSidebar(location: location, queryParams: queryParams, grupos: grupos, userName: user?.nombreCompleto ?? ''),
           Container(width: 1, color: AppTheme.border),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                _DeskTopBar(location: location, ref: ref),
+                _DeskTopBar(location: location, queryParams: queryParams, ref: ref),
                 Expanded(
                   child: Container(
                     color: AppTheme.background,
@@ -67,11 +69,13 @@ class _DesktopShell extends ConsumerWidget {
 
 class _DeskSidebar extends StatelessWidget {
   final String location;
+  final Map<String, String> queryParams;
   final List<GrupoModel> grupos;
   final String userName;
 
   const _DeskSidebar({
     required this.location,
+    required this.queryParams,
     required this.grupos,
     required this.userName,
   });
@@ -84,9 +88,9 @@ class _DeskSidebar extends StatelessWidget {
   ];
 
   bool _isActive(String navId) {
-    if (navId == 'inicio') return location == '/home' && !location.contains('tab=');
+    if (navId == 'inicio') return location == '/home' && !queryParams.containsKey('tab');
     if (navId == 'search') return location.startsWith('/search');
-    if (navId == 'agenda') return location.contains('tab=2');
+    if (navId == 'agenda') return location == '/home' && queryParams['tab'] == '2';
     if (navId == 'notifs') return location.startsWith('/notificaciones');
     return false;
   }
@@ -360,11 +364,19 @@ class _SideGroupRow extends StatelessWidget {
 
 class _DeskTopBar extends ConsumerWidget {
   final String location;
+  final Map<String, String> queryParams;
   final WidgetRef ref;
-  const _DeskTopBar({required this.location, required this.ref});
+  const _DeskTopBar({required this.location, required this.queryParams, required this.ref});
 
   String _title(WidgetRef r) {
-    if (location == '/home') return 'Inicio';
+    if (location == '/home') {
+      return switch (queryParams['tab']) {
+        '2' => 'Agenda',
+        '3' => 'Caja',
+        '4' => 'Mi perfil',
+        _ => 'Inicio',
+      };
+    }
     if (location == '/profile') return 'Mi perfil';
     if (location == '/search') return 'Buscar grupos';
     if (location == '/busqueda') return 'Buscar';
