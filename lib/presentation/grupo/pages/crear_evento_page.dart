@@ -138,8 +138,9 @@ class _CrearEventoPageState extends ConsumerState<CrearEventoPage> {
     final monthsShort = ['ENE','FEB','MAR','ABR','MAY','JUN','JUL','AGO','SEP','OCT','NOV','DIC'];
     final weekdayShort = ['LUN','MAR','MIÉ','JUE','VIE','SÁB','DOM'];
 
+    final isDesktop = MediaQuery.sizeOf(context).width >= 900;
     return Scaffold(
-      appBar: AppBar(
+      appBar: isDesktop ? null : AppBar(
         leading: IconButton(
           icon: const Icon(Icons.close_rounded, size: 22),
           onPressed: () => context.pop(),

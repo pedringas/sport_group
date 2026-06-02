@@ -61,8 +61,9 @@ class _TabPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDesktop = MediaQuery.sizeOf(context).width >= 900;
     return Scaffold(
-      appBar: AppBar(title: Text(title)),
+      appBar: isDesktop ? null : AppBar(title: Text(title)),
       body: child,
     );
   }

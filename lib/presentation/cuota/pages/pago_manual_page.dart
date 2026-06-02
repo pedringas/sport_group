@@ -199,8 +199,9 @@ class _PagoManualPageState extends ConsumerState<PagoManualPage> {
     final gc = ref.watch(grupoColorProvider(widget.grupoId));
     final hasFile = _comprobanteBytes != null;
 
+    final isDesktop = MediaQuery.sizeOf(context).width >= 900;
     return Scaffold(
-      appBar: AppBar(
+      appBar: isDesktop ? null : AppBar(
         title: const Text('Subir comprobante'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),

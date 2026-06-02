@@ -165,9 +165,10 @@ class _GrupoGastoDetailPageState extends ConsumerState<GrupoGastoDetailPage> {
     final canAdd = !cerrado;
 
     // â”€â”€ Body â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    final isDesktop = MediaQuery.sizeOf(context).width >= 900;
     return Scaffold(
       backgroundColor: AppTheme.bg(context),
-      appBar: _buildAppBar(
+      appBar: isDesktop ? null : _buildAppBar(
           nombre, cerrado, isStaff, context, gc),
       body: movimientos.isEmpty && liqGrupo.isEmpty
           ? _EmptyState(cerrado: cerrado, esGeneral: _esGeneral)

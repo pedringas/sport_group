@@ -42,97 +42,139 @@ class _NotificacionesPageState extends ConsumerState<NotificacionesPage>
   Widget build(BuildContext context) {
     final unread = ref.watch(unreadRolCountProvider).valueOrNull ?? 0;
 
-    return Scaffold(
-      backgroundColor: AppTheme.bg(context),
-      appBar: AppBar(
-        backgroundColor: AppTheme.surf(context),
-        surfaceTintColor: Colors.transparent,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
-          onPressed: () =>
-              context.canPop() ? context.pop() : context.go('/home'),
-        ),
-        titleSpacing: 4,
-        title: Text(
-          'Notificaciones',
-          style: GoogleFonts.bricolageGrotesque(
-            fontWeight: FontWeight.w700,
-            fontSize: 18,
-            letterSpacing: -0.2,
-          ),
-        ),
-        actions: [
-          if (unread > 0)
-            TextButton(
-              onPressed: _marcarTodasLeidas,
-              child: const Text(
-                'Marcar leídas',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: AppTheme.primary,
-                ),
-              ),
-            ),
-        ],
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(49),
-          child: Column(
+    final isDesktop = MediaQuery.sizeOf(context).width >= 900;
+
+    final tabBar = TabBar(
+      controller: _tab,
+      labelStyle: GoogleFonts.bricolageGrotesque(
+        fontWeight: FontWeight.w700,
+        fontSize: 13,
+      ),
+      unselectedLabelStyle: GoogleFonts.bricolageGrotesque(
+        fontWeight: FontWeight.w500,
+        fontSize: 13,
+      ),
+      indicatorColor: AppTheme.primary,
+      labelColor: AppTheme.primary,
+      unselectedLabelColor: AppTheme.textMuted,
+      tabs: [
+        const Tab(text: 'Generales'),
+        Tab(
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Container(height: 1, color: AppTheme.border),
-              TabBar(
-                controller: _tab,
-                labelStyle: GoogleFonts.bricolageGrotesque(
-                  fontWeight: FontWeight.w700,
-                  fontSize: 13,
-                ),
-                unselectedLabelStyle: GoogleFonts.bricolageGrotesque(
-                  fontWeight: FontWeight.w500,
-                  fontSize: 13,
-                ),
-                indicatorColor: AppTheme.primary,
-                labelColor: AppTheme.primary,
-                unselectedLabelColor: AppTheme.textMuted,
-                tabs: [
-                  const Tab(text: 'Generales'),
-                  Tab(
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Text('De rol'),
-                        if (unread > 0) ...[
-                          const SizedBox(width: 6),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: AppTheme.danger,
-                              borderRadius: BorderRadius.circular(99),
-                            ),
-                            child: Text(
-                              '$unread',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 10,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ],
+              const Text('De rol'),
+              if (unread > 0) ...[
+                const SizedBox(width: 6),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: AppTheme.danger,
+                    borderRadius: BorderRadius.circular(99),
+                  ),
+                  child: Text(
+                    '$unread',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ],
           ),
         ),
-      ),
-      body: TabBarView(
-        controller: _tab,
-        children: const [
-          _GeneralesTab(),
-          _RolTab(),
+      ],
+    );
+
+    return Scaffold(
+      backgroundColor: AppTheme.bg(context),
+      appBar: isDesktop
+          ? null
+          : AppBar(
+              backgroundColor: AppTheme.surf(context),
+              surfaceTintColor: Colors.transparent,
+              leading: IconButton(
+                icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
+                onPressed: () =>
+                    context.canPop() ? context.pop() : context.go('/home'),
+              ),
+              titleSpacing: 4,
+              title: Text(
+                'Notificaciones',
+                style: GoogleFonts.bricolageGrotesque(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 18,
+                  letterSpacing: -0.2,
+                ),
+              ),
+              actions: [
+                if (unread > 0)
+                  TextButton(
+                    onPressed: _marcarTodasLeidas,
+                    child: const Text(
+                      'Marcar leídas',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: AppTheme.primary,
+                      ),
+                    ),
+                  ),
+              ],
+              bottom: PreferredSize(
+                preferredSize: const Size.fromHeight(49),
+                child: Column(
+                  children: [
+                    Container(height: 1, color: AppTheme.border),
+                    tabBar,
+                  ],
+                ),
+              ),
+            ),
+      body: Column(
+        children: [
+          if (isDesktop) ...[
+            Container(
+              color: AppTheme.surf(context),
+              child: Column(
+                children: [
+                  Container(height: 1, color: AppTheme.border),
+                  Row(
+                    children: [
+                      Expanded(child: tabBar),
+                      if (unread > 0)
+                        Padding(
+                          padding: const EdgeInsets.only(right: 16),
+                          child: TextButton(
+                            onPressed: _marcarTodasLeidas,
+                            child: const Text(
+                              'Marcar leídas',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: AppTheme.primary,
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+          Expanded(
+            child: TabBarView(
+              controller: _tab,
+              children: const [
+                _GeneralesTab(),
+                _RolTab(),
+              ],
+            ),
+          ),
         ],
       ),
     );

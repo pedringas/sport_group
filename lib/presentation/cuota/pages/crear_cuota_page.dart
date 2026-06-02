@@ -125,8 +125,9 @@ class _CrearCuotaPageState extends ConsumerState<CrearCuotaPage> {
             : miembrosTotales;
     final total = monto * efectivos;
 
+    final isDesktop = MediaQuery.sizeOf(context).width >= 900;
     return Scaffold(
-      appBar: AppBar(
+      appBar: isDesktop ? null : AppBar(
         leading: IconButton(
           icon: const Icon(Icons.close_rounded, size: 22),
           onPressed: () => context.pop(),

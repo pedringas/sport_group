@@ -23,8 +23,9 @@ class PerfilPage extends ConsumerWidget {
     final userAsync = ref.watch(currentUserProvider);
     final gruposAsync = ref.watch(userGruposProvider);
     final uid = ref.watch(authStateProvider).valueOrNull?.uid ?? '';
+    final isDesktop = MediaQuery.sizeOf(context).width >= 900;
     return Scaffold(
-      appBar: AppBar(
+      appBar: isDesktop ? null : AppBar(
         leading: showBackButton
             ? IconButton(
                 icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),

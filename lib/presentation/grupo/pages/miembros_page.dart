@@ -25,9 +25,10 @@ class _MiembrosPageState extends ConsumerState<MiembrosPage> {
     final gc = ref.watch(grupoColorProvider(widget.grupoId));
     final miembrosAsync = ref.watch(miembrosProvider(widget.grupoId));
 
+    final isDesktop = MediaQuery.sizeOf(context).width >= 900;
     return Scaffold(
       backgroundColor: AppTheme.bg(context),
-      appBar: AppBar(
+      appBar: isDesktop ? null : AppBar(
         backgroundColor: AppTheme.surf(context),
         elevation: 0,
         leading: IconButton(
