@@ -234,7 +234,7 @@ class _EditarPerfilPageState extends ConsumerState<EditarPerfilPage> {
                     ),
                   ),
                   const SizedBox(height: 4),
-                  Center(
+                  const Center(
                     child: Text(
                       'Cambiar foto',
                       style: TextStyle(
@@ -245,10 +245,10 @@ class _EditarPerfilPageState extends ConsumerState<EditarPerfilPage> {
                     ),
                   ),
                   const SizedBox(height: 2),
-                  Center(
+                  const Center(
                     child: Text(
                       'JPG o PNG · cuadrada, mínimo 200×200',
-                      style: const TextStyle(
+                      style: TextStyle(
                           fontSize: 11, color: AppTheme.textMuted),
                     ),
                   ),
@@ -256,7 +256,7 @@ class _EditarPerfilPageState extends ConsumerState<EditarPerfilPage> {
                   const SizedBox(height: 20),
 
                   // â”€â”€ Color de perfil
-                  SGEyebrow('Color de perfil'),
+                  const SGEyebrow('Color de perfil'),
                   const SizedBox(height: 8),
                   Container(
                     padding: const EdgeInsets.all(14),
@@ -324,7 +324,7 @@ class _EditarPerfilPageState extends ConsumerState<EditarPerfilPage> {
                   const SizedBox(height: 20),
 
                   // â”€â”€ Datos públicos
-                  SGEyebrow('Datos públicos'),
+                  const SGEyebrow('Datos públicos'),
                   const SizedBox(height: 8),
                   _EditSection(
                     children: [
@@ -351,7 +351,7 @@ class _EditarPerfilPageState extends ConsumerState<EditarPerfilPage> {
                   const SizedBox(height: 20),
 
                   // â”€â”€ Quién puede verte
-                  SGEyebrow('Quién puede verte'),
+                  const SGEyebrow('Quién puede verte'),
                   const SizedBox(height: 8),
                   Container(
                     decoration: BoxDecoration(
@@ -371,7 +371,7 @@ class _EditarPerfilPageState extends ConsumerState<EditarPerfilPage> {
                           onChanged: (v) =>
                               setState(() => _apareceEnBusqueda = v),
                         ),
-                        Divider(
+                        const Divider(
                             height: 1,
                             indent: 16,
                             endIndent: 16,
@@ -392,7 +392,7 @@ class _EditarPerfilPageState extends ConsumerState<EditarPerfilPage> {
                   const SizedBox(height: 20),
 
                   // â”€â”€ Datos privados
-                  SGEyebrow('Datos privados'),
+                  const SGEyebrow('Datos privados'),
                   const SizedBox(height: 8),
                   _EditSection(
                     children: [
@@ -485,7 +485,7 @@ class _EditableRow extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         if (showDivider)
-          Divider(height: 1, indent: 12, endIndent: 12, color: AppTheme.border),
+          const Divider(height: 1, indent: 12, endIndent: 12, color: AppTheme.border),
         Padding(
           padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
           child: Column(

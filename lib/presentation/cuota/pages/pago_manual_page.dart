@@ -146,7 +146,7 @@ class _PagoManualPageState extends ConsumerState<PagoManualPage> {
               const SizedBox(height: 12),
               Container(
                 width: 120, height: 120,
-                decoration: BoxDecoration(
+                decoration: const BoxDecoration(
                   color: AppTheme.goodSoft,
                   shape: BoxShape.circle,
                 ),
@@ -175,7 +175,7 @@ class _PagoManualPageState extends ConsumerState<PagoManualPage> {
                 ),
               ),
               const SizedBox(height: 12),
-              Text(
+              const Text(
                 'El tesorero lo va a revisar y te llega\nuna notificación cuando lo confirme.',
                 textAlign: TextAlign.center,
                 style: TextStyle(color: AppTheme.textMuted, fontSize: 14, height: 1.5),
@@ -223,7 +223,7 @@ class _PagoManualPageState extends ConsumerState<PagoManualPage> {
                     iconColor: gc,
                   ),
                   const SizedBox(width: 12),
-                  Expanded(
+                  const Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisSize: MainAxisSize.min,
@@ -315,11 +315,11 @@ class _PagoManualPageState extends ConsumerState<PagoManualPage> {
             ),
 
             const SizedBox(height: 14),
-            Row(
+            const Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Icon(Icons.lock_outline_rounded, size: 14, color: AppTheme.textMuted),
-                const SizedBox(width: 4),
+                SizedBox(width: 4),
                 Text(
                   'Solo el tesorero ve tu comprobante.',
                   style: TextStyle(color: AppTheme.textMuted, fontSize: 12),
@@ -402,7 +402,7 @@ class _UploadZone extends StatelessWidget {
             if (fileSizeKb != null)
               Text(
                 '${fileSizeKb!.toString()} KB · Listo para enviar',
-                style: TextStyle(color: AppTheme.textMuted, fontSize: 11),
+                style: const TextStyle(color: AppTheme.textMuted, fontSize: 11),
               ),
             const SizedBox(height: 10),
             Row(
@@ -455,7 +455,7 @@ class _UploadZone extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 4),
-            Text(
+            const Text(
               'JPG o PNG · hasta 8 MB',
               style: TextStyle(color: AppTheme.textMuted, fontSize: 11),
             ),
@@ -535,7 +535,7 @@ class _FormRow extends StatelessWidget {
         children: [
           Text(
             label.toUpperCase(),
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 10,
               fontWeight: FontWeight.w700,
               color: AppTheme.textMuted,
@@ -553,7 +553,7 @@ class _FormRow extends StatelessWidget {
             ),
             decoration: InputDecoration(
               hintText: hint,
-              hintStyle: TextStyle(color: AppTheme.textMuted, fontSize: 14),
+              hintStyle: const TextStyle(color: AppTheme.textMuted, fontSize: 14),
               isDense: true,
               border: InputBorder.none,
               enabledBorder: InputBorder.none,

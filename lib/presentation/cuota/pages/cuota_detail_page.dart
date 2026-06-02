@@ -195,11 +195,11 @@ class _StatusBanner extends StatelessWidget {
       bannerIcon = Icons.check_circle_rounded;
       bannerLabel = 'Suscripción pagada';
     } else if (esperandoTesorero) {
-      bannerColor = const Color(0xFFF59E0B);
+      bannerColor = AppTheme.warning;
       bannerIcon = Icons.hourglass_top_rounded;
       bannerLabel = 'Esperando confirmación del tesorero';
     } else if (enValidacion) {
-      bannerColor = Colors.blue;
+      bannerColor = AppTheme.info;
       bannerIcon = Icons.hourglass_top_rounded;
       bannerLabel = 'Comprobante en validación';
     } else if (vencida) {
@@ -207,7 +207,7 @@ class _StatusBanner extends StatelessWidget {
       bannerIcon = Icons.warning_amber_rounded;
       bannerLabel = 'Suscripción vencida';
     } else {
-      bannerColor = const Color(0xFFF59E0B);
+      bannerColor = AppTheme.warning;
       bannerIcon = Icons.payments_outlined;
       bannerLabel = 'Pendiente de pago';
     }
@@ -298,13 +298,13 @@ class _AmountCard extends StatelessWidget {
                     color: Colors.white.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: Row(
+                  child: const Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.repeat_rounded,
+                      Icon(Icons.repeat_rounded,
                           size: 12, color: Colors.white70),
-                      const SizedBox(width: 4),
-                      const Text('Recurrente',
+                      SizedBox(width: 4),
+                      Text('Recurrente',
                           style: TextStyle(
                               color: Colors.white70,
                               fontSize: 11,
@@ -383,7 +383,7 @@ class _DetailsSection extends StatelessWidget {
             value: '\$${cuota.monto.toStringAsFixed(0)}',
             valueColor: gc,
           ),
-          Divider(height: 1, color: AppTheme.border),
+          const Divider(height: 1, color: AppTheme.border),
           _DetailRow(
             icon: Icons.calendar_today_outlined,
             label: 'Vencimiento',
@@ -391,7 +391,7 @@ class _DetailsSection extends StatelessWidget {
             valueColor: vencida ? AppTheme.danger : null,
           ),
           if (cuota.esRecurrente) ...[
-            Divider(height: 1, color: AppTheme.border),
+            const Divider(height: 1, color: AppTheme.border),
             _DetailRow(
               icon: Icons.repeat_rounded,
               label: 'Frecuencia',
@@ -400,7 +400,7 @@ class _DetailsSection extends StatelessWidget {
           ],
           if (miPago?.updatedAt != null &&
               miPago?.estado == EstadoPago.aprobado) ...[
-            Divider(height: 1, color: AppTheme.border),
+            const Divider(height: 1, color: AppTheme.border),
             _DetailRow(
               icon: Icons.check_circle_outline_rounded,
               label: 'Aprobado el',
@@ -438,7 +438,7 @@ class _DetailRow extends StatelessWidget {
             Expanded(
               child: Text(
                 label,
-                style: TextStyle(fontSize: 14, color: AppTheme.textMuted),
+                style: const TextStyle(fontSize: 14, color: AppTheme.textMuted),
               ),
             ),
             Text(
@@ -628,9 +628,9 @@ class _RegistrarEfectivoSheetState
             ),
           ),
           const SizedBox(height: 4),
-          Text(
+          const Text(
             'El tesorero o administrador confirmará el pago.',
-            style: const TextStyle(fontSize: 13, color: AppTheme.textMuted),
+            style: TextStyle(fontSize: 13, color: AppTheme.textMuted),
           ),
           const SizedBox(height: 20),
 
@@ -701,7 +701,7 @@ class _EsperaAprobacionCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final amber = const Color(0xFFF59E0B);
+    final amber = AppTheme.warning;
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -895,7 +895,7 @@ class _PagosPendientesPanel extends ConsumerWidget {
           _SectionHeader(
             label: 'Pendientes de confirmación',
             count: porConfirmar.length,
-            color: const Color(0xFFF59E0B),
+            color: AppTheme.warning,
           ),
           const SizedBox(height: 6),
           ...porConfirmar.map((e) => _PagoPendienteRow(
@@ -927,7 +927,7 @@ class _PagosPendientesPanel extends ConsumerWidget {
                 return Column(
                   children: [
                     if (idx > 0)
-                      Divider(height: 1, color: AppTheme.border,
+                      const Divider(height: 1, color: AppTheme.border,
                           indent: 50, endIndent: 12),
                     Padding(
                       padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
@@ -984,7 +984,7 @@ class _PagosPendientesPanel extends ConsumerWidget {
                 return Column(
                   children: [
                     if (idx > 0)
-                      Divider(height: 1, color: AppTheme.border,
+                      const Divider(height: 1, color: AppTheme.border,
                           indent: 50, endIndent: 12),
                     Padding(
                       padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
@@ -1175,14 +1175,14 @@ class _PagoPendienteRowState extends ConsumerState<_PagoPendienteRow> {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 5, vertical: 2),
                           decoration: BoxDecoration(
-                            color: Colors.blue.withValues(alpha: 0.12),
+                            color: AppTheme.info.withValues(alpha: 0.12),
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: const Text('Comprobante',
                               style: TextStyle(
                                   fontSize: 9,
                                   fontWeight: FontWeight.w700,
-                                  color: Colors.blue)),
+                                  color: AppTheme.info)),
                         )
                       else
                         Container(
@@ -1190,14 +1190,14 @@ class _PagoPendienteRowState extends ConsumerState<_PagoPendienteRow> {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 5, vertical: 2),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFF59E0B).withValues(alpha: 0.12),
+                            color: AppTheme.warning.withValues(alpha: 0.12),
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: const Text('Efectivo',
                               style: TextStyle(
                                   fontSize: 9,
                                   fontWeight: FontWeight.w700,
-                                  color: Color(0xFFF59E0B))),
+                                  color: AppTheme.warning)),
                         ),
                       Text(
                         DateFormat('dd/MM · HH:mm')
@@ -1336,7 +1336,7 @@ class _PaidCard extends StatelessWidget {
               color: AppTheme.good.withValues(alpha: 0.12),
               shape: BoxShape.circle,
             ),
-            child: Icon(Icons.check_rounded, color: AppTheme.good, size: 28),
+            child: const Icon(Icons.check_rounded, color: AppTheme.good, size: 28),
           ),
           const SizedBox(height: 12),
           Text(
@@ -1351,7 +1351,7 @@ class _PaidCard extends StatelessWidget {
             const SizedBox(height: 4),
             Text(
               'Aprobado el ${DateFormat('dd/MM/yyyy').format(miPago!.updatedAt!)}',
-              style: TextStyle(fontSize: 13, color: AppTheme.textMuted),
+              style: const TextStyle(fontSize: 13, color: AppTheme.textMuted),
             ),
           ],
           if (miPago?.comprobanteUrl != null) ...[
@@ -1392,9 +1392,9 @@ class _ValidationCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.blue.withValues(alpha: 0.07),
+        color: AppTheme.info.withValues(alpha: 0.07),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.blue.withValues(alpha: 0.2)),
+        border: Border.all(color: AppTheme.info.withValues(alpha: 0.2)),
       ),
       child: Column(
         children: [
@@ -1402,11 +1402,11 @@ class _ValidationCard extends StatelessWidget {
             width: 56,
             height: 56,
             decoration: BoxDecoration(
-              color: Colors.blue.withValues(alpha: 0.12),
+              color: AppTheme.info.withValues(alpha: 0.12),
               shape: BoxShape.circle,
             ),
             child: const Icon(Icons.hourglass_top_rounded,
-                color: Colors.blue, size: 26),
+                color: AppTheme.info, size: 26),
           ),
           const SizedBox(height: 12),
           Text(
@@ -1425,7 +1425,7 @@ class _ValidationCard extends StatelessWidget {
                 ? 'El tesorero revisará tu comprobante pronto'
                 : 'Verificando tu transferencia automáticamente',
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 13, color: AppTheme.textMuted),
+            style: const TextStyle(fontSize: 13, color: AppTheme.textMuted),
           ),
           if (miPago?.comprobanteUrl != null) ...[
             const SizedBox(height: 14),

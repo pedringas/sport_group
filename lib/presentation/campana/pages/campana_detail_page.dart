@@ -110,9 +110,9 @@ class CampanaDetailPage extends ConsumerWidget {
 
                   // â”€â”€ Description â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                   if (campana.descripcion != null) ...[
-                    SliverToBoxAdapter(
+                    const SliverToBoxAdapter(
                       child: Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
+                        padding: EdgeInsets.fromLTRB(16, 20, 16, 8),
                         child: SGEyebrow('DE QUÉ SE TRATA'),
                       ),
                     ),
@@ -155,11 +155,11 @@ class CampanaDetailPage extends ConsumerWidget {
                                 crossAxisAlignment:
                                     CrossAxisAlignment.start,
                                 children: [
-                                  Row(
+                                  const Row(
                                     children: [
                                       Text(
                                         'Campaña creada',
-                                        style: const TextStyle(
+                                        style: TextStyle(
                                           fontWeight: FontWeight.w600,
                                           fontSize: 12,
                                           color: AppTheme.text,
@@ -202,9 +202,9 @@ class CampanaDetailPage extends ConsumerWidget {
 
                   // â”€â”€ Quick amount presets â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                   if (activa) ...[
-                    SliverToBoxAdapter(
+                    const SliverToBoxAdapter(
                       child: Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
+                        padding: EdgeInsets.fromLTRB(16, 20, 16, 8),
                         child: SGEyebrow('APORTES RÁPIDOS'),
                       ),
                     ),
@@ -234,9 +234,9 @@ class CampanaDetailPage extends ConsumerWidget {
                     ),
 
                   // â”€â”€ Aportes list â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-                  SliverToBoxAdapter(
+                  const SliverToBoxAdapter(
                     child: Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
+                      padding: EdgeInsets.fromLTRB(16, 20, 16, 8),
                       child: SGEyebrow('ÚLTIMOS APORTES'),
                     ),
                   ),
@@ -309,9 +309,9 @@ class CampanaDetailPage extends ConsumerWidget {
                   right: 0,
                   bottom: 0,
                   child: Container(
-                    decoration: BoxDecoration(
+                    decoration: const BoxDecoration(
                       color: AppTheme.background,
-                      border: const Border(
+                      border: Border(
                           top: BorderSide(color: AppTheme.border)),
                     ),
                     padding: EdgeInsets.fromLTRB(
@@ -467,10 +467,10 @@ class _TopBar extends StatelessWidget {
             icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
             onPressed: () => Navigator.of(context).pop(),
           ),
-          Expanded(
+          const Expanded(
             child: Text(
               'Campañas',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
                 color: AppTheme.textMuted,
@@ -861,7 +861,7 @@ class _AporteRow extends StatelessWidget {
             children: [
               Text(
                 '\$ ${fmt.format(aporte.monto)}',
-                style: TextStyle(
+                style: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w700,
                   color: AppTheme.good,
@@ -1201,15 +1201,15 @@ class _AportarSheetState extends ConsumerState<_AportarSheet> {
                   color: AppTheme.accentSoft,
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: Row(
+                child: const Row(
                   children: [
-                    const Icon(Icons.auto_awesome_rounded,
+                    Icon(Icons.auto_awesome_rounded,
                         size: 14, color: AppTheme.accentInk),
-                    const SizedBox(width: 8),
+                    SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         'En el siguiente paso subís el comprobante. Lo verificamos automáticamente.',
-                        style: const TextStyle(
+                        style: TextStyle(
                             fontSize: 12,
                             color: AppTheme.accentInk,
                             height: 1.4),
@@ -1381,8 +1381,8 @@ class _AportesPendientesPanel extends ConsumerWidget {
                 Container(
                   width: 8,
                   height: 8,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF59E0B),
+                  decoration: const BoxDecoration(
+                    color: AppTheme.warning,
                     shape: BoxShape.circle,
                   ),
                 ),
@@ -1400,7 +1400,7 @@ class _AportesPendientesPanel extends ConsumerWidget {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF59E0B).withValues(alpha: 0.15),
+                    color: AppTheme.warning.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Text(
@@ -1408,7 +1408,7 @@ class _AportesPendientesPanel extends ConsumerWidget {
                     style: const TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
-                      color: Color(0xFFF59E0B),
+                      color: AppTheme.warning,
                     ),
                   ),
                 ),
@@ -1504,7 +1504,7 @@ class _AportePendienteRowState extends ConsumerState<_AportePendienteRow> {
               Container(
                 width: 36,
                 height: 36,
-                decoration: BoxDecoration(
+                decoration: const BoxDecoration(
                   color: AppTheme.goodSoft,
                   shape: BoxShape.circle,
                 ),
@@ -1562,7 +1562,7 @@ class _AportePendienteRowState extends ConsumerState<_AportePendienteRow> {
                                 horizontal: 6, vertical: 1),
                             decoration: BoxDecoration(
                               color:
-                                  Colors.blue.withValues(alpha: 0.1),
+                                  AppTheme.info.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: const Text(
@@ -1570,7 +1570,7 @@ class _AportePendienteRowState extends ConsumerState<_AportePendienteRow> {
                               style: TextStyle(
                                 fontSize: 10,
                                 fontWeight: FontWeight.w700,
-                                color: Colors.blue,
+                                color: AppTheme.info,
                               ),
                             ),
                           ),

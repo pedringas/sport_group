@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -185,7 +186,7 @@ class _GrupoPageState extends ConsumerState<GrupoPage>
     return SafeArea(
       top: false,
       child: Container(
-        decoration: BoxDecoration(
+        decoration: const BoxDecoration(
           color: AppTheme.surface,
           border: Border(top: BorderSide(color: AppTheme.border)),
         ),
@@ -278,12 +279,12 @@ class _GrupoPageState extends ConsumerState<GrupoPage>
       (Icons.event_rounded, gc.withValues(alpha: 0.12), gc,
           'Crear evento', '/group/$id/evento/crear'),
       (Icons.payments_outlined, AppTheme.dangerSoft,
-          const Color(0xFF8C2A14), 'Emitir suscripción',
+          AppTheme.dangerInk, 'Emitir suscripción',
           '/group/$id/cuotas/crear'),
       (Icons.campaign_outlined, AppTheme.accentSoft, AppTheme.accentInk,
           'Campañas', '/group/$id/campanas'),
       (Icons.newspaper_outlined, AppTheme.goodSoft,
-          const Color(0xFF1F7A5A), 'Noticias', '/group/$id/noticias'),
+          AppTheme.goodInk, 'Noticias', '/group/$id/noticias'),
     ];
     showModalBottomSheet(
       context: context,
@@ -523,11 +524,11 @@ class _GrupoCover extends StatelessWidget {
         CustomPaint(painter: _StripePainter()),
 
         // Sport watermark
-        Positioned(
+        const Positioned(
           right: -16, bottom: -16,
           child: Opacity(
             opacity: 0.13,
-            child: const Icon(Icons.sports_soccer_rounded,
+            child: Icon(Icons.sports_soccer_rounded,
                 size: 200, color: Colors.white),
           ),
         ),
@@ -607,9 +608,9 @@ class _GrupoCover extends StatelessWidget {
                         borderRadius:
                             BorderRadius.circular(escudoSize * 0.25 - 3),
                         child: grupo!.logoUrl?.isNotEmpty == true
-                            ? Image.network(grupo!.logoUrl!,
+                            ? CachedNetworkImage(imageUrl: grupo!.logoUrl!,
                                 fit: BoxFit.cover,
-                                errorBuilder: (_, __, ___) =>
+                                errorWidget: (_, __, ___) =>
                                     _fallback(escudoSize))
                             : _fallback(escudoSize),
                       ),
@@ -931,10 +932,10 @@ class _GroupHeader extends StatelessWidget {
           children: [
             // Background: portada image or color gradient
             if (hasPortada)
-              Image.network(
-                grupo.portadaUrl!,
+              CachedNetworkImage(
+                imageUrl: grupo.portadaUrl!,
                 fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => _buildGradient(color),
+                errorWidget: (_, __, ___) => _buildGradient(color),
               )
             else
               _buildGradient(color),
@@ -1212,7 +1213,7 @@ class _BentoGrid extends ConsumerWidget {
             Expanded(
               child: _BentoTile(
                 icon: Icons.account_balance_wallet_outlined,
-                iconBg: AppTheme.goodSoft, iconColor: const Color(0xFF1F7A5A),
+                iconBg: AppTheme.goodSoft, iconColor: AppTheme.goodInk,
                 label: 'Gastos',
                 big: 'Ver gastos',
                 onTap: () => context.push('/group/$grupoId/gastos'),
@@ -1222,7 +1223,7 @@ class _BentoGrid extends ConsumerWidget {
             Expanded(
               child: _BentoTile(
                 icon: Icons.payments_outlined,
-                iconBg: AppTheme.dangerSoft, iconColor: const Color(0xFF8C2A14),
+                iconBg: AppTheme.dangerSoft, iconColor: AppTheme.dangerInk,
                 label: 'Tu cuota',
                 big: cuotaBig,
                 sub: cuotaSub.isNotEmpty ? cuotaSub : null,

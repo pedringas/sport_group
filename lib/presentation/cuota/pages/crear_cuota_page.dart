@@ -232,15 +232,15 @@ class _CrearCuotaPageState extends ConsumerState<CrearCuotaPage> {
                     Text('VENCE',
                         style: GoogleFonts.bricolageGrotesque(
                             fontSize: 10, fontWeight: FontWeight.w700,
-                            color: const Color(0xFF8C2A14), letterSpacing: 1)),
+                            color: AppTheme.dangerInk, letterSpacing: 1)),
                     Text('${_vencimiento.day}',
                         style: GoogleFonts.bricolageGrotesque(
                             fontSize: 24, fontWeight: FontWeight.w700,
-                            color: const Color(0xFF8C2A14), height: 1)),
+                            color: AppTheme.dangerInk, height: 1)),
                     Text(monthsShort[_vencimiento.month - 1],
                         style: GoogleFonts.bricolageGrotesque(
                             fontSize: 10, fontWeight: FontWeight.w700,
-                            color: const Color(0xFF8C2A14), letterSpacing: 1)),
+                            color: AppTheme.dangerInk, letterSpacing: 1)),
                   ]),
                 ),
                 const SizedBox(width: 12),

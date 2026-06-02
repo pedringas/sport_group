@@ -1,4 +1,5 @@
 import 'dart:typed_data';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -65,9 +66,9 @@ class RecursosTab extends ConsumerWidget {
                 else ...[
                   // â”€â”€ Links (fijados style) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                   if (links.isNotEmpty)
-                    SliverToBoxAdapter(
+                    const SliverToBoxAdapter(
                       child: Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
+                        padding: EdgeInsets.fromLTRB(16, 20, 16, 8),
                         child: SGEyebrow('ENLACES'),
                       ),
                     ),
@@ -87,9 +88,9 @@ class RecursosTab extends ConsumerWidget {
 
                   // â”€â”€ Archivos (recent style) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                   if (archivos.isNotEmpty)
-                    SliverToBoxAdapter(
+                    const SliverToBoxAdapter(
                       child: Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
+                        padding: EdgeInsets.fromLTRB(16, 24, 16, 8),
                         child: SGEyebrow('ARCHIVOS'),
                       ),
                     ),
@@ -176,7 +177,7 @@ class _Header extends StatelessWidget {
               ),
               child: Text(
                 '$totalArchivos ${totalArchivos == 1 ? "recurso" : "recursos"}',
-                style: TextStyle(
+                style: const TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
                   color: AppTheme.textMuted,
@@ -237,7 +238,7 @@ class _LinkTile extends StatelessWidget {
                       size: 20, color: Colors.white),
                 ),
                 const Spacer(),
-                Icon(Icons.open_in_new_rounded,
+                const Icon(Icons.open_in_new_rounded,
                     size: 14, color: AppTheme.textMuted),
               ],
             ),
@@ -246,7 +247,7 @@ class _LinkTile extends StatelessWidget {
               recurso.titulo,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: TextStyle(
+              style: const TextStyle(
                 fontWeight: FontWeight.w700,
                 fontSize: 13,
                 height: 1.3,
@@ -259,7 +260,7 @@ class _LinkTile extends StatelessWidget {
                   DateFormat('dd/MM/yy').format(recurso.createdAt),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: TextStyle(fontSize: 11, color: AppTheme.textMuted),
+              style: const TextStyle(fontSize: 11, color: AppTheme.textMuted),
             ),
           ],
         ),
@@ -462,12 +463,12 @@ class _ArchivoInfoSheet extends StatelessWidget {
           ClipRRect(
             borderRadius:
                 const BorderRadius.vertical(top: Radius.circular(28)),
-            child: Image.network(
-              recurso.url,
+            child: CachedNetworkImage(
+              imageUrl: recurso.url,
               width: double.infinity,
               height: 220,
               fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => Container(
+              errorWidget: (_, __, ___) => Container(
                 height: 220,
                 color: AppTheme.surfaceAlt,
                 child: const Center(
@@ -475,9 +476,7 @@ class _ArchivoInfoSheet extends StatelessWidget {
                       size: 40, color: AppTheme.textMuted),
                 ),
               ),
-              loadingBuilder: (_, child, progress) => progress == null
-                  ? child
-                  : Container(
+              placeholder: (_, __) => Container(
                       height: 220,
                       color: AppTheme.surfaceAlt,
                       child: const Center(child: CircularProgressIndicator()),

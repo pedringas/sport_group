@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -16,6 +16,36 @@ final _selectedMonthProvider =
     StateProvider.family<DateTime, String>((ref, grupoId) {
   final now = DateTime.now();
   return DateTime(now.year, now.month);
+});
+
+// Computed: gruposGasto filtered for the selected month.
+// Open groups always show; closed groups only in months they were active.
+final _gruposGastoFiltradosProvider =
+    Provider.family<List<GrupoGastoModel>, String>((ref, grupoId) {
+  final all = ref.watch(gruposGastoProvider(grupoId)).valueOrNull ?? [];
+  final sel = ref.watch(_selectedMonthProvider(grupoId));
+  final selYM = DateTime(sel.year, sel.month);
+  return all.where((g) {
+    if (!g.cerrado) return true;
+    final createdYM = DateTime(g.createdAt.year, g.createdAt.month);
+    final closedYM = g.cerradoAt != null
+        ? DateTime(g.cerradoAt!.year, g.cerradoAt!.month)
+        : createdYM;
+    return !selYM.isBefore(createdYM) && !selYM.isAfter(closedYM);
+  }).toList();
+});
+
+// Computed: total of gasto-type movements for the selected month.
+final _totalGastosMesProvider =
+    Provider.family<double, String>((ref, grupoId) {
+  final all = ref.watch(todosGastosProvider(grupoId)).valueOrNull ?? [];
+  final sel = ref.watch(_selectedMonthProvider(grupoId));
+  return all
+      .where((g) =>
+          g.createdAt.year == sel.year &&
+          g.createdAt.month == sel.month &&
+          g.tipo == TipoMovimiento.gasto)
+      .fold(0.0, (s, g) => s + g.monto);
 });
 
 // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -36,29 +66,9 @@ class GastosTab extends ConsumerWidget {
     final isStaff = rol?.puedeCerrarGrupoGasto ?? false;
 
     final allGastos = todosGastosAsync.valueOrNull ?? [];
-    final allGruposGasto = gruposGastoAsync.valueOrNull ?? [];
 
-    // Filter grupos de gasto by selected month:
-    //  - Open groups always appear
-    //  - Closed groups appear only in months they were active (created → cerradoAt)
-    final selectedYM = DateTime(selectedMonth.year, selectedMonth.month);
-    final gruposGasto = allGruposGasto.where((g) {
-      if (!g.cerrado) return true;
-      final createdYM = DateTime(g.createdAt.year, g.createdAt.month);
-      final closedYM = g.cerradoAt != null
-          ? DateTime(g.cerradoAt!.year, g.cerradoAt!.month)
-          : createdYM;
-      return !selectedYM.isBefore(createdYM) && !selectedYM.isAfter(closedYM);
-    }).toList();
-
-    // â”€â”€ Monthly summary â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-    final gastosMes = allGastos.where((g) =>
-        g.createdAt.year == selectedMonth.year &&
-        g.createdAt.month == selectedMonth.month);
-
-    final totalGastosMes = gastosMes
-        .where((g) => g.tipo == TipoMovimiento.gasto)
-        .fold(0.0, (s, g) => s + g.monto);
+    final gruposGasto = ref.watch(_gruposGastoFiltradosProvider(grupoId));
+    final totalGastosMes = ref.watch(_totalGastosMesProvider(grupoId));
 
     return Scaffold(
       backgroundColor: AppTheme.bg(context),
@@ -492,7 +502,7 @@ class _GrupoGastoTile extends StatelessWidget {
                         style: GoogleFonts.bricolageGrotesque(
                           fontWeight: FontWeight.w700,
                           fontSize: 13,
-                          color: const Color(0xFF8C2A14),
+                          color: AppTheme.dangerInk,
                         ),
                       ),
                     if (totalIngresos > 0)
@@ -501,7 +511,7 @@ class _GrupoGastoTile extends StatelessWidget {
                         style: GoogleFonts.bricolageGrotesque(
                           fontWeight: FontWeight.w700,
                           fontSize: 13,
-                          color: const Color(0xFF1F7A5A),
+                          color: AppTheme.goodInk,
                         ),
                       ),
                   ],
@@ -619,7 +629,7 @@ class _TotalCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final bg = positive ? AppTheme.goodSoft : AppTheme.dangerSoft;
     final textColor =
-        positive ? const Color(0xFF1F7A5A) : const Color(0xFF8C2A14);
+        positive ? AppTheme.goodInk : AppTheme.dangerInk;
 
     return Container(
       padding: const EdgeInsets.all(14),

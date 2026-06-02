@@ -1,4 +1,5 @@
 import 'dart:typed_data';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -64,12 +65,12 @@ class NoticiasTab extends ConsumerWidget {
       length: hasPasadas ? 2 : 1,
       child: Scaffold(
         appBar: hasPasadas
-            ? PreferredSize(
-                preferredSize: const Size.fromHeight(48),
+            ? const PreferredSize(
+                preferredSize: Size.fromHeight(48),
                 child: Material(
                   color: AppTheme.surface,
                   child: TabBar(
-                    tabs: const [
+                    tabs: [
                       Tab(text: 'Activas'),
                       Tab(text: 'Pasadas'),
                     ],
@@ -159,7 +160,7 @@ class _NoticiasList extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.newspaper_outlined,
+              const Icon(Icons.newspaper_outlined,
                   size: 56, color: AppTheme.textMuted),
               const SizedBox(height: 12),
               Text(emptyMessage,
@@ -239,8 +240,8 @@ class _NoticiaCard extends ConsumerWidget {
                 borderRadius: noticia.fijada
                     ? BorderRadius.zero
                     : const BorderRadius.vertical(top: Radius.circular(20)),
-                child: Image.network(
-                  noticia.imagenUrl!,
+                child: CachedNetworkImage(
+                  imageUrl: noticia.imagenUrl!,
                   width: double.infinity,
                   height: 200,
                   fit: BoxFit.cover,
@@ -475,12 +476,12 @@ class _NoticiaDetailModalState extends ConsumerState<NoticiaDetailModal> {
                 children: [
                   // Imagen
                   if (n.imagenUrl != null)
-                    Image.network(
-                      n.imagenUrl!,
+                    CachedNetworkImage(
+                      imageUrl: n.imagenUrl!,
                       width: double.infinity,
                       height: 220,
                       fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                      errorWidget: (_, __, ___) => const SizedBox.shrink(),
                     ),
                   // Banner fijada
                   if (n.fijada)
@@ -733,15 +734,15 @@ class _ComentariosSection extends ConsumerWidget {
         padding: EdgeInsets.symmetric(vertical: 20),
         child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
       ),
-      error: (e, _) => Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8),
+      error: (e, _) => const Padding(
+        padding: EdgeInsets.symmetric(vertical: 8),
         child: Row(children: [
-          const Icon(Icons.error_outline, size: 16, color: AppTheme.danger),
-          const SizedBox(width: 6),
+          Icon(Icons.error_outline, size: 16, color: AppTheme.danger),
+          SizedBox(width: 6),
           Expanded(
             child: Text(
               'No se pudieron cargar los comentarios. Verificá tu conexión.',
-              style: const TextStyle(fontSize: 12, color: AppTheme.danger),
+              style: TextStyle(fontSize: 12, color: AppTheme.danger),
             ),
           ),
         ]),
@@ -978,9 +979,9 @@ class _CommentInputBarState extends ConsumerState<_CommentInputBar> {
     final currentUser = ref.watch(currentUserProvider).valueOrNull;
     return Container(
       padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         color: AppTheme.surface,
-        border: const Border(top: BorderSide(color: AppTheme.border)),
+        border: Border(top: BorderSide(color: AppTheme.border)),
       ),
       child: Row(children: [
         SGAvatar(

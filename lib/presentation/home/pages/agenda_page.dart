@@ -445,7 +445,7 @@ class _CalendarView extends StatelessWidget {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.event_busy_rounded,
+                        const Icon(Icons.event_busy_rounded,
                             size: 40, color: AppTheme.border),
                         const SizedBox(height: 12),
                         Text(
@@ -595,7 +595,7 @@ class _EmptyState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.calendar_month_rounded,
+            const Icon(Icons.calendar_month_rounded,
                 size: 64, color: AppTheme.border),
             const SizedBox(height: 16),
             Text(

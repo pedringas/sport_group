@@ -280,7 +280,7 @@ class _EmptyTareas extends StatelessWidget {
                 ? 'No hay tareas todavía'
                 : 'Sin tareas ${filtro!.label.toLowerCase()}s',
             style:
-                TextStyle(fontSize: 15, color: AppTheme.textMuted),
+                const TextStyle(fontSize: 15, color: AppTheme.textMuted),
           ),
         ],
       ),
@@ -381,7 +381,7 @@ class _TareaCard extends ConsumerWidget {
                           tarea.descripcion!,
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
+                          style: const TextStyle(
                               fontSize: 12, color: AppTheme.textMuted),
                         ),
                       ],
@@ -400,7 +400,7 @@ class _TareaCard extends ConsumerWidget {
                                     .map((a) =>
                                         a.nombre.split(' ').first)
                                     .join(', '),
-                                style: TextStyle(
+                                style: const TextStyle(
                                     fontSize: 11,
                                     color: AppTheme.textMuted),
                                 overflow: TextOverflow.ellipsis,
@@ -417,7 +417,7 @@ class _TareaCard extends ConsumerWidget {
                           Expanded(
                             child: Text(
                               'Por ${tarea.creadoPorNombre.split(' ').first}',
-                              style: TextStyle(
+                              style: const TextStyle(
                                   fontSize: 11, color: AppTheme.textMuted),
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -460,8 +460,8 @@ class _TareaCard extends ConsumerWidget {
   }
 
   Color _estadoColor(TareaEstado e) => switch (e) {
-        TareaEstado.pendiente => const Color(0xFFF59E0B),
-        TareaEstado.en_curso => Colors.blue,
+        TareaEstado.pendiente => AppTheme.warning,
+        TareaEstado.en_curso => AppTheme.info,
         TareaEstado.completada => AppTheme.good,
         TareaEstado.cancelada => AppTheme.textMuted,
       };
@@ -511,8 +511,8 @@ class _TareaCard extends ConsumerWidget {
             const Divider(height: 16),
             // â”€â”€ Cambiar estado (solo si tiene permiso) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             if (puedeEditar) ...[
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
+              const Padding(
+                padding: EdgeInsets.fromLTRB(16, 0, 16, 4),
                 child: Align(
                   alignment: Alignment.centerLeft,
                   child: Text('Cambiar estado',
@@ -529,8 +529,8 @@ class _TareaCard extends ConsumerWidget {
                   children: TareaEstado.values.map((e) {
                     final selected = tarea.estado == e;
                     final color = switch (e) {
-                      TareaEstado.pendiente => const Color(0xFFF59E0B),
-                      TareaEstado.en_curso => Colors.blue,
+                      TareaEstado.pendiente => AppTheme.warning,
+                      TareaEstado.en_curso => AppTheme.info,
                       TareaEstado.completada => AppTheme.good,
                       TareaEstado.cancelada => AppTheme.textMuted,
                     };
@@ -962,14 +962,14 @@ class _TareaSheetState extends ConsumerState<_TareaSheet> {
             const SizedBox(height: 16),
 
             // Assignees
-            Text('Asignar miembros (opcional)',
+            const Text('Asignar miembros (opcional)',
                 style: TextStyle(
                     fontWeight: FontWeight.w600,
                     fontSize: 13,
                     color: AppTheme.textMuted)),
             const SizedBox(height: 8),
             if (widget.miembros.isEmpty)
-              Text('Cargando miembros…',
+              const Text('Cargando miembros…',
                   style: TextStyle(color: AppTheme.textMuted))
             else
               Wrap(

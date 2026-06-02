@@ -123,12 +123,12 @@ class _CajaPageState extends ConsumerState<CajaPage> {
                 ),
               ),
             ),
-            SliverToBoxAdapter(
+            const SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 2, 16, 0),
+                padding: EdgeInsets.fromLTRB(16, 2, 16, 0),
                 child: Text(
                   'Historial financiero de todos tus grupos',
-                  style: const TextStyle(fontSize: 13, color: AppTheme.textMuted),
+                  style: TextStyle(fontSize: 13, color: AppTheme.textMuted),
                 ),
               ),
             ),
@@ -371,10 +371,10 @@ class _CajaPageState extends ConsumerState<CajaPage> {
               color: AppTheme.goodSoft,
               borderRadius: BorderRadius.circular(14),
             ),
-            child: Row(children: [
-              const Icon(Icons.check_circle_rounded, color: AppTheme.good, size: 20),
-              const SizedBox(width: 10),
-              const Text('¡Todo saldado! No hay deudas pendientes.',
+            child: const Row(children: [
+              Icon(Icons.check_circle_rounded, color: AppTheme.good, size: 20),
+              SizedBox(width: 10),
+              Text('¡Todo saldado! No hay deudas pendientes.',
                   style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
             ]),
           ),

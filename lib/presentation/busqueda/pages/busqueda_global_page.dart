@@ -334,7 +334,7 @@ class _BusquedaGlobalPageState extends ConsumerState<BusquedaGlobalPage> {
                 children: [
                   if (!hasQuery) ...[
                     if (_recents.isNotEmpty) ...[
-                      _Eyebrow('Búsquedas recientes'),
+                      const _Eyebrow('Búsquedas recientes'),
                       const SizedBox(height: 4),
                       ..._recents.asMap().entries.map((e) =>
                           GestureDetector(
@@ -374,20 +374,20 @@ class _BusquedaGlobalPageState extends ConsumerState<BusquedaGlobalPage> {
                             ),
                           )),
                     ] else
-                      Padding(
+                      const Padding(
                         padding:
-                            const EdgeInsets.symmetric(vertical: 40),
+                            EdgeInsets.symmetric(vertical: 40),
                         child: Column(
                           children: [
                             Icon(Icons.search_rounded,
                                 size: 48, color: AppTheme.border),
-                            const SizedBox(height: 12),
-                            const Text('Escribí para buscar',
+                            SizedBox(height: 12),
+                            Text('Escribí para buscar',
                                 style: TextStyle(
                                     fontSize: 14,
                                     color: AppTheme.textMuted)),
-                            const SizedBox(height: 4),
-                            const Text(
+                            SizedBox(height: 4),
+                            Text(
                                 'Noticias, personas, archivos y eventos\nde todos tus grupos',
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
@@ -413,7 +413,7 @@ class _BusquedaGlobalPageState extends ConsumerState<BusquedaGlobalPage> {
                     ),
                   ] else ...[
                     // Top match
-                    _Eyebrow('Mejor coincidencia'),
+                    const _Eyebrow('Mejor coincidencia'),
                     const SizedBox(height: 8),
                     _TopMatch(result: results.first, query: _query),
                     const SizedBox(height: 20),
@@ -602,7 +602,7 @@ class _ResultSection extends StatelessWidget {
           return Column(
             children: [
               if (e.key > 0)
-                Divider(
+                const Divider(
                     height: 1,
                     indent: 16,
                     endIndent: 16,

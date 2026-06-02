@@ -133,7 +133,7 @@ class AdminPanelPage extends ConsumerWidget {
                   padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
                   child: _AlertBanner(
                     icon: Icons.person_add_outlined,
-                    color: const Color(0xFFF59E0B),
+                    color: AppTheme.warning,
                     label: '${solicitudes.length} solicitud${solicitudes.length != 1 ? 'es' : ''} de ingreso pendiente${solicitudes.length != 1 ? 's' : ''}',
                     onTap: () => _showSolicitudesSheet(context, ref, solicitudes),
                   ),
@@ -163,7 +163,7 @@ class AdminPanelPage extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    SGEyebrow('Acciones rápidas'),
+                    const SGEyebrow('Acciones rápidas'),
                     const SizedBox(height: 8),
                     // Row 1
                     Row(
@@ -175,7 +175,7 @@ class AdminPanelPage extends ConsumerWidget {
                             badge: solicitudes.isNotEmpty
                                 ? '${solicitudes.length}'
                                 : null,
-                            color: const Color(0xFFF59E0B),
+                            color: AppTheme.warning,
                             onTap: () => _showSolicitudesSheet(
                                 context, ref, solicitudes),
                           ),
@@ -243,9 +243,9 @@ class AdminPanelPage extends ConsumerWidget {
             ),
 
             // â”€â”€ Roles section
-            SliverToBoxAdapter(
+            const SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
+                padding: EdgeInsets.fromLTRB(16, 24, 16, 8),
                 child: SGEyebrow('Roles del grupo'),
               ),
             ),
@@ -253,10 +253,10 @@ class AdminPanelPage extends ConsumerWidget {
             SliverPadding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               sliver: miembros.isEmpty
-                  ? SliverToBoxAdapter(
+                  ? const SliverToBoxAdapter(
                       child: Center(
                         child: Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 24),
+                          padding: EdgeInsets.symmetric(vertical: 24),
                           child: Text('Sin miembros',
                               style:
                                   TextStyle(color: AppTheme.textMuted)),
@@ -327,7 +327,7 @@ class _HealthCard extends StatelessWidget {
     final color = score >= 80
         ? AppTheme.good
         : score >= 60
-            ? const Color(0xFFF59E0B)
+            ? AppTheme.warning
             : AppTheme.danger;
     final label = score >= 80
         ? 'Excelente'
@@ -371,7 +371,7 @@ class _HealthCard extends StatelessWidget {
                         letterSpacing: -0.5,
                       ),
                     ),
-                    Text(
+                    const Text(
                       '/100',
                       style: TextStyle(
                           fontSize: 10, color: AppTheme.textMuted),
@@ -386,7 +386,7 @@ class _HealthCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
+                const Text(
                   'Salud del grupo',
                   style: TextStyle(
                     fontSize: 12,
@@ -504,7 +504,7 @@ class _MiniStat extends StatelessWidget {
           ),
           Text(
             label,
-            style: TextStyle(fontSize: 10, color: AppTheme.textMuted),
+            style: const TextStyle(fontSize: 10, color: AppTheme.textMuted),
           ),
         ],
       ),
@@ -627,7 +627,7 @@ class _ActionTile extends StatelessWidget {
             Text(
               label,
               textAlign: TextAlign.center,
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
                 color: AppTheme.text,
@@ -689,12 +689,12 @@ class _SolicitudesSheet extends ConsumerWidget {
                   padding: const EdgeInsets.symmetric(
                       horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF59E0B).withValues(alpha: 0.12),
+                    color: AppTheme.warning.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text('${solicitudes.length}',
                       style: const TextStyle(
-                          color: Color(0xFFF59E0B),
+                          color: AppTheme.warning,
                           fontWeight: FontWeight.w700,
                           fontSize: 12)),
                 ),
@@ -729,7 +729,7 @@ class _SolicitudesSheet extends ConsumerWidget {
                             Text(
                               DateFormat('dd/MM/yyyy')
                                   .format(s.createdAt),
-                              style: TextStyle(
+                              style: const TextStyle(
                                   fontSize: 11,
                                   color: AppTheme.textMuted),
                             ),
@@ -761,7 +761,7 @@ class _SolicitudesSheet extends ConsumerWidget {
                             color: AppTheme.good.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(10),
                           ),
-                          child: Icon(Icons.check_rounded,
+                          child: const Icon(Icons.check_rounded,
                               size: 18, color: AppTheme.good),
                         ),
                       ),
@@ -824,7 +824,7 @@ class _MiembroRolTile extends ConsumerWidget {
                 Text(
                   'Desde ${DateFormat('dd/MM/yy').format(miembro.joinedAt)}',
                   style:
-                      TextStyle(fontSize: 11, color: AppTheme.textMuted),
+                      const TextStyle(fontSize: 11, color: AppTheme.textMuted),
                 ),
               ],
             ),
@@ -1008,11 +1008,11 @@ class _DangerZone extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
+          const Row(
             children: [
-              const Icon(Icons.warning_amber_rounded,
+              Icon(Icons.warning_amber_rounded,
                   size: 16, color: AppTheme.danger),
-              const SizedBox(width: 6),
+              SizedBox(width: 6),
               Text(
                 'Zona de peligro',
                 style: TextStyle(
@@ -1035,11 +1035,11 @@ class _DangerZone extends ConsumerWidget {
                 border: Border.all(
                     color: AppTheme.danger.withValues(alpha: 0.3)),
               ),
-              child: Row(
+              child: const Row(
                 children: [
-                  const Icon(Icons.delete_forever_rounded,
+                  Icon(Icons.delete_forever_rounded,
                       size: 18, color: AppTheme.danger),
-                  const SizedBox(width: 10),
+                  SizedBox(width: 10),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1060,7 +1060,7 @@ class _DangerZone extends ConsumerWidget {
                       ],
                     ),
                   ),
-                  const Icon(Icons.chevron_right_rounded,
+                  Icon(Icons.chevron_right_rounded,
                       color: AppTheme.danger, size: 18),
                 ],
               ),
@@ -1131,10 +1131,7 @@ String _rolDesc(RolMiembro rol) => switch (rol) {
 
 Color _rolColor(RolMiembro rol, Color gc) => switch (rol) {
       RolMiembro.administrador => gc,
-      RolMiembro.moderador => Colors.blue,
-      RolMiembro.tesorero => AppTheme.good,
-      RolMiembro.delegado => const Color(0xFFF59E0B),
-      RolMiembro.miembro => AppTheme.textMuted,
+      _ => AppTheme.roleColor(rol),
     };
 
 IconData _rolIcon(RolMiembro rol) => switch (rol) {

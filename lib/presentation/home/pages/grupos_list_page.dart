@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -76,9 +77,9 @@ class GruposListPage extends ConsumerWidget {
               else ...[
                 // Favourites section
                 if (favoritosIds.isNotEmpty) ...[
-                  SliverToBoxAdapter(
+                  const SliverToBoxAdapter(
                     child: Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
+                      padding: EdgeInsets.fromLTRB(16, 0, 16, 0),
                       child: SGEyebrow('Favoritos'),
                     ),
                   ),
@@ -104,9 +105,9 @@ class GruposListPage extends ConsumerWidget {
                 ],
 
                 // All groups
-                SliverToBoxAdapter(
+                const SliverToBoxAdapter(
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
+                    padding: EdgeInsets.fromLTRB(16, 0, 16, 0),
                     child: SGEyebrow('Todos'),
                   ),
                 ),
@@ -180,17 +181,17 @@ class _GrupoCard extends StatelessWidget {
               SizedBox(
                 height: 100,
                 width: double.infinity,
-                child: Image.network(
-                  grupo.portadaUrl!,
+                child: CachedNetworkImage(
+                  imageUrl: grupo.portadaUrl!,
                   fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) =>
+                  errorWidget: (_, __, ___) =>
                       Container(color: AppTheme.surfaceAlt),
                 ),
               )
             else
               Container(
                 height: 48,
-                decoration: BoxDecoration(
+                decoration: const BoxDecoration(
                   gradient: LinearGradient(
                     colors: [AppTheme.primarySoft, AppTheme.accentSoft],
                     begin: Alignment.topLeft,
@@ -427,7 +428,7 @@ class _EmptyGrupos extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.groups_rounded, size: 72, color: AppTheme.border),
+          const Icon(Icons.groups_rounded, size: 72, color: AppTheme.border),
           const SizedBox(height: 20),
           Text(
             'Todavía no estás\nen ningún grupo',
@@ -440,10 +441,10 @@ class _EmptyGrupos extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 8),
-          Text(
+          const Text(
             'Sumate a uno o creá el tuyo.',
             textAlign: TextAlign.center,
-            style: const TextStyle(
+            style: TextStyle(
                 color: AppTheme.textMuted, fontSize: 14),
           ),
           const SizedBox(height: 28),

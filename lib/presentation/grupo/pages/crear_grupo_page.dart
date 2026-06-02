@@ -224,7 +224,7 @@ class _TopBar extends StatelessWidget {
                 padding: const EdgeInsets.only(right: 16),
                 child: Text(
                   'PASO $step DE 3',
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
                     letterSpacing: 1,
@@ -244,13 +244,13 @@ class _TopBar extends StatelessWidget {
             child: LinearProgressIndicator(
               value: step / 3,
               backgroundColor: AppTheme.border,
-              valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primary),
+              valueColor: const AlwaysStoppedAnimation<Color>(AppTheme.primary),
               minHeight: 4,
             ),
           ),
         ),
         const SizedBox(height: 8),
-        Divider(height: 1, color: AppTheme.border),
+        const Divider(height: 1, color: AppTheme.border),
       ],
     );
   }
@@ -274,7 +274,7 @@ class _BottomBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         color: AppTheme.surface,
         border: Border(top: BorderSide(color: AppTheme.border)),
       ),
@@ -357,12 +357,12 @@ class _Step1 extends StatelessWidget {
               ),
             ),
             child: portadaBytes == null
-                ? Column(
+                ? const Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Icon(Icons.add_photo_alternate_outlined,
                           size: 32, color: AppTheme.primaryInk),
-                      const SizedBox(height: 6),
+                      SizedBox(height: 6),
                       Text(
                         'Foto de portada (opcional)',
                         style: TextStyle(
@@ -396,7 +396,7 @@ class _Step1 extends StatelessWidget {
         const SizedBox(height: 20),
 
         // â”€â”€ Nombre
-        Text(
+        const Text(
           'Nombre del grupo *',
           style: TextStyle(
             fontSize: 13,
@@ -420,7 +420,7 @@ class _Step1 extends StatelessWidget {
               fontSize: 16,
               color: AppTheme.text,
             ),
-            decoration: InputDecoration(
+            decoration: const InputDecoration(
               hintText: 'ej. Los Cracks del Parque',
               hintStyle: TextStyle(
                 color: AppTheme.textMuted,
@@ -429,7 +429,7 @@ class _Step1 extends StatelessWidget {
               ),
               border: InputBorder.none,
               contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             ),
           ),
         ),
@@ -437,7 +437,7 @@ class _Step1 extends StatelessWidget {
         const SizedBox(height: 16),
 
         // â”€â”€ Descripción (opcional)
-        Text(
+        const Text(
           'Descripción (opcional)',
           style: TextStyle(
             fontSize: 13,
@@ -456,12 +456,12 @@ class _Step1 extends StatelessWidget {
             controller: descCtrl,
             maxLines: 3,
             style: const TextStyle(fontSize: 15, color: AppTheme.text),
-            decoration: InputDecoration(
+            decoration: const InputDecoration(
               hintText: 'Contá de qué se trata el grupo...',
               hintStyle: TextStyle(color: AppTheme.textMuted, fontSize: 14),
               border: InputBorder.none,
               contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             ),
           ),
         ),
@@ -481,7 +481,7 @@ class _Step1 extends StatelessWidget {
                     backgroundImage:
                         logoBytes != null ? MemoryImage(logoBytes!) : null,
                     child: logoBytes == null
-                        ? Icon(Icons.add_a_photo_outlined,
+                        ? const Icon(Icons.add_a_photo_outlined,
                             size: 22, color: AppTheme.primaryInk)
                         : null,
                   ),
@@ -502,14 +502,14 @@ class _Step1 extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 14),
-            Expanded(
+            const Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Logo del grupo',
+                  Text('Logo del grupo',
                       style: TextStyle(
                           fontWeight: FontWeight.w600, fontSize: 14)),
-                  const SizedBox(height: 2),
+                  SizedBox(height: 2),
                   Text('Opcional · se muestra en tu feed',
                       style: TextStyle(
                           fontSize: 12, color: AppTheme.textMuted)),
@@ -548,7 +548,7 @@ class _Step2 extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 6),
-        Text(
+        const Text(
           'Elegí uno o más. Podés cambiar esto después.',
           style: TextStyle(fontSize: 14, color: AppTheme.textMuted, height: 1.4),
         ),
@@ -593,8 +593,8 @@ class _Step2 extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         if (selected.isEmpty)
-          Padding(
-            padding: const EdgeInsets.only(top: 8),
+          const Padding(
+            padding: EdgeInsets.only(top: 8),
             child: Text(
               'Podés saltear este paso si no aplica.',
               style: TextStyle(
@@ -630,7 +630,7 @@ class _Step3 extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 6),
-        Text(
+        const Text(
           'Definí si el grupo es abierto o requiere aprobación.',
           style: TextStyle(fontSize: 14, color: AppTheme.textMuted, height: 1.4),
         ),
@@ -672,7 +672,7 @@ class _Step3 extends StatelessWidget {
           ),
           child: Row(
             children: [
-              Icon(Icons.info_outline_rounded,
+              const Icon(Icons.info_outline_rounded,
                   size: 18, color: AppTheme.primaryInk),
               const SizedBox(width: 10),
               Expanded(
@@ -680,7 +680,7 @@ class _Step3 extends StatelessWidget {
                   tipo == TipoGrupo.publico
                       ? 'El grupo aparece en búsquedas y cualquiera puede unirse sin aprobación.'
                       : 'El grupo no aparece en búsquedas. Vos aprobás cada solicitud de ingreso.',
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 13,
                     color: AppTheme.primaryInk,
                     height: 1.4,
@@ -744,7 +744,7 @@ class _PrivacyCard extends StatelessWidget {
                 if (selected)
                   Container(
                     width: 20, height: 20,
-                    decoration: BoxDecoration(
+                    decoration: const BoxDecoration(
                       color: AppTheme.primary,
                       shape: BoxShape.circle,
                     ),

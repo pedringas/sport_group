@@ -158,7 +158,7 @@ class _AporteComprobantePageState
               Container(
                 width: 120,
                 height: 120,
-                decoration: BoxDecoration(
+                decoration: const BoxDecoration(
                   color: AppTheme.goodSoft,
                   shape: BoxShape.circle,
                 ),
@@ -188,10 +188,10 @@ class _AporteComprobantePageState
                 ),
               ),
               const SizedBox(height: 12),
-              Text(
+              const Text(
                 'Estamos verificando tu transferencia.\nEl tesorero recibirá una notificación\nsi necesita revisarlo manualmente.',
                 textAlign: TextAlign.center,
-                style: const TextStyle(
+                style: TextStyle(
                     color: AppTheme.textMuted, fontSize: 14, height: 1.5),
               ),
               const SizedBox(height: 28),
@@ -329,15 +329,15 @@ class _AporteComprobantePageState
             ),
 
             const SizedBox(height: 14),
-            Row(
+            const Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(Icons.auto_awesome_rounded,
+                Icon(Icons.auto_awesome_rounded,
                     size: 14, color: AppTheme.textMuted),
-                const SizedBox(width: 4),
+                SizedBox(width: 4),
                 Text(
                   'Verificación automática del comprobante',
-                  style: const TextStyle(
+                  style: TextStyle(
                       color: AppTheme.textMuted, fontSize: 12),
                 ),
               ],

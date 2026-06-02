@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -481,7 +482,7 @@ class _GrupoSettingsPageState extends ConsumerState<GrupoSettingsPage> {
           const SizedBox(height: 20),
 
           // â”€â”€ Identidad
-          SGEyebrow('Identidad'),
+          const SGEyebrow('Identidad'),
           const SizedBox(height: 8),
           _SettingsCard(
             children: [
@@ -529,7 +530,7 @@ class _GrupoSettingsPageState extends ConsumerState<GrupoSettingsPage> {
           const SizedBox(height: 20),
 
           // â”€â”€ Portada
-          SGEyebrow('Portada'),
+          const SGEyebrow('Portada'),
           const SizedBox(height: 8),
           _SettingsCard(
             children: [
@@ -556,8 +557,8 @@ class _GrupoSettingsPageState extends ConsumerState<GrupoSettingsPage> {
               children: [
                 ClipRRect(
                   borderRadius: BorderRadius.circular(14),
-                  child: Image.network(
-                    grupo!.portadaUrl!,
+                  child: CachedNetworkImage(
+                    imageUrl: grupo!.portadaUrl!,
                     height: 110,
                     width: double.infinity,
                     fit: BoxFit.cover,
@@ -598,7 +599,7 @@ class _GrupoSettingsPageState extends ConsumerState<GrupoSettingsPage> {
           const SizedBox(height: 20),
 
           // â”€â”€ Color del grupo
-          SGEyebrow('Color del grupo'),
+          const SGEyebrow('Color del grupo'),
           const SizedBox(height: 4),
           const Text(
             'Define el color que identifica a tu grupo en toda la app.',
@@ -661,7 +662,7 @@ class _GrupoSettingsPageState extends ConsumerState<GrupoSettingsPage> {
           const SizedBox(height: 20),
 
           // â”€â”€ Acceso
-          SGEyebrow('Acceso'),
+          const SGEyebrow('Acceso'),
           const SizedBox(height: 8),
           _SettingsCard(
             children: [
@@ -725,7 +726,7 @@ class _GrupoSettingsPageState extends ConsumerState<GrupoSettingsPage> {
           }).valueOrNull ?? const SizedBox.shrink(),
 
           // â”€â”€ Caja y cuotas
-          SGEyebrow('Caja y cuotas'),
+          const SGEyebrow('Caja y cuotas'),
           const SizedBox(height: 8),
           _SettingsCard(
             children: [
@@ -750,7 +751,7 @@ class _GrupoSettingsPageState extends ConsumerState<GrupoSettingsPage> {
           const SizedBox(height: 20),
 
           // â”€â”€ Roles y permisos
-          SGEyebrow('Roles y permisos'),
+          const SGEyebrow('Roles y permisos'),
           const SizedBox(height: 8),
           _SettingsCard(
             children: [
@@ -791,7 +792,7 @@ class _GrupoSettingsPageState extends ConsumerState<GrupoSettingsPage> {
           const SizedBox(height: 20),
 
           // â”€â”€ Notificaciones
-          SGEyebrow('Notificaciones del grupo'),
+          const SGEyebrow('Notificaciones del grupo'),
           const SizedBox(height: 8),
           _SettingsCard(
             children: [
@@ -882,9 +883,9 @@ class _GrupoSettingsPageState extends ConsumerState<GrupoSettingsPage> {
                 grupoId: widget.grupoId,
                 grupoNombre: grupo?.nombre ?? 'este grupo',
               ),
-              icon: Icon(Icons.logout_rounded,
+              icon: const Icon(Icons.logout_rounded,
                   size: 16, color: AppTheme.danger),
-              label: Text(
+              label: const Text(
                 'Abandonar grupo',
                 style: TextStyle(
                     color: AppTheme.danger,
@@ -957,7 +958,7 @@ class _SettingsRow extends StatelessWidget {
     return Column(
       children: [
         if (showDivider)
-          Divider(
+          const Divider(
               height: 1,
               indent: 16,
               endIndent: 16,
@@ -1038,7 +1039,7 @@ class _ToggleSettingsRow extends StatelessWidget {
     return Column(
       children: [
         if (showDivider)
-          Divider(
+          const Divider(
               height: 1,
               indent: 16,
               endIndent: 16,
@@ -1490,7 +1491,7 @@ class _SolicitudTile extends ConsumerWidget {
     return Column(
       children: [
         if (showDivider)
-          Divider(
+          const Divider(
               height: 1,
               indent: 16,
               endIndent: 16,
@@ -1523,7 +1524,7 @@ class _SolicitudTile extends ConsumerWidget {
                         ),
               ),
               IconButton(
-                icon: Icon(Icons.cancel_rounded, color: AppTheme.danger),
+                icon: const Icon(Icons.cancel_rounded, color: AppTheme.danger),
                 onPressed: () =>
                     ref.read(grupoRepositoryProvider).responderSolicitud(
                           grupoId,

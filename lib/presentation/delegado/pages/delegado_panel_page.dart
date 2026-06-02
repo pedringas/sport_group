@@ -83,7 +83,7 @@ class DelegadoPanelPage extends ConsumerWidget {
                         value:
                             '${noticias.where((n) => n.fijada).length}',
                         icon: Icons.push_pin_rounded,
-                        color: const Color(0xFFF59E0B),
+                        color: AppTheme.warning,
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -107,7 +107,7 @@ class DelegadoPanelPage extends ConsumerWidget {
                 padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
                 child: Row(
                   children: [
-                    SGEyebrow('Mis noticias'),
+                    const SGEyebrow('Mis noticias'),
                     const Spacer(),
                     GestureDetector(
                       onTap: () =>
@@ -224,7 +224,7 @@ class _QuickComposerCard extends StatelessWidget {
                       color: AppTheme.text,
                     ),
                   ),
-                  Text(
+                  const Text(
                     'Publicá una noticia, aviso o convocatoria',
                     style:
                         TextStyle(fontSize: 12, color: AppTheme.textMuted),
@@ -289,7 +289,7 @@ class _StatPill extends StatelessWidget {
           ),
           Text(
             label,
-            style: TextStyle(fontSize: 10, color: AppTheme.textMuted),
+            style: const TextStyle(fontSize: 10, color: AppTheme.textMuted),
           ),
         ],
       ),
@@ -336,7 +336,7 @@ class _EmptyNoticias extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 6),
-          Text(
+          const Text(
             'Usá el botón + para crear tu primera noticia',
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 13, color: AppTheme.textMuted),
@@ -395,7 +395,7 @@ class _NoticiaDelegadoCard extends ConsumerWidget {
                 const Padding(
                   padding: EdgeInsets.only(left: 6),
                   child: Icon(Icons.push_pin_rounded,
-                      size: 14, color: Color(0xFFF59E0B)),
+                      size: 14, color: AppTheme.warning),
                 ),
               // Pin toggle
               GestureDetector(
@@ -410,7 +410,7 @@ class _NoticiaDelegadoCard extends ConsumerWidget {
                         : Icons.push_pin_outlined,
                     size: 16,
                     color: noticia.fijada
-                        ? const Color(0xFFF59E0B)
+                        ? AppTheme.warning
                         : AppTheme.textMuted,
                   ),
                 ),
@@ -422,7 +422,7 @@ class _NoticiaDelegadoCard extends ConsumerWidget {
             noticia.contenido,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
-            style: TextStyle(color: AppTheme.textMuted, fontSize: 13),
+            style: const TextStyle(color: AppTheme.textMuted, fontSize: 13),
           ),
           const SizedBox(height: 8),
           Row(
@@ -434,7 +434,7 @@ class _NoticiaDelegadoCard extends ConsumerWidget {
               ),
               if (noticia.tieneListado) ...[
                 const SizedBox(width: 6),
-                SGChip(
+                const SGChip(
                   icon: Icons.checklist_rounded,
                   label: 'Lista de asistencia',
                   tone: SGChipTone.accent,

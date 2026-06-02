@@ -79,7 +79,7 @@ class ModeradorPanelPage extends ConsumerWidget {
                         value: '${solicitudes.length}',
                         icon: Icons.person_add_outlined,
                         color: solicitudes.isNotEmpty
-                            ? const Color(0xFFF59E0B)
+                            ? AppTheme.warning
                             : AppTheme.textMuted,
                         highlight: solicitudes.isNotEmpty,
                       ),
@@ -104,20 +104,20 @@ class ModeradorPanelPage extends ConsumerWidget {
                 padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
                 child: Row(
                   children: [
-                    SGEyebrow('Solicitudes de ingreso'),
+                    const SGEyebrow('Solicitudes de ingreso'),
                     if (solicitudes.isNotEmpty) ...[
                       const SizedBox(width: 8),
                       Container(
                         padding: const EdgeInsets.symmetric(
                             horizontal: 7, vertical: 2),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF59E0B)
+                          color: AppTheme.warning
                               .withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text('${solicitudes.length}',
                             style: const TextStyle(
-                                color: Color(0xFFF59E0B),
+                                color: AppTheme.warning,
                                 fontSize: 11,
                                 fontWeight: FontWeight.w700)),
                       ),
@@ -130,7 +130,7 @@ class ModeradorPanelPage extends ConsumerWidget {
             SliverPadding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               sliver: solicitudes.isEmpty
-                  ? SliverToBoxAdapter(
+                  ? const SliverToBoxAdapter(
                       child: _EmptySection(
                         icon: Icons.check_circle_outline_rounded,
                         label: 'No hay solicitudes pendientes',
@@ -164,7 +164,7 @@ class ModeradorPanelPage extends ConsumerWidget {
                                     Text(
                                       DateFormat('dd/MM/yyyy')
                                           .format(s.createdAt),
-                                      style: TextStyle(
+                                      style: const TextStyle(
                                           fontSize: 11,
                                           color: AppTheme.textMuted),
                                     ),
@@ -209,7 +209,7 @@ class ModeradorPanelPage extends ConsumerWidget {
                 padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
                 child: Row(
                   children: [
-                    SGEyebrow('Miembros'),
+                    const SGEyebrow('Miembros'),
                     const Spacer(),
                     GestureDetector(
                       onTap: () =>
@@ -231,7 +231,7 @@ class ModeradorPanelPage extends ConsumerWidget {
             SliverPadding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               sliver: miembros.isEmpty
-                  ? SliverToBoxAdapter(
+                  ? const SliverToBoxAdapter(
                       child: _EmptySection(
                         icon: Icons.people_outline,
                         label: 'Sin miembros',
@@ -278,9 +278,9 @@ class ModeradorPanelPage extends ConsumerWidget {
               ),
 
             // â”€â”€ Noticias section
-            SliverToBoxAdapter(
+            const SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
+                padding: EdgeInsets.fromLTRB(16, 24, 16, 8),
                 child: SGEyebrow('Noticias recientes'),
               ),
             ),
@@ -288,7 +288,7 @@ class ModeradorPanelPage extends ConsumerWidget {
             SliverPadding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               sliver: noticias.isEmpty
-                  ? SliverToBoxAdapter(
+                  ? const SliverToBoxAdapter(
                       child: _EmptySection(
                         icon: Icons.newspaper_outlined,
                         label: 'No hay noticias',
@@ -361,7 +361,7 @@ class _ModStat extends StatelessWidget {
           ),
           Text(
             label,
-            style: TextStyle(fontSize: 10, color: AppTheme.textMuted),
+            style: const TextStyle(fontSize: 10, color: AppTheme.textMuted),
           ),
         ],
       ),
@@ -421,7 +421,7 @@ class _EmptySection extends StatelessWidget {
           Icon(icon, size: 18, color: color),
           const SizedBox(width: 8),
           Text(label,
-              style: TextStyle(fontSize: 13, color: AppTheme.textMuted)),
+              style: const TextStyle(fontSize: 13, color: AppTheme.textMuted)),
         ],
       ),
     );
@@ -443,10 +443,7 @@ class _MiembroModTile extends ConsumerWidget {
     final esAdmin = miembro.rol == RolMiembro.administrador;
     final rolColor = switch (miembro.rol) {
       RolMiembro.administrador => gc,
-      RolMiembro.moderador => Colors.blue,
-      RolMiembro.tesorero => AppTheme.good,
-      RolMiembro.delegado => const Color(0xFFF59E0B),
-      RolMiembro.miembro => AppTheme.textMuted,
+      _ => AppTheme.roleColor(miembro.rol),
     };
     final rolLabel = switch (miembro.rol) {
       RolMiembro.administrador => 'Admin',
@@ -579,7 +576,7 @@ class _NoticiaModCard extends ConsumerWidget {
                 ),
                 Text(
                   noticia.autorNombre,
-                  style: TextStyle(fontSize: 11, color: AppTheme.textMuted),
+                  style: const TextStyle(fontSize: 11, color: AppTheme.textMuted),
                 ),
               ],
             ),
@@ -595,7 +592,7 @@ class _NoticiaModCard extends ConsumerWidget {
                 noticia.fijada ? Icons.push_pin : Icons.push_pin_outlined,
                 size: 16,
                 color: noticia.fijada
-                    ? const Color(0xFFF59E0B)
+                    ? AppTheme.warning
                     : AppTheme.textMuted,
               ),
             ),

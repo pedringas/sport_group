@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -144,9 +145,9 @@ class HomePage extends ConsumerWidget {
                 )
               else ...[
                 // â”€â”€ Eyebrow
-                SliverToBoxAdapter(
+                const SliverToBoxAdapter(
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                    padding: EdgeInsets.fromLTRB(16, 8, 16, 0),
                     child: SGEyebrow('Mis grupos'),
                   ),
                 ),
@@ -243,10 +244,10 @@ class _GrupoCard extends StatelessWidget {
               SizedBox(
                 height: 120,
                 width: double.infinity,
-                child: Image.network(
-                  grupo.portadaUrl!,
+                child: CachedNetworkImage(
+                  imageUrl: grupo.portadaUrl!,
                   fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => Container(
+                  errorWidget: (_, __, ___) => Container(
                     color: AppTheme.surfaceAlt,
                   ),
                 ),
@@ -254,7 +255,7 @@ class _GrupoCard extends StatelessWidget {
             else
               Container(
                 height: 56,
-                decoration: BoxDecoration(
+                decoration: const BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
                       AppTheme.primarySoft,
@@ -425,7 +426,7 @@ class _EmptyState extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 10),
-          Text(
+          const Text(
             'Sumate a uno o creá el tuyo — es para\narrancar en menos de un minuto.',
             textAlign: TextAlign.center,
             style: TextStyle(color: AppTheme.textMuted, fontSize: 14, height: 1.4),

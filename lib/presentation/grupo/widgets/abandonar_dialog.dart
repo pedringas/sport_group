@@ -97,7 +97,7 @@ class _AbandonarDialogState extends ConsumerState<AbandonarDialog> {
                 color: AppTheme.danger.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(20),
               ),
-              child: Icon(
+              child: const Icon(
                 Icons.logout_rounded,
                 size: 32,
                 color: AppTheme.danger,
@@ -233,7 +233,7 @@ class _WarnRow extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(Icons.warning_rounded,
+        const Icon(Icons.warning_rounded,
             size: 14, color: AppTheme.danger),
         const SizedBox(width: 8),
         Expanded(

@@ -306,8 +306,8 @@ class _BuscarGrupoPageState extends ConsumerState<BuscarGrupoPage> {
 
                   // Empty (no query, no special filter)
                   else if (!_showCode) ...[
-                    Padding(
-                      padding: const EdgeInsets.only(left: 4, bottom: 8),
+                    const Padding(
+                      padding: EdgeInsets.only(left: 4, bottom: 8),
                       child: SGEyebrow('SUGERIDOS PARA VOS'),
                     ),
                     Center(
@@ -377,7 +377,7 @@ class _BuscarGrupoPageState extends ConsumerState<BuscarGrupoPage> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(
+                                  const Text(
                                     '¿Te invitaron por código?',
                                     style: TextStyle(
                                       fontWeight: FontWeight.w700,
@@ -396,7 +396,7 @@ class _BuscarGrupoPageState extends ConsumerState<BuscarGrupoPage> {
                                 ],
                               ),
                             ),
-                            Icon(Icons.arrow_forward_ios_rounded,
+                            const Icon(Icons.arrow_forward_ios_rounded,
                                 size: 14, color: AppTheme.primaryInk),
                           ],
                         ),

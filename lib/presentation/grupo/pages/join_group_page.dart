@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -48,7 +49,7 @@ class JoinGroupPage extends ConsumerWidget {
                         background: Stack(
                           fit: StackFit.expand,
                           children: [
-                            Image.network(grupo.portadaUrl!,
+                            CachedNetworkImage(imageUrl: grupo.portadaUrl!,
                                 fit: BoxFit.cover),
                             const DecoratedBox(
                               decoration: BoxDecoration(
@@ -172,7 +173,7 @@ class JoinGroupPage extends ConsumerWidget {
 
                       // ── Action section ─────────────────────────────────
                       if (yaEsMiembro) ...[
-                        _StatusBanner(
+                        const _StatusBanner(
                           icon: Icons.check_circle,
                           text: 'Ya sos miembro de este grupo',
                           color: Colors.green,
@@ -186,16 +187,16 @@ class JoinGroupPage extends ConsumerWidget {
                               minimumSize: const Size(double.infinity, 52)),
                         ),
                       ] else if (solicitudPendiente) ...[
-                        _StatusBanner(
+                        const _StatusBanner(
                           icon: Icons.hourglass_empty,
                           text: 'Tu solicitud está pendiente de aprobación',
                           color: Colors.orange,
                         ),
                       ] else if (currentUid == null) ...[
-                        _StatusBanner(
+                        const _StatusBanner(
                           icon: Icons.login,
                           text: 'Necesitás una cuenta para unirte a este grupo',
-                          color: Colors.blue,
+                          color: AppTheme.info,
                         ),
                         const SizedBox(height: 16),
                         FilledButton(

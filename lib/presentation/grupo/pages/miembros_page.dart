@@ -91,7 +91,7 @@ class _MiembrosPageState extends ConsumerState<MiembrosPage> {
                           children: [
                             TextSpan(
                               text: '${todos.length} ',
-                              style: TextStyle(
+                              style: const TextStyle(
                                 color: AppTheme.text,
                                 fontWeight: FontWeight.w700,
                                 fontSize: 14,

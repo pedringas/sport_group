@@ -160,9 +160,9 @@ class _CrearEventoPageState extends ConsumerState<CrearEventoPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Author chip
-            Row(children: [
-              const SGAvatar(name: 'Yo', size: 36),
-              const SizedBox(width: 10),
+            const Row(children: [
+              SGAvatar(name: 'Yo', size: 36),
+              SizedBox(width: 10),
               Expanded(child: Wrap(
                 spacing: 6,
                 children: [

@@ -636,7 +636,7 @@ class _MiPosicionCard extends ConsumerWidget {
     final amount = myBalance.abs();
     final bg = iOwe ? AppTheme.dangerSoft : AppTheme.goodSoft;
     final textColor =
-        iOwe ? const Color(0xFF8C2A14) : const Color(0xFF1F7A5A);
+        iOwe ? AppTheme.dangerInk : AppTheme.goodInk;
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -653,8 +653,8 @@ class _MiPosicionCard extends ConsumerWidget {
               height: 44,
               decoration: BoxDecoration(
                 color: iOwe
-                    ? const Color(0xFF8C2A14).withValues(alpha: 0.15)
-                    : const Color(0xFF1F7A5A).withValues(alpha: 0.15),
+                    ? AppTheme.dangerInk.withValues(alpha: 0.15)
+                    : AppTheme.goodInk.withValues(alpha: 0.15),
                 shape: BoxShape.circle,
               ),
               child: Icon(
@@ -806,11 +806,11 @@ class _BalancesDetalladosCardState extends State<_BalancesDetalladosCard> {
 
                   if (isCreditor) {
                     rowBg = null;
-                    amtColor = const Color(0xFF1F7A5A);
+                    amtColor = AppTheme.goodInk;
                     statusIcon = Icons.arrow_downward_rounded;
                   } else if (isDebtor) {
                     rowBg = null;
-                    amtColor = const Color(0xFF8C2A14);
+                    amtColor = AppTheme.dangerInk;
                     statusIcon = Icons.arrow_upward_rounded;
                   } else {
                     rowBg = null;
@@ -1025,8 +1025,8 @@ class _SettlementRowState extends ConsumerState<_SettlementRow> {
         border: Border.all(
           color: highlight
               ? (isMyDebt
-                  ? const Color(0xFF8C2A14).withValues(alpha: 0.2)
-                  : const Color(0xFF1F7A5A).withValues(alpha: 0.2))
+                  ? AppTheme.dangerInk.withValues(alpha: 0.2)
+                  : AppTheme.goodInk.withValues(alpha: 0.2))
               : AppTheme.border,
         ),
       ),
@@ -1043,9 +1043,9 @@ class _SettlementRowState extends ConsumerState<_SettlementRow> {
                   fontSize: 13,
                   fontWeight: FontWeight.w700,
                   color: isMyDebt
-                      ? const Color(0xFF8C2A14)
+                      ? AppTheme.dangerInk
                       : isMyCredit
-                          ? const Color(0xFF1F7A5A)
+                          ? AppTheme.goodInk
                           : AppTheme.text,
                 ),
               ),
@@ -1055,9 +1055,9 @@ class _SettlementRowState extends ConsumerState<_SettlementRow> {
                   fontWeight: FontWeight.w700,
                   fontSize: 15,
                   color: isMyDebt
-                      ? const Color(0xFF8C2A14)
+                      ? AppTheme.dangerInk
                       : isMyCredit
-                          ? const Color(0xFF1F7A5A)
+                          ? AppTheme.goodInk
                           : AppTheme.text,
                 ),
               ),
@@ -1079,8 +1079,8 @@ class _SettlementRowState extends ConsumerState<_SettlementRow> {
                     padding: const EdgeInsets.symmetric(
                         horizontal: 10, vertical: 6),
                     foregroundColor: isMyDebt
-                        ? const Color(0xFF8C2A14)
-                        : const Color(0xFF1F7A5A),
+                        ? AppTheme.dangerInk
+                        : AppTheme.goodInk,
                   ),
                   child: Text(
                     isMyDebt ? 'Pagué' : 'Cobré',
@@ -1235,7 +1235,7 @@ class _ConciliarSheetState extends ConsumerState<_ConciliarSheet> {
                               style: GoogleFonts.bricolageGrotesque(
                                   fontWeight: FontWeight.w700,
                                   fontSize: 15,
-                                  color: const Color(0xFF8C2A14))),
+                                  color: AppTheme.dangerInk)),
                         ],
                       ),
                     ),
@@ -1413,9 +1413,9 @@ class _MovimientoRowState extends ConsumerState<_MovimientoRow> {
                 fontWeight: FontWeight.w700,
                 fontSize: 13,
                 color: isIngreso
-                    ? const Color(0xFF1F7A5A)
+                    ? AppTheme.goodInk
                     : isPayer
-                        ? const Color(0xFF8C2A14)
+                        ? AppTheme.dangerInk
                         : AppTheme.text,
               ),
             ),

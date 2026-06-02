@@ -85,7 +85,7 @@ class TesoreroPanelPage extends ConsumerWidget {
                         value: '${pendientes.length}',
                         icon: Icons.hourglass_top_rounded,
                         color: pendientes.isNotEmpty
-                            ? const Color(0xFFF59E0B)
+                            ? AppTheme.warning
                             : AppTheme.textMuted,
                         highlight: pendientes.isNotEmpty,
                       ),
@@ -119,20 +119,20 @@ class TesoreroPanelPage extends ConsumerWidget {
                 padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
                 child: Row(
                   children: [
-                    SGEyebrow('Comprobantes pendientes'),
+                    const SGEyebrow('Comprobantes pendientes'),
                     if (pendientes.isNotEmpty) ...[
                       const SizedBox(width: 8),
                       Container(
                         padding: const EdgeInsets.symmetric(
                             horizontal: 7, vertical: 2),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF59E0B)
+                          color: AppTheme.warning
                               .withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text('${pendientes.length}',
                             style: const TextStyle(
-                                color: Color(0xFFF59E0B),
+                                color: AppTheme.warning,
                                 fontSize: 11,
                                 fontWeight: FontWeight.w700)),
                       ),
@@ -155,7 +155,7 @@ class TesoreroPanelPage extends ConsumerWidget {
                         ),
                         child: Column(
                           children: [
-                            Icon(Icons.check_circle_outline_rounded,
+                            const Icon(Icons.check_circle_outline_rounded,
                                 size: 40, color: AppTheme.good),
                             const SizedBox(height: 8),
                             Text('Todo al día',
@@ -165,7 +165,7 @@ class TesoreroPanelPage extends ConsumerWidget {
                                   color: AppTheme.text,
                                 )),
                             const SizedBox(height: 4),
-                            Text('No hay comprobantes por validar',
+                            const Text('No hay comprobantes por validar',
                                 style: TextStyle(
                                     fontSize: 13,
                                     color: AppTheme.textMuted)),
@@ -190,7 +190,7 @@ class TesoreroPanelPage extends ConsumerWidget {
                 padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
                 child: Row(
                   children: [
-                    SGEyebrow('Suscripciones'),
+                    const SGEyebrow('Suscripciones'),
                     const Spacer(),
                     GestureDetector(
                       onTap: () =>
@@ -252,7 +252,7 @@ class TesoreroPanelPage extends ConsumerWidget {
                 padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
                 child: Row(
                   children: [
-                    SGEyebrow('Campañas'),
+                    const SGEyebrow('Campañas'),
                     const Spacer(),
                     GestureDetector(
                       onTap: () =>
@@ -390,7 +390,7 @@ class _TresStat extends StatelessWidget {
           ),
           Text(
             label,
-            style: TextStyle(fontSize: 10, color: AppTheme.textMuted),
+            style: const TextStyle(fontSize: 10, color: AppTheme.textMuted),
           ),
         ],
       ),
@@ -408,8 +408,8 @@ class _ComprobanteCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final color = switch (pago.estado) {
-      EstadoPago.validando => const Color(0xFFF59E0B),
-      EstadoPago.revision => Colors.blue,
+      EstadoPago.validando => AppTheme.warning,
+      EstadoPago.revision => AppTheme.info,
       EstadoPago.aprobado => AppTheme.good,
       EstadoPago.pendiente => AppTheme.textMuted,
     };
@@ -443,7 +443,7 @@ class _ComprobanteCard extends ConsumerWidget {
                             fontWeight: FontWeight.w600, fontSize: 14)),
                     Text(
                       '\$${pago.montoEsperado.toStringAsFixed(0)} · ${DateFormat('dd/MM/yyyy').format(pago.createdAt)}',
-                      style: TextStyle(
+                      style: const TextStyle(
                           color: AppTheme.textMuted, fontSize: 12),
                     ),
                   ],
@@ -744,7 +744,7 @@ class _CampanaRow extends StatelessWidget {
             const SizedBox(height: 4),
             Text(
               '\$${campana.montoActual.toStringAsFixed(0)} / \$${campana.objetivo.toStringAsFixed(0)}',
-              style: TextStyle(
+              style: const TextStyle(
                   fontSize: 11, color: AppTheme.textMuted),
             ),
           ],
@@ -781,7 +781,7 @@ class _EmptyAction extends StatelessWidget {
           Expanded(
             child: Text(label,
                 style:
-                    TextStyle(fontSize: 13, color: AppTheme.textMuted)),
+                    const TextStyle(fontSize: 13, color: AppTheme.textMuted)),
           ),
           GestureDetector(
             onTap: onTap,
@@ -982,7 +982,7 @@ class _CrearCuotaSheetState extends ConsumerState<_CrearCuotaSheet> {
               const SizedBox(height: 4),
               Text(
                 'Se crearán $_totalCuotas suscripciones ${_frecuencia.label.toLowerCase()}s',
-                style: TextStyle(color: AppTheme.textMuted, fontSize: 12),
+                style: const TextStyle(color: AppTheme.textMuted, fontSize: 12),
               ),
             ],
             const SizedBox(height: 20),

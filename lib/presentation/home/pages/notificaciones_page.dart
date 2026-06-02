@@ -163,7 +163,7 @@ class _GeneralesTab extends ConsumerWidget {
       error: (e, _) => Center(child: Text('Error: $e')),
       data: (items) {
         if (items.isEmpty) {
-          return _EmptyState(
+          return const _EmptyState(
             icon: Icons.notifications_none_rounded,
             message: 'Sin actividad reciente en tus grupos',
           );
@@ -174,7 +174,7 @@ class _GeneralesTab extends ConsumerWidget {
           child: ListView.separated(
             padding: const EdgeInsets.symmetric(vertical: 8),
             itemCount: items.length,
-            separatorBuilder: (_, __) => Divider(
+            separatorBuilder: (_, __) => const Divider(
               height: 1,
               indent: 68,
               color: AppTheme.border,
@@ -206,7 +206,7 @@ class _RolTab extends ConsumerWidget {
       error: (e, _) => Center(child: Text('Error: $e')),
       data: (notifs) {
         if (notifs.isEmpty) {
-          return _EmptyState(
+          return const _EmptyState(
             icon: Icons.shield_outlined,
             message: 'No tenés notificaciones de rol',
           );
@@ -214,7 +214,7 @@ class _RolTab extends ConsumerWidget {
         return ListView.separated(
           padding: const EdgeInsets.symmetric(vertical: 8),
           itemCount: notifs.length,
-          separatorBuilder: (_, __) => Divider(
+          separatorBuilder: (_, __) => const Divider(
             height: 1,
             indent: 68,
             color: AppTheme.border,

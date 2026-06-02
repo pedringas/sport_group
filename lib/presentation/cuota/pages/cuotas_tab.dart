@@ -458,8 +458,8 @@ class _CuotaCard extends StatelessWidget {
     final vencida = cuota.vencimiento.isBefore(DateTime.now());
     final (bg, fg, badge) = cuota.activa
         ? vencida
-            ? (AppTheme.dangerSoft, const Color(0xFF8C2A14), 'Vencida')
-            : (AppTheme.goodSoft, const Color(0xFF1F7A5A), 'Activa')
+            ? (AppTheme.dangerSoft, AppTheme.dangerInk, 'Vencida')
+            : (AppTheme.goodSoft, AppTheme.goodInk, 'Activa')
         : (AppTheme.surfaceAlt, AppTheme.textMuted, 'Cerrada');
 
     return SGCard(
@@ -538,7 +538,7 @@ class _CuotaCard extends StatelessWidget {
             ),
             const SizedBox(height: 2),
             if (miEstado == EstadoPago.aprobado)
-              Row(mainAxisSize: MainAxisSize.min, children: const [
+              const Row(mainAxisSize: MainAxisSize.min, children: [
                 Icon(Icons.check_circle_rounded,
                     size: 11, color: AppTheme.good),
                 SizedBox(width: 3),
@@ -549,14 +549,14 @@ class _CuotaCard extends StatelessWidget {
                         fontWeight: FontWeight.w700)),
               ])
             else if (miEstado != null)
-              Row(mainAxisSize: MainAxisSize.min, children: const [
+              const Row(mainAxisSize: MainAxisSize.min, children: [
                 Icon(Icons.hourglass_top_rounded,
-                    size: 11, color: Color(0xFFF59E0B)),
+                    size: 11, color: AppTheme.warning),
                 SizedBox(width: 3),
                 Text('En revisión',
                     style: TextStyle(
                         fontSize: 10,
-                        color: Color(0xFFF59E0B),
+                        color: AppTheme.warning,
                         fontWeight: FontWeight.w700)),
               ])
             else if (pagosAprobados > 0 || pagosPendientes > 0)
@@ -613,10 +613,10 @@ class _SerieGroupState extends State<_SerieGroup> {
         .length;
 
     final (headerBg, headerFg) = vencidas > 0
-        ? (AppTheme.dangerSoft, const Color(0xFF8C2A14))
+        ? (AppTheme.dangerSoft, AppTheme.dangerInk)
         : completadas == total
             ? (AppTheme.surfaceAlt, AppTheme.textMuted)
-            : (AppTheme.goodSoft, const Color(0xFF1F7A5A));
+            : (AppTheme.goodSoft, AppTheme.goodInk);
 
     return Container(
       decoration: BoxDecoration(
@@ -708,9 +708,9 @@ class _SerieGroupState extends State<_SerieGroup> {
                           fontSize: 14,
                         ),
                       ),
-                      Text(
+                      const Text(
                         'c/cuota',
-                        style: const TextStyle(
+                        style: TextStyle(
                             fontSize: 10, color: AppTheme.textMuted),
                       ),
                     ],
@@ -731,7 +731,7 @@ class _SerieGroupState extends State<_SerieGroup> {
             firstChild: const SizedBox.shrink(),
             secondChild: Column(
               children: [
-                Divider(
+                const Divider(
                     height: 1,
                     color: AppTheme.border,
                     indent: 12,
@@ -766,7 +766,7 @@ class _SerieGroupState extends State<_SerieGroup> {
                               size: 14, color: AppTheme.good)
                         else if (miEst != null)
                           const Icon(Icons.hourglass_top_rounded,
-                              size: 14, color: Color(0xFFF59E0B)),
+                              size: 14, color: AppTheme.warning),
                         const SizedBox(width: 6),
                         Text(
                           'vence ${DateFormat('dd/MM').format(c.vencimiento)}',

@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -58,9 +59,9 @@ class CampanasTab extends ConsumerWidget {
 
           // ── Rest of active campañas
           if (activas.length > 1) ...[
-            SliverToBoxAdapter(
+            const SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
                 child: SGEyebrow('Otras activas'),
               ),
             ),
@@ -80,9 +81,9 @@ class CampanasTab extends ConsumerWidget {
 
           // ── Pasadas
           if (resto.isNotEmpty) ...[
-            SliverToBoxAdapter(
+            const SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
+                padding: EdgeInsets.fromLTRB(16, 20, 16, 8),
                 child: SGEyebrow('Historial'),
               ),
             ),
@@ -155,9 +156,9 @@ class _HeroCampana extends StatelessWidget {
               SizedBox(
                 height: 130,
                 width: double.infinity,
-                child: Image.network(campana.imagenUrl!,
+                child: CachedNetworkImage(imageUrl: campana.imagenUrl!,
                     fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => _GradientBanner(gc: gc)),
+                    errorWidget: (_, __, ___) => _GradientBanner(gc: gc)),
               )
             else
               _GradientBanner(gc: gc),
@@ -212,7 +213,7 @@ class _HeroCampana extends StatelessWidget {
                       campana.descripcion!,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
+                      style: const TextStyle(
                           fontSize: 13, color: AppTheme.textMuted),
                     ),
                   ],
@@ -244,7 +245,7 @@ class _HeroCampana extends StatelessWidget {
                               color: campana.completada ? AppTheme.good : gc,
                             ),
                           ),
-                          Text('recaudado',
+                          const Text('recaudado',
                               style: TextStyle(
                                   fontSize: 11, color: AppTheme.textMuted)),
                         ],
@@ -261,7 +262,7 @@ class _HeroCampana extends StatelessWidget {
                               color: AppTheme.text,
                             ),
                           ),
-                          Text('objetivo',
+                          const Text('objetivo',
                               style: TextStyle(
                                   fontSize: 11, color: AppTheme.textMuted)),
                         ],
@@ -288,12 +289,12 @@ class _HeroCampana extends StatelessWidget {
                     const SizedBox(height: 6),
                     Row(
                       children: [
-                        Icon(Icons.schedule_outlined,
+                        const Icon(Icons.schedule_outlined,
                             size: 12, color: AppTheme.textMuted),
                         const SizedBox(width: 4),
                         Text(
                           'Límite: ${DateFormat('dd/MM/yyyy').format(campana.fechaLimite!)}',
-                          style: TextStyle(
+                          style: const TextStyle(
                               fontSize: 11, color: AppTheme.textMuted),
                         ),
                       ],
@@ -392,7 +393,7 @@ class _CampanaRow extends StatelessWidget {
                   const SizedBox(height: 3),
                   Text(
                     '${(pct * 100).toStringAsFixed(0)}% · ${campana.estado.label}',
-                    style: TextStyle(fontSize: 11, color: AppTheme.textMuted),
+                    style: const TextStyle(fontSize: 11, color: AppTheme.textMuted),
                   ),
                 ],
               ),
@@ -449,7 +450,7 @@ class _EmptyCampanas extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 8),
-            Text(
+            const Text(
               'Las campañas sirven para juntar fondos\n'
               'para equipamiento, viajes y más.',
               textAlign: TextAlign.center,

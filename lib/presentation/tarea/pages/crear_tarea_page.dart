@@ -193,7 +193,7 @@ class _CrearTareaPageState extends ConsumerState<CrearTareaPage> {
                   const SizedBox(height: 20),
 
                   // â”€â”€ Assigned to
-                  SGEyebrow('A quién le toca'),
+                  const SGEyebrow('A quién le toca'),
                   const SizedBox(height: 8),
                   Container(
                     padding: const EdgeInsets.all(12),
@@ -243,7 +243,7 @@ class _CrearTareaPageState extends ConsumerState<CrearTareaPage> {
                   const SizedBox(height: 20),
 
                   // â”€â”€ Due date
-                  SGEyebrow('Vencimiento'),
+                  const SGEyebrow('Vencimiento'),
                   const SizedBox(height: 8),
                   Wrap(
                     spacing: 6,
@@ -295,7 +295,7 @@ class _CrearTareaPageState extends ConsumerState<CrearTareaPage> {
                   const SizedBox(height: 20),
 
                   // â”€â”€ Priority
-                  SGEyebrow('Prioridad'),
+                  const SGEyebrow('Prioridad'),
                   const SizedBox(height: 8),
                   Row(
                     children: _Prioridad.values.map((p) {

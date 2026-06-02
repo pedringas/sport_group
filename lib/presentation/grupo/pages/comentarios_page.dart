@@ -183,9 +183,9 @@ class _ComentariosPageState extends ConsumerState<ComentariosPage> {
                       const Icon(Icons.error_outline_rounded,
                           size: 40, color: AppTheme.textMuted),
                       const SizedBox(height: 12),
-                      Text(
+                      const Text(
                         'No se pudieron cargar los comentarios',
-                        style: const TextStyle(
+                        style: TextStyle(
                             color: AppTheme.textMuted,
                             fontWeight: FontWeight.w600),
                         textAlign: TextAlign.center,
@@ -253,7 +253,7 @@ class _ComentariosPageState extends ConsumerState<ComentariosPage> {
           SafeArea(
             child: Container(
               padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 color: AppTheme.surface,
                 border: Border(top: BorderSide(color: AppTheme.border)),
               ),
@@ -368,11 +368,11 @@ class _CommentCard extends StatelessWidget {
                   color: isOwn
                       ? gc.withValues(alpha: 0.08)
                       : AppTheme.surface,
-                  borderRadius: BorderRadius.only(
-                    topLeft: const Radius.circular(4),
-                    topRight: const Radius.circular(16),
-                    bottomLeft: const Radius.circular(16),
-                    bottomRight: const Radius.circular(16),
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(4),
+                    topRight: Radius.circular(16),
+                    bottomLeft: Radius.circular(16),
+                    bottomRight: Radius.circular(16),
                   ),
                   border: Border.all(
                     color: isOwn
