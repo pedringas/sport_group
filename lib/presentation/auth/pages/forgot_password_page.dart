@@ -115,7 +115,7 @@ class _FormState extends StatelessWidget {
 
           const SizedBox(height: 10),
 
-          Text(
+          const Text(
             'Ingresá tu email y te mandamos un link para resetear tu contraseña.',
             style: TextStyle(
               color: AppTheme.textMuted,
@@ -203,7 +203,7 @@ class _SuccessState extends StatelessWidget {
 
         RichText(
           text: TextSpan(
-            style: TextStyle(
+            style: const TextStyle(
               color: AppTheme.textMuted, fontSize: 15, height: 1.5),
             children: [
               const TextSpan(text: 'Enviamos un link de recuperación a '),

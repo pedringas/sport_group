@@ -2,6 +2,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../providers/auth_provider.dart';
 
@@ -37,7 +38,14 @@ class _SplashPageState extends ConsumerState<SplashPage>
     if (!mounted) return;
 
     final user = ref.read(authStateProvider).valueOrNull;
-    context.go(user != null ? '/home' : '/login');
+    if (user != null) {
+      context.go('/home');
+      return;
+    }
+    final prefs = await SharedPreferences.getInstance();
+    final seen = prefs.getBool('onboarding_seen') ?? false;
+    if (!mounted) return;
+    context.go(seen ? '/login' : '/onboarding');
   }
 
   @override

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../presentation/auth/pages/splash_page.dart';
 import '../../presentation/auth/pages/login_page.dart';
+import '../../presentation/auth/pages/onboarding_page.dart';
 import '../../presentation/auth/pages/register_page.dart';
 import '../../presentation/auth/pages/otp_page.dart';
 import '../../presentation/auth/pages/forgot_password_page.dart';
@@ -81,7 +82,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       final loc = state.matchedLocation;
       if (loc.startsWith('/join/')) return null;
       final onAuthScreen =
-          ['/splash', '/login', '/register', '/otp', '/forgot-password']
+          ['/splash', '/onboarding', '/login', '/register', '/otp', '/forgot-password']
               .contains(loc);
       if (isAuth && onAuthScreen && loc != '/splash') {
         // After login, honour a ?redirect param (e.g. /login?redirect=/join/abc)
@@ -94,6 +95,7 @@ final routerProvider = Provider<GoRouter>((ref) {
     routes: [
       // ── Auth (outside shell)
       GoRoute(path: '/splash', builder: (_, __) => const SplashPage()),
+      GoRoute(path: '/onboarding', builder: (_, __) => const OnboardingPage()),
       GoRoute(path: '/login', builder: (_, __) => const LoginPage()),
       GoRoute(path: '/register', builder: (_, __) => const RegisterPage()),
       GoRoute(path: '/forgot-password', builder: (_, __) => const ForgotPasswordPage()),

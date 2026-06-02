@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../data/models/enums.dart';
 
 /// SportGroups Theme — "Atardecer" warm community palette.
 /// Migrated from the previous indigo Material 3 theme to a coral + plum
@@ -16,9 +17,19 @@ class AppTheme {
 
   static const Color good          = Color(0xFF2DA67D);
   static const Color goodSoft      = Color(0xFFD9F1E5);
+  static const Color goodInk       = Color(0xFF1F7A5A);
 
   static const Color danger        = Color(0xFFDA4A2C);
   static const Color dangerSoft    = Color(0xFFFCD9D0);
+  static const Color dangerInk     = Color(0xFF8C2A14);
+
+  static const Color warning       = Color(0xFFF59E0B); // amber — pending / in-review
+  static const Color warningSoft   = Color(0xFFFEF3C7);
+  static const Color warningInk    = Color(0xFF92400E);
+
+  static const Color info          = Color(0xFF3B82F6); // blue — in-progress / validating
+  static const Color infoSoft      = Color(0xFFDBEAFE);
+  static const Color infoInk       = Color(0xFF1D4ED8);
 
   static const Color surface       = Colors.white;
   static const Color surfaceAlt    = Color(0xFFF1ECE7);
@@ -28,6 +39,29 @@ class AppTheme {
   static const Color textMuted     = Color(0xFF756864);
   static const Color border        = Color(0xFFE8E2DD);
   static const Color borderStrong  = Color(0xFFD6CFC8);
+
+  // ── Role colours ──────────────────────────────────────────────────────────
+  static const Color roleAdmin      = primary;     // coral
+  static const Color roleModerador  = info;         // blue
+  static const Color roleTesorero   = accent;       // plum
+  static const Color roleDelegado   = warning;      // amber
+  static const Color roleMiembro    = textMuted;    // warm muted
+
+  static Color roleColor(RolMiembro rol) {
+    switch (rol) {
+      case RolMiembro.administrador: return roleAdmin;
+      case RolMiembro.moderador:     return roleModerador;
+      case RolMiembro.tesorero:      return roleTesorero;
+      case RolMiembro.delegado:      return roleDelegado;
+      case RolMiembro.miembro:       return roleMiembro;
+    }
+  }
+
+  // ── Overlay helper ─────────────────────────────────────────────────────────
+  static Color overlay(BuildContext ctx, {double opacity = 0.08}) =>
+      isDark(ctx)
+          ? Colors.white.withValues(alpha: opacity)
+          : Colors.black.withValues(alpha: opacity);
 
   // Aliases kept for backwards compatibility with screens that imported
   // AppTheme.secondary / .tertiary / .error from the old theme.
@@ -75,7 +109,7 @@ class AppTheme {
   static ThemeData get dark {
     const Color dPrimary = Color(0xFFF07B52); // slightly lighter coral for dark
 
-    final base = ColorScheme(
+    const base = ColorScheme(
       brightness: Brightness.dark,
       primary: dPrimary,
       onPrimary: Colors.white,

@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'app_theme.dart';
@@ -158,8 +159,8 @@ class SGChip extends StatelessWidget {
       case SGChipTone.neutral: return (bg: AppTheme.surfaceAlt, fg: AppTheme.text);
       case SGChipTone.primary: return (bg: AppTheme.primarySoft, fg: AppTheme.primaryInk);
       case SGChipTone.accent:  return (bg: AppTheme.accentSoft, fg: AppTheme.accentInk);
-      case SGChipTone.good:    return (bg: AppTheme.goodSoft, fg: const Color(0xFF1F7A5A));
-      case SGChipTone.danger:  return (bg: AppTheme.dangerSoft, fg: const Color(0xFF8C2A14));
+      case SGChipTone.good:    return (bg: AppTheme.goodSoft,   fg: AppTheme.goodInk);
+      case SGChipTone.danger:  return (bg: AppTheme.dangerSoft, fg: AppTheme.dangerInk);
     }
   }
 }
@@ -256,7 +257,7 @@ class SGAvatar extends StatelessWidget {
     if (imageUrl != null && imageUrl!.isNotEmpty) {
       return CircleAvatar(
         radius: size / 2,
-        backgroundImage: NetworkImage(imageUrl!),
+        backgroundImage: CachedNetworkImageProvider(imageUrl!),
         backgroundColor: background ?? AppTheme.surfaceAlt,
       );
     }
