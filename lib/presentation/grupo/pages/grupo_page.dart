@@ -131,7 +131,13 @@ class _GrupoPageState extends ConsumerState<GrupoPage>
                 if (grupo == null) {
                   return const Center(child: Text('Grupo no encontrado'));
                 }
-                return ListView(
+                final isDesktop = MediaQuery.sizeOf(context).width >= 900;
+                return Center(
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      maxWidth: isDesktop ? 800 : double.infinity,
+                    ),
+                    child: ListView(
                   padding: const EdgeInsets.fromLTRB(16, 12, 16, 120),
                   children: [
                     if (rol != null && rol != RolMiembro.miembro)
@@ -159,6 +165,8 @@ class _GrupoPageState extends ConsumerState<GrupoPage>
                     const SizedBox(height: 24),
                     _UltimasNoticias(grupoId: widget.grupoId),
                   ],
+                    ),
+                  ),
                 );
               },
             ),

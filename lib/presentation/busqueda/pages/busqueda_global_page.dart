@@ -185,10 +185,14 @@ class _BusquedaGlobalPageState extends ConsumerState<BusquedaGlobalPage> {
     final results = _filtered;
     final allResults = _buildResults();
 
+    final isDesktop = MediaQuery.sizeOf(context).width >= 900;
     return Scaffold(
       backgroundColor: AppTheme.bg(context),
       body: SafeArea(
-        child: Column(
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 720),
+            child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             // ── Search bar row
@@ -249,18 +253,20 @@ class _BusquedaGlobalPageState extends ConsumerState<BusquedaGlobalPage> {
                       ),
                     ),
                   ),
-                  const SizedBox(width: 10),
-                  GestureDetector(
-                    onTap: () => context.pop(),
-                    child: const Text(
-                      'Cancelar',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                        color: AppTheme.primary,
+                  if (!isDesktop) ...[
+                    const SizedBox(width: 10),
+                    GestureDetector(
+                      onTap: () => context.pop(),
+                      child: const Text(
+                        'Cancelar',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: AppTheme.primary,
+                        ),
                       ),
                     ),
-                  ),
+                  ],
                 ],
               ),
             ),
@@ -462,6 +468,8 @@ class _BusquedaGlobalPageState extends ConsumerState<BusquedaGlobalPage> {
               ),
             ),
           ],
+            ),
+          ),
         ),
       ),
     );

@@ -367,6 +367,9 @@ class _DeskTopBar extends ConsumerWidget {
     if (location == '/home') return 'Inicio';
     if (location == '/profile') return 'Mi perfil';
     if (location == '/search') return 'Buscar grupos';
+    if (location == '/busqueda') return 'Buscar';
+    if (location == '/notificaciones') return 'Notificaciones';
+    if (location == '/profile/edit') return 'Editar perfil';
     if (location == '/create-group') return 'Crear grupo';
     if (location == '/faq') return 'Ayuda y soporte';
     if (location.contains('/noticias')) return 'Novedades';
@@ -470,8 +473,7 @@ class _DeskTopBar extends ConsumerWidget {
           _TopBarIcon(
             icon: Icons.notifications_rounded,
             tooltip: 'Notificaciones',
-            onTap: () => ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Notificaciones: próximamente'))),
+            onTap: () => context.push('/notificaciones'),
           ),
           const SizedBox(width: 6),
           _TopBarIcon(

@@ -29,6 +29,7 @@ class GruposListPage extends ConsumerWidget {
           }
           final grupos = gruposAsync.valueOrNull ?? [];
 
+          final isDesktop = MediaQuery.sizeOf(context).width >= 900;
           return CustomScrollView(
             slivers: [
               // Header
@@ -85,22 +86,28 @@ class GruposListPage extends ConsumerWidget {
                   ),
                   SliverPadding(
                     padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
-                    sliver: SliverList.separated(
-                      itemCount: grupos
-                          .where((g) => favoritosIds.contains(g.id))
-                          .length,
-                      separatorBuilder: (_, __) => const SizedBox(height: 10),
-                      itemBuilder: (_, i) {
-                        final favGrupos = grupos
-                            .where((g) => favoritosIds.contains(g.id))
-                            .toList();
-                        return _GrupoCard(
-                          grupo: favGrupos[i],
-                          esFavorito: true,
-                          ref: ref,
-                        );
-                      },
-                    ),
+                    sliver: isDesktop
+                        ? SliverGrid.builder(
+                            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 2,
+                              mainAxisSpacing: 10,
+                              crossAxisSpacing: 10,
+                              mainAxisExtent: 175,
+                            ),
+                            itemCount: grupos.where((g) => favoritosIds.contains(g.id)).length,
+                            itemBuilder: (_, i) {
+                              final favGrupos = grupos.where((g) => favoritosIds.contains(g.id)).toList();
+                              return _GrupoCard(grupo: favGrupos[i], esFavorito: true, ref: ref);
+                            },
+                          )
+                        : SliverList.separated(
+                            itemCount: grupos.where((g) => favoritosIds.contains(g.id)).length,
+                            separatorBuilder: (_, __) => const SizedBox(height: 10),
+                            itemBuilder: (_, i) {
+                              final favGrupos = grupos.where((g) => favoritosIds.contains(g.id)).toList();
+                              return _GrupoCard(grupo: favGrupos[i], esFavorito: true, ref: ref);
+                            },
+                          ),
                   ),
                 ],
 
@@ -112,16 +119,31 @@ class GruposListPage extends ConsumerWidget {
                   ),
                 ),
                 SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
-                  sliver: SliverList.separated(
-                    itemCount: grupos.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 10),
-                    itemBuilder: (_, i) => _GrupoCard(
-                      grupo: grupos[i],
-                      esFavorito: favoritosIds.contains(grupos[i].id),
-                      ref: ref,
-                    ),
-                  ),
+                  padding: EdgeInsets.fromLTRB(16, 0, 16, isDesktop ? 40 : 100),
+                  sliver: isDesktop
+                      ? SliverGrid.builder(
+                          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            mainAxisSpacing: 10,
+                            crossAxisSpacing: 10,
+                            mainAxisExtent: 175,
+                          ),
+                          itemCount: grupos.length,
+                          itemBuilder: (_, i) => _GrupoCard(
+                            grupo: grupos[i],
+                            esFavorito: favoritosIds.contains(grupos[i].id),
+                            ref: ref,
+                          ),
+                        )
+                      : SliverList.separated(
+                          itemCount: grupos.length,
+                          separatorBuilder: (_, __) => const SizedBox(height: 10),
+                          itemBuilder: (_, i) => _GrupoCard(
+                            grupo: grupos[i],
+                            esFavorito: favoritosIds.contains(grupos[i].id),
+                            ref: ref,
+                          ),
+                        ),
                 ),
               ],
             ],
