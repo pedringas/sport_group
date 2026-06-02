@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_theme.dart';
 import 'home_feed_page.dart';
@@ -54,18 +54,24 @@ class _HomeShellState extends ConsumerState<HomeShell> {
     }
   }
 
+  static const double _kDesktopBreakpoint = 900;
+
   @override
   Widget build(BuildContext context) {
+    final isDesktop =
+        MediaQuery.sizeOf(context).width >= _kDesktopBreakpoint;
     return Scaffold(
       backgroundColor: AppTheme.bg(context),
       body: IndexedStack(
         index: _currentIndex,
         children: List.generate(_tabs.length, _buildPage),
       ),
-      bottomNavigationBar: _BottomNav(
-        currentIndex: _currentIndex,
-        onTap: (i) => setState(() => _currentIndex = i),
-      ),
+      bottomNavigationBar: isDesktop
+          ? null
+          : _BottomNav(
+              currentIndex: _currentIndex,
+              onTap: (i) => setState(() => _currentIndex = i),
+            ),
     );
   }
 }
@@ -88,7 +94,7 @@ class _BottomNav extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         color: AppTheme.surface,
         border: Border(top: BorderSide(color: AppTheme.border, width: 1)),
       ),

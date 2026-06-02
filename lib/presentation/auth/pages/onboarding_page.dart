@@ -27,7 +27,7 @@ const _slides = [
     tag: 'TU COMUNIDAD',
     title: 'Tu equipo,\ntu club, tu barra.',
     desc:
-        'Todo lo que pasa en tu grupo en un solo lugar ”” sin chats interminables ni planillas.',
+        'Todo lo que pasa en tu grupo en un solo lugar: sin chats interminables ni planillas.',
     accent: AppTheme.primary,
     soft: AppTheme.primarySoft,
   ),
@@ -35,7 +35,7 @@ const _slides = [
     tag: 'SIN VUELTAS',
     title: 'Pagá la cuota\nen 2 toques.',
     desc:
-        'Hacés la transferencia, subís el comprobante, y listo. El tesorero lo valida en segundos ”” todo registrado y sin perseguir a nadie.',
+        'Hacés la transferencia, subís el comprobante, y listo. El tesorero lo valida en segundos: todo registrado, sin perseguir a nadie.',
     accent: AppTheme.good,
     soft: AppTheme.goodSoft,
   ),
@@ -511,7 +511,7 @@ class _Viz2 extends StatelessWidget {
             // Confirmed row
             Row(
               children: [
-                Icon(Icons.check_circle_rounded, size: 13, color: AppTheme.good),
+                const Icon(Icons.check_circle_rounded, size: 13, color: AppTheme.good),
                 const SizedBox(width: 5),
                 Text(
                   'Confirmado al instante',
@@ -541,18 +541,19 @@ class _Viz3 extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final roles = [
-      (icon: Icons.shield_rounded, label: 'Administrador', sub: 'control total', bg: accent, offset: 0.0),
-      (icon: Icons.assignment_rounded, label: 'Delegado', sub: 'eventos y comunicación', bg: AppTheme.primary, offset: 20.0),
-      (icon: Icons.account_balance_rounded, label: 'Tesorero', sub: 'cuotas y caja', bg: AppTheme.good, offset: 40.0),
+      (icon: Icons.shield_rounded, label: 'Administrador', sub: 'control total', bg: AppTheme.roleAdmin, offset: 0.0),
+      (icon: Icons.assignment_rounded, label: 'Delegado', sub: 'eventos y comunicación', bg: AppTheme.roleDelegado, offset: 12.0),
+      (icon: Icons.account_balance_rounded, label: 'Tesorero', sub: 'cuotas y caja', bg: AppTheme.roleTesorero, offset: 24.0),
+      (icon: Icons.record_voice_over_rounded, label: 'Moderador', sub: 'comunicación y orden', bg: AppTheme.roleModerador, offset: 36.0),
     ];
 
     return SizedBox(
-      width: 260,
+      width: 240,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: roles.map((r) {
           return Padding(
-            padding: const EdgeInsets.only(bottom: 10),
+            padding: const EdgeInsets.only(bottom: 8),
             child: Transform.translate(
               offset: Offset(r.offset, 0),
               child: Container(
@@ -567,17 +568,17 @@ class _Viz3 extends StatelessWidget {
                     ),
                   ],
                 ),
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.all(10),
                 child: Row(
                   children: [
                     Container(
-                      width: 40,
-                      height: 40,
+                      width: 36,
+                      height: 36,
                       decoration: BoxDecoration(
                         color: r.bg,
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(10),
                       ),
-                      child: Icon(r.icon, size: 22, color: Colors.white),
+                      child: Icon(r.icon, size: 20, color: Colors.white),
                     ),
                     const SizedBox(width: 12),
                     Column(

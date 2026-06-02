@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -43,6 +44,7 @@ class HomeFeedPage extends ConsumerWidget {
         .first;
 
     final hasHero = featuredEvent != null || tareasPrioritarias.isNotEmpty;
+    final isDesktop = MediaQuery.sizeOf(context).width >= 900;
 
     return Scaffold(
       backgroundColor: AppTheme.bg(context),
@@ -50,7 +52,8 @@ class HomeFeedPage extends ConsumerWidget {
         bottom: false,
         child: CustomScrollView(
           slivers: [
-            // â”€â”€ Header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+            // â”€â”€ Header (mobile only) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+            if (!isDesktop)
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(16, 12, 12, 4),
@@ -136,9 +139,9 @@ class HomeFeedPage extends ConsumerWidget {
 
             // â”€â”€ “Hoy te toca” hero / carrusel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             if (hasHero) ...[
-              SliverToBoxAdapter(
+              const SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
+                  padding: EdgeInsets.fromLTRB(16, 20, 16, 0),
                   child: _SectionDivider(
                     label: 'Hoy te toca',
                     color: AppTheme.primary,
@@ -165,7 +168,7 @@ class HomeFeedPage extends ConsumerWidget {
                   padding: const EdgeInsets.fromLTRB(16, 28, 16, 0),
                   child: Row(
                     children: [
-                      Expanded(
+                      const Expanded(
                         child: _SectionDivider(
                           label: 'Esta semana',
                           color: AppTheme.textMuted,
@@ -197,12 +200,12 @@ class HomeFeedPage extends ConsumerWidget {
 
             // â”€â”€ Próximos eventos confirmados â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             if (proximosEventos.isNotEmpty) ...[
-              SliverToBoxAdapter(
+              const SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 28, 16, 0),
+                  padding: EdgeInsets.fromLTRB(16, 28, 16, 0),
                   child: _SectionDivider(
                     label: 'Mis próximos eventos',
-                    color: const Color(0xFFD97706),
+                    color: Color(0xFFD97706),
                   ),
                 ),
               ),
@@ -216,9 +219,9 @@ class HomeFeedPage extends ConsumerWidget {
 
             // â”€â”€ Destacadas (fijadas de grupos favoritos) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             if (feedDestacadas.isNotEmpty) ...[
-              SliverToBoxAdapter(
+              const SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 28, 16, 0),
+                  padding: EdgeInsets.fromLTRB(16, 28, 16, 0),
                   child: _SectionDivider(
                     label: 'Destacadas',
                     color: AppTheme.primary,
@@ -242,9 +245,9 @@ class HomeFeedPage extends ConsumerWidget {
             ],
 
             // â”€â”€ “Noticias” feed â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-            SliverToBoxAdapter(
+            const SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 28, 16, 0),
+                padding: EdgeInsets.fromLTRB(16, 28, 16, 0),
                 child: SGEyebrow('Noticias'),
               ),
             ),
@@ -509,7 +512,7 @@ class _EventoConfirmadoCard extends StatelessWidget {
                     const SizedBox(height: 6),
                     Text(
                       _daysLabel(fecha),
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.w700,
                         color: cardColor,
@@ -577,12 +580,12 @@ class _EventoConfirmadoCard extends StatelessWidget {
                           border: Border.all(
                               color: cardColor.withValues(alpha: 0.3)),
                         ),
-                        child: Row(
+                        child: const Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Icon(Icons.check_circle_rounded,
                                 size: 12, color: cardColor),
-                            const SizedBox(width: 4),
+                            SizedBox(width: 4),
                             Text(
                               'Confirmé asistencia',
                               style: TextStyle(
@@ -687,7 +690,7 @@ class _DestacadaChip extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                Icon(Icons.push_pin_rounded,
+                const Icon(Icons.push_pin_rounded,
                     size: 12, color: AppTheme.primary),
               ],
             ),
@@ -1210,13 +1213,13 @@ class _PendingRow extends StatelessWidget {
     final pct = (c.campana.porcentaje * 100).round();
     return (
       AppTheme.goodSoft,
-      const Color(0xFF1F7A5A),
+      AppTheme.goodInk,
       Icons.savings_outlined,
       c.campana.titulo,
       '$pct% completado · ${c.grupo.nombre}',
       'Aportar',
       AppTheme.goodSoft,
-      const Color(0xFF1F7A5A),
+      AppTheme.goodInk,
       () => context.push('/group/${c.grupo.id}/campanas'),
     );
   }
@@ -1229,17 +1232,17 @@ class _EmptyNoticias extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
+    return const Column(
       children: [
-        Icon(Icons.newspaper_outlined, size: 56, color: AppTheme.border),
-        const SizedBox(height: 12),
-        const Text(
+        Icon(Icons.newspaper_outlined, size: 56, color: AppTheme.textMuted),
+        SizedBox(height: 12),
+        Text(
           'No hay noticias aún',
           style: TextStyle(
               color: AppTheme.textMuted, fontWeight: FontWeight.w600),
         ),
-        const SizedBox(height: 4),
-        const Text(
+        SizedBox(height: 4),
+        Text(
           'Las noticias de tus grupos aparecerán acá',
           style: TextStyle(color: AppTheme.textMuted, fontSize: 13),
           textAlign: TextAlign.center,
@@ -1285,12 +1288,12 @@ class _NoticiaFeedCard extends ConsumerWidget {
               ClipRRect(
                 borderRadius:
                     const BorderRadius.vertical(top: Radius.circular(18)),
-                child: Image.network(
-                  noticia.imagenUrl!,
+                child: CachedNetworkImage(
+                  imageUrl: noticia.imagenUrl!,
                   width: double.infinity,
                   height: 160,
                   fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                  errorWidget: (_, __, ___) => const SizedBox.shrink(),
                 ),
               ),
             Padding(
@@ -1327,7 +1330,7 @@ class _NoticiaFeedCard extends ConsumerWidget {
                                 ),
                                 if (esFav) ...[
                                   const SizedBox(width: 4),
-                                  Icon(Icons.star_rounded,
+                                  const Icon(Icons.star_rounded,
                                       size: 12,
                                       color: AppTheme.primary),
                                 ],
@@ -1378,7 +1381,7 @@ class _NoticiaFeedCard extends ConsumerWidget {
                   const SizedBox(height: 10),
                   Row(
                     children: [
-                      Icon(Icons.favorite_border_rounded,
+                      const Icon(Icons.favorite_border_rounded,
                           size: 16, color: AppTheme.textMuted),
                       const SizedBox(width: 4),
                       Text(
@@ -1387,7 +1390,7 @@ class _NoticiaFeedCard extends ConsumerWidget {
                             fontSize: 12, color: AppTheme.textMuted),
                       ),
                       const SizedBox(width: 12),
-                      Icon(Icons.chat_bubble_outline_rounded,
+                      const Icon(Icons.chat_bubble_outline_rounded,
                           size: 15, color: AppTheme.textMuted),
                       const SizedBox(width: 4),
                       const Text(
@@ -1397,12 +1400,12 @@ class _NoticiaFeedCard extends ConsumerWidget {
                       ),
                       const Spacer(),
                       if (noticia.fijada)
-                        Row(
+                        const Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Icon(Icons.push_pin_rounded,
                                 size: 13, color: AppTheme.primary),
-                            const SizedBox(width: 3),
+                            SizedBox(width: 3),
                             Text(
                               'Fijada',
                               style: TextStyle(

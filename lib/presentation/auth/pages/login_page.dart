@@ -128,9 +128,10 @@ class _LoginPageState extends ConsumerState<LoginPage>
             // Content
             SingleChildScrollView(
               padding: const EdgeInsets.fromLTRB(24, 32, 24, 32),
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 420),
-                child: Column(
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 420),
+                  child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // â”€â”€ Brand mark
@@ -168,8 +169,8 @@ class _LoginPageState extends ConsumerState<LoginPage>
                           ),
                     ),
                     const SizedBox(height: 10),
-                    Text(
-                      'Tu club, tu equipo, tu comunidad,\ntodo en un solo lugar.',
+                    const Text(
+                      'Tu comunidad te está esperando.',
                       style: TextStyle(
                         color: AppTheme.textMuted,
                         fontSize: 15,
@@ -346,6 +347,7 @@ class _LoginPageState extends ConsumerState<LoginPage>
                 ),
               ),
             ),
+          ),
           ],
         ),
       ),
@@ -360,13 +362,13 @@ class _LoginPageState extends ConsumerState<LoginPage>
         duration: const Duration(milliseconds: 180),
         padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
         decoration: BoxDecoration(
-          color: selected ? AppTheme.text : Colors.transparent,
+          color: selected ? AppTheme.primary : Colors.transparent,
           borderRadius: BorderRadius.circular(999),
         ),
         child: Text(
           label,
           style: TextStyle(
-            color: selected ? AppTheme.surface : AppTheme.textMuted,
+            color: selected ? Colors.white : AppTheme.textMuted,
             fontWeight: FontWeight.w600,
             fontSize: 13,
           ),

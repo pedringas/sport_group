@@ -88,7 +88,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage>
       if (next is AuthError) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content: Text(next.message), backgroundColor: Colors.red),
+              content: Text(next.message), backgroundColor: AppTheme.danger),
         );
         ref.read(authFlowProvider.notifier).reset();
         setState(() => _loading = false);
@@ -148,7 +148,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage>
 
                 Container(
                   decoration: BoxDecoration(
-                    color: const Color(0xFFEEEEF8),
+                    color: AppTheme.surfaceAlt,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: TabBar(
@@ -166,13 +166,13 @@ class _RegisterPageState extends ConsumerState<RegisterPage>
                     ),
                     indicatorSize: TabBarIndicatorSize.tab,
                     labelColor: AppTheme.primary,
-                    unselectedLabelColor: Colors.grey,
+                    unselectedLabelColor: AppTheme.textMuted,
                     labelStyle: const TextStyle(
                         fontWeight: FontWeight.w600, fontSize: 14),
                     dividerColor: Colors.transparent,
-                    tabs: [
-                      const Tab(text: 'Email'),
-                      if (!kIsWeb) const Tab(text: 'Teléfono'),
+                    tabs: const [
+                      Tab(text: 'Email'),
+                      if (!kIsWeb) Tab(text: 'Teléfono'),
                     ],
                   ),
                 ),
@@ -313,7 +313,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage>
                   Padding(
                     padding: EdgeInsets.symmetric(horizontal: 12),
                     child:
-                        Text('o', style: TextStyle(color: Colors.grey)),
+                        Text('o', style: TextStyle(color: AppTheme.textMuted)),
                   ),
                   Expanded(child: Divider()),
                 ]),

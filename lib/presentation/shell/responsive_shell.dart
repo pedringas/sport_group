@@ -156,8 +156,8 @@ class _DeskSidebar extends StatelessWidget {
             const SizedBox(height: 16),
 
             // â”€â”€ Groups header
-            Padding(
-              padding: const EdgeInsets.fromLTRB(18, 0, 16, 6),
+            const Padding(
+              padding: EdgeInsets.fromLTRB(18, 0, 16, 6),
               child: Text(
                 'MIS GRUPOS',
                 style: TextStyle(
@@ -402,7 +402,7 @@ class _DeskTopBar extends ConsumerWidget {
     return Container(
       height: 64,
       padding: const EdgeInsets.symmetric(horizontal: 28),
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         color: AppTheme.surface,
         border: Border(bottom: BorderSide(color: AppTheme.border)),
       ),
@@ -437,7 +437,7 @@ class _DeskTopBar extends ConsumerWidget {
                 children: [
                   const Icon(Icons.search_rounded, size: 16, color: AppTheme.textMuted),
                   const SizedBox(width: 8),
-                  Expanded(
+                  const Expanded(
                     child: Text(
                       'Buscar grupos, miembros, archivos...',
                       style: TextStyle(fontSize: 12, color: AppTheme.textMuted),
@@ -450,8 +450,8 @@ class _DeskTopBar extends ConsumerWidget {
                       borderRadius: BorderRadius.circular(4),
                       border: Border.all(color: AppTheme.border),
                     ),
-                    child: Text(
-                      'âŒ˜K',
+                    child: const Text(
+                      'Ctrl K',
                       style: TextStyle(
                         fontSize: 10,
                         color: AppTheme.textMuted,
@@ -469,12 +469,14 @@ class _DeskTopBar extends ConsumerWidget {
           // â”€â”€ Notifications icon
           _TopBarIcon(
             icon: Icons.notifications_rounded,
+            tooltip: 'Notificaciones',
             onTap: () => ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Notificaciones ”” próximamente'))),
+              const SnackBar(content: Text('Notificaciones: próximamente'))),
           ),
           const SizedBox(width: 6),
           _TopBarIcon(
             icon: Icons.help_outline_rounded,
+            tooltip: 'Ayuda y soporte',
             onTap: () => context.push('/faq'),
           ),
         ],
@@ -485,22 +487,26 @@ class _DeskTopBar extends ConsumerWidget {
 
 class _TopBarIcon extends StatelessWidget {
   final IconData icon;
+  final String tooltip;
   final VoidCallback onTap;
-  const _TopBarIcon({required this.icon, required this.onTap});
+  const _TopBarIcon({required this.icon, required this.tooltip, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 38, height: 38,
-        decoration: BoxDecoration(
-          color: AppTheme.surface,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppTheme.border),
+    return Tooltip(
+      message: tooltip,
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          width: 38, height: 38,
+          decoration: BoxDecoration(
+            color: AppTheme.surface,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: AppTheme.border),
+          ),
+          alignment: Alignment.center,
+          child: Icon(icon, size: 18, color: AppTheme.text),
         ),
-        alignment: Alignment.center,
-        child: Icon(icon, size: 18, color: AppTheme.text),
       ),
     );
   }
