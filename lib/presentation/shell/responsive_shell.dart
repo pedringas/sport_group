@@ -387,6 +387,7 @@ class _DeskTopBar extends ConsumerWidget {
     if (location.contains('/noticias')) return 'Novedades';
     if (location.contains('/cuotas/crear')) return 'Nueva suscripción';
     if (location.contains('/cuotas')) return 'Suscripciones';
+    if (location.contains('/cuota/')) return 'Detalle de cuota';
     if (location.contains('/gastos/crear')) return 'Nuevo gasto';
     if (location.contains('/gastos')) return 'Gastos';
     if (location.contains('/tareas/crear')) return 'Nueva tarea';

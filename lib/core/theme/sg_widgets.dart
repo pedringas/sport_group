@@ -254,14 +254,7 @@ class SGAvatar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final initial = name.trim().isEmpty ? '?' : name.trim()[0].toUpperCase();
-    if (imageUrl != null && imageUrl!.isNotEmpty) {
-      return CircleAvatar(
-        radius: size / 2,
-        backgroundImage: CachedNetworkImageProvider(imageUrl!),
-        backgroundColor: background ?? AppTheme.surfaceAlt,
-      );
-    }
-    return Container(
+    final fallback = Container(
       width: size, height: size,
       decoration: BoxDecoration(
         color: background ?? AppTheme.primary,
@@ -277,6 +270,18 @@ class SGAvatar extends StatelessWidget {
         ),
       ),
     );
+    if (imageUrl != null && imageUrl!.isNotEmpty) {
+      return ClipOval(
+        child: CachedNetworkImage(
+          imageUrl: imageUrl!,
+          width: size, height: size,
+          fit: BoxFit.cover,
+          placeholder: (_, __) => fallback,
+          errorWidget: (_, __, ___) => fallback,
+        ),
+      );
+    }
+    return fallback;
   }
 }
 

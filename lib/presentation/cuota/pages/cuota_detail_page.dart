@@ -316,7 +316,7 @@ class _AmountCard extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            '\$${cuota.monto.toStringAsFixed(0)}',
+            '\$ ${NumberFormat('#,##0', 'es_AR').format(cuota.monto.toInt())}',
             style: GoogleFonts.bricolageGrotesque(
               fontWeight: FontWeight.w800,
               fontSize: 42,
@@ -380,7 +380,7 @@ class _DetailsSection extends StatelessWidget {
           _DetailRow(
             icon: Icons.attach_money_rounded,
             label: 'Monto',
-            value: '\$${cuota.monto.toStringAsFixed(0)}',
+            value: '\$ ${NumberFormat('#,##0', 'es_AR').format(cuota.monto.toInt())}',
             valueColor: gc,
           ),
           const Divider(height: 1, color: AppTheme.border),
@@ -646,7 +646,7 @@ class _RegistrarEfectivoSheetState
                 Icon(Icons.payments_rounded, size: 18, color: gc),
                 const SizedBox(width: 10),
                 Text(
-                  'Monto: \$${widget.cuota.monto.toStringAsFixed(0)}',
+                  'Monto: \$ ${NumberFormat('#,##0', 'es_AR').format(widget.cuota.monto.toInt())}',
                   style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
