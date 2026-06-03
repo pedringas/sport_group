@@ -121,11 +121,24 @@ class PerfilPage extends ConsumerWidget {
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(color: AppTheme.border),
                       ),
-                      child: const Center(
-                        child: Text(
-                          'No pertenecés a ningún grupo todavía',
-                          style: TextStyle(
-                              fontSize: 13, color: AppTheme.textMuted),
+                      child: Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Text(
+                              'No pertenecés a ningún grupo todavía',
+                              style: TextStyle(
+                                  fontSize: 13, color: AppTheme.textMuted),
+                            ),
+                            const SizedBox(height: 12),
+                            TextButton.icon(
+                              onPressed: () => context.push('/search'),
+                              icon: const Icon(Icons.search_rounded, size: 16),
+                              label: const Text('Buscar grupos'),
+                              style: TextButton.styleFrom(
+                                  foregroundColor: AppTheme.primary),
+                            ),
+                          ],
                         ),
                       ),
                     );
@@ -219,6 +232,25 @@ class PerfilPage extends ConsumerWidget {
               Center(
                 child: TextButton.icon(
                   onPressed: () async {
+                    final confirm = await showDialog<bool>(
+                      context: context,
+                      builder: (ctx) => AlertDialog(
+                        title: const Text('Cerrar sesión'),
+                        content: const Text('¿Cerrás sesión en este dispositivo?'),
+                        actions: [
+                          TextButton(
+                              onPressed: () => Navigator.pop(ctx, false),
+                              child: const Text('Cancelar')),
+                          TextButton(
+                            onPressed: () => Navigator.pop(ctx, true),
+                            style: TextButton.styleFrom(
+                                foregroundColor: AppTheme.danger),
+                            child: const Text('Cerrar sesión'),
+                          ),
+                        ],
+                      ),
+                    );
+                    if (confirm != true || !context.mounted) return;
                     await ref.read(authFlowProvider.notifier).signOut();
                     if (context.mounted) context.go('/login');
                   },

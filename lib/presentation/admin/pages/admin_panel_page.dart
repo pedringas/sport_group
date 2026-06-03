@@ -220,7 +220,7 @@ class AdminPanelPage extends ConsumerWidget {
                           child: _ActionTile(
                             icon: Icons.task_alt_rounded,
                             label: 'Tareas',
-                            color: Colors.teal,
+                            color: AppTheme.good,
                             onTap: () =>
                                 context.push('/group/$grupoId/tareas'),
                           ),
@@ -230,7 +230,7 @@ class AdminPanelPage extends ConsumerWidget {
                           child: _ActionTile(
                             icon: Icons.settings_rounded,
                             label: 'Configuración',
-                            color: Colors.grey,
+                            color: AppTheme.textMuted,
                             onTap: () =>
                                 context.push('/group/$grupoId/settings'),
                           ),

@@ -506,14 +506,14 @@ class _PaymentSection extends ConsumerWidget {
         ),
         const SizedBox(height: 12),
         SGPillButton(
-          label: 'Registrar pago en efectivo',
+          label: 'Pagué en efectivo',
           icon: Icons.payments_rounded,
           expand: true,
           onPressed: () => _showRegistrarEfectivo(context, ref),
         ),
         const SizedBox(height: 10),
         SGPillButton(
-          label: 'Subir comprobante manual',
+          label: 'Hice una transferencia — subir comprobante',
           icon: Icons.upload_rounded,
           tone: SGTone.outline,
           expand: true,

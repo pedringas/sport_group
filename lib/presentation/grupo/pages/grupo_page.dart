@@ -140,6 +140,31 @@ class _GrupoPageState extends ConsumerState<GrupoPage>
                     child: ListView(
                   padding: const EdgeInsets.fromLTRB(16, 12, 16, 120),
                   children: [
+                    // ── Desktop nav chips (tabs hidden on desktop)
+                    if (isDesktop)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 16),
+                        child: Wrap(
+                          spacing: 8,
+                          children: [
+                            _DesktopNavChip(
+                              icon: Icons.newspaper_outlined,
+                              label: 'Novedades',
+                              onTap: () => context.push('/group/${widget.grupoId}/noticias'),
+                            ),
+                            _DesktopNavChip(
+                              icon: Icons.group_outlined,
+                              label: 'Miembros',
+                              onTap: () => context.push('/group/${widget.grupoId}/miembros'),
+                            ),
+                            _DesktopNavChip(
+                              icon: Icons.calendar_month_outlined,
+                              label: 'Agenda',
+                              onTap: () => context.push('/group/${widget.grupoId}/agenda'),
+                            ),
+                          ],
+                        ),
+                      ),
                     if (rol != null && rol != RolMiembro.miembro)
                       Padding(
                         padding: const EdgeInsets.only(bottom: 12),
@@ -1354,6 +1379,43 @@ class _UltimasNoticias extends ConsumerWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _DesktopNavChip extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+  const _DesktopNavChip({required this.icon, required this.label, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: AppTheme.surface,
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(color: AppTheme.border),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 15, color: AppTheme.textMuted),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: AppTheme.text,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

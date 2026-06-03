@@ -213,6 +213,7 @@ class CampanaDetailPage extends ConsumerWidget {
                         padding: const EdgeInsets.symmetric(horizontal: 16),
                         child: _QuickAmounts(
                           gc: gc,
+                          faltante: campana.faltante,
                           onSelect: (amount) =>
                               _showAportarSheet(context, ref, campana,
                                   initialAmount: amount),
@@ -736,23 +737,47 @@ class _RingPainter extends CustomPainter {
 class _QuickAmounts extends StatelessWidget {
   final void Function(double) onSelect;
   final Color gc;
-  static const _presets = [500.0, 1000.0, 2000.0];
+  final double faltante;
 
-  const _QuickAmounts({required this.onSelect, required this.gc});
+  const _QuickAmounts({
+    required this.onSelect,
+    required this.gc,
+    required this.faltante,
+  });
+
+  List<double> _buildPresets() {
+    if (faltante <= 0) return [];
+    // Base: 10%, 25%, 50% of remaining, capped at full
+    final candidates = [
+      (faltante * 0.1).roundToDouble(),
+      (faltante * 0.25).roundToDouble(),
+      (faltante * 0.5).roundToDouble(),
+    ];
+    // Round to nearest sensible denomination
+    final rounded = candidates.map((v) {
+      if (v >= 10000) return (v / 1000).round() * 1000.0;
+      if (v >= 1000) return (v / 500).round() * 500.0;
+      if (v >= 100) return (v / 100).round() * 100.0;
+      return (v / 50).round() * 50.0;
+    }).where((v) => v > 0).toSet().toList()..sort();
+    return rounded.take(3).toList();
+  }
 
   @override
   Widget build(BuildContext context) {
     final fmt = NumberFormat('#,##0', 'es_AR');
+    final presets = _buildPresets();
+    if (presets.isEmpty) return const SizedBox.shrink();
     return Column(
       children: [
         Row(
-          children: _presets.map((amount) {
+          children: presets.map((amount) {
             return Expanded(
               child: GestureDetector(
                 onTap: () => onSelect(amount),
                 child: Container(
                   margin: EdgeInsets.only(
-                    right: amount != _presets.last ? 8 : 0,
+                    right: amount != presets.last ? 8 : 0,
                   ),
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   decoration: BoxDecoration(
