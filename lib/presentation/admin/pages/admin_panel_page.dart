@@ -778,6 +778,27 @@ class _SolicitudesSheet extends ConsumerWidget {
 
   Future<void> _responder(BuildContext context, WidgetRef ref,
       SolicitudUnionModel s, bool aprobar) async {
+    if (!aprobar) {
+      final confirm = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Rechazar solicitud'),
+          content: Text(
+              '¿Rechazás la solicitud de ${s.usuarioNombre}? No podrá unirse al grupo.'),
+          actions: [
+            TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: const Text('Cancelar')),
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              style: TextButton.styleFrom(foregroundColor: AppTheme.danger),
+              child: const Text('Rechazar'),
+            ),
+          ],
+        ),
+      );
+      if (confirm != true || !context.mounted) return;
+    }
     await ref.read(grupoRepositoryProvider).responderSolicitud(
         grupoId, s.usuarioUid, aprobar, s.usuarioNombre, s.usuarioAvatar);
     if (context.mounted) {
@@ -1077,7 +1098,7 @@ class _DangerZone extends ConsumerWidget {
       builder: (_) => AlertDialog(
         title: const Text('Eliminar grupo'),
         content: const Text(
-            'Esta acción eliminará el grupo y todos sus datos permanentemente. ¿Confirmás?'),
+            'Se eliminarán permanentemente el grupo, todos sus miembros, cuotas, pagos, noticias, tareas y archivos. Esta acción no se puede deshacer.'),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(context),

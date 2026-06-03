@@ -1443,6 +1443,27 @@ class _AportePendienteRowState extends ConsumerState<_AportePendienteRow> {
   bool _loading = false;
 
   Future<void> _accion(bool aprobar) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(aprobar ? 'Aprobar aporte' : 'Rechazar aporte'),
+        content: Text(aprobar
+            ? '¿Aprobás el aporte de ${widget.aporte.usuarioNombre}?'
+            : '¿Rechazás el aporte de ${widget.aporte.usuarioNombre}? El monto no se sumará a la campaña.'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Cancelar')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: TextButton.styleFrom(
+                foregroundColor: aprobar ? AppTheme.good : AppTheme.danger),
+            child: Text(aprobar ? 'Aprobar' : 'Rechazar'),
+          ),
+        ],
+      ),
+    );
+    if (confirm != true || !mounted) return;
     setState(() => _loading = true);
     try {
       if (aprobar) {

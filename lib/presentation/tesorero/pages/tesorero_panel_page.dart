@@ -536,10 +536,31 @@ class _ComprobanteCard extends ConsumerWidget {
                     icon: Icons.close_rounded,
                     label: 'Rechazar',
                     color: AppTheme.danger,
-                    onTap: () => ref
-                        .read(cuotaRepositoryProvider)
-                        .updatePagoEstado(
-                            pago.id, EstadoPago.pendiente),
+                    onTap: () async {
+                      final confirm = await showDialog<bool>(
+                        context: context,
+                        builder: (ctx) => AlertDialog(
+                          title: const Text('Rechazar comprobante'),
+                          content: Text(
+                              '¿Rechazás el comprobante de ${pago.usuarioNombre}? El pago quedará pendiente.'),
+                          actions: [
+                            TextButton(
+                                onPressed: () => Navigator.pop(ctx, false),
+                                child: const Text('Cancelar')),
+                            TextButton(
+                              onPressed: () => Navigator.pop(ctx, true),
+                              style: TextButton.styleFrom(
+                                  foregroundColor: AppTheme.danger),
+                              child: const Text('Rechazar'),
+                            ),
+                          ],
+                        ),
+                      );
+                      if (confirm == true) {
+                        ref.read(cuotaRepositoryProvider).updatePagoEstado(
+                            pago.id, EstadoPago.pendiente);
+                      }
+                    },
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -548,10 +569,31 @@ class _ComprobanteCard extends ConsumerWidget {
                     icon: Icons.check_rounded,
                     label: 'Confirmar',
                     color: AppTheme.good,
-                    onTap: () => ref
-                        .read(cuotaRepositoryProvider)
-                        .updatePagoEstado(
-                            pago.id, EstadoPago.aprobado),
+                    onTap: () async {
+                      final confirm = await showDialog<bool>(
+                        context: context,
+                        builder: (ctx) => AlertDialog(
+                          title: const Text('Confirmar pago'),
+                          content: Text(
+                              '¿Confirmás el pago de ${pago.usuarioNombre}? Se registrará como pagado.'),
+                          actions: [
+                            TextButton(
+                                onPressed: () => Navigator.pop(ctx, false),
+                                child: const Text('Cancelar')),
+                            TextButton(
+                              onPressed: () => Navigator.pop(ctx, true),
+                              style: TextButton.styleFrom(
+                                  foregroundColor: AppTheme.good),
+                              child: const Text('Confirmar'),
+                            ),
+                          ],
+                        ),
+                      );
+                      if (confirm == true) {
+                        ref.read(cuotaRepositoryProvider).updatePagoEstado(
+                            pago.id, EstadoPago.aprobado);
+                      }
+                    },
                   ),
                 ),
               ],

@@ -271,7 +271,7 @@ class _AmountCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: const Color(0xFF1C1C2E),
+        color: AppTheme.text,
         borderRadius: BorderRadius.circular(20),
       ),
       child: Column(

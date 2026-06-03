@@ -174,14 +174,33 @@ class ModeradorPanelPage extends ConsumerWidget {
                               _ActionBtn(
                                 icon: Icons.close_rounded,
                                 color: AppTheme.danger,
-                                onTap: () => ref
-                                    .read(grupoRepositoryProvider)
-                                    .responderSolicitud(
-                                        grupoId,
-                                        s.usuarioUid,
-                                        false,
-                                        s.usuarioNombre,
-                                        s.usuarioAvatar),
+                                onTap: () async {
+                                  final confirm = await showDialog<bool>(
+                                    context: context,
+                                    builder: (ctx) => AlertDialog(
+                                      title: const Text('Rechazar solicitud'),
+                                      content: Text(
+                                          '¿Rechazás la solicitud de ${s.usuarioNombre}?'),
+                                      actions: [
+                                        TextButton(
+                                            onPressed: () =>
+                                                Navigator.pop(ctx, false),
+                                            child: const Text('Cancelar')),
+                                        TextButton(
+                                          onPressed: () =>
+                                              Navigator.pop(ctx, true),
+                                          style: TextButton.styleFrom(
+                                              foregroundColor: AppTheme.danger),
+                                          child: const Text('Rechazar'),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                  if (confirm != true || !context.mounted) return;
+                                  ref.read(grupoRepositoryProvider).responderSolicitud(
+                                      grupoId, s.usuarioUid, false,
+                                      s.usuarioNombre, s.usuarioAvatar);
+                                },
                               ),
                               const SizedBox(width: 8),
                               _ActionBtn(
