@@ -59,18 +59,19 @@ class CampanaDetailPage extends ConsumerWidget {
               CustomScrollView(
                 slivers: [
                   // â”€â”€ TopBar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-                  SliverToBoxAdapter(
-                    child: SafeArea(
-                      bottom: false,
-                      child: _TopBar(
-                        puedeGestionar: puedeGestionar,
-                        activa: activa,
-                        grupoId: grupoId,
-                        onAction: (action) =>
-                            _handleAction(context, ref, campana, action),
+                  if (MediaQuery.sizeOf(context).width < 900)
+                    SliverToBoxAdapter(
+                      child: SafeArea(
+                        bottom: false,
+                        child: _TopBar(
+                          puedeGestionar: puedeGestionar,
+                          activa: activa,
+                          grupoId: grupoId,
+                          onAction: (action) =>
+                              _handleAction(context, ref, campana, action),
+                        ),
                       ),
                     ),
-                  ),
 
                   // â”€â”€ Hero card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                   SliverToBoxAdapter(

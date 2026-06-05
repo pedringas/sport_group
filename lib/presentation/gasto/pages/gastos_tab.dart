@@ -69,10 +69,11 @@ class GastosTab extends ConsumerWidget {
 
     final gruposGasto = ref.watch(_gruposGastoFiltradosProvider(grupoId));
     final totalGastosMes = ref.watch(_totalGastosMesProvider(grupoId));
+    final isDesktop = MediaQuery.sizeOf(context).width >= 900;
 
     return Scaffold(
       backgroundColor: AppTheme.bg(context),
-      appBar: AppBar(
+      appBar: isDesktop ? null : AppBar(
         backgroundColor: AppTheme.surf(context),
         surfaceTintColor: Colors.transparent,
         leading: IconButton(
