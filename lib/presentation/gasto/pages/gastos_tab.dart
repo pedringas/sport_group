@@ -627,9 +627,17 @@ class _TotalCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bg = positive ? AppTheme.goodSoft : AppTheme.dangerSoft;
-    final textColor =
-        positive ? AppTheme.goodInk : AppTheme.dangerInk;
+    final isEmpty = amount == 0;
+    final bg = isEmpty
+        ? AppTheme.surfaceAlt
+        : positive
+            ? AppTheme.goodSoft
+            : AppTheme.dangerSoft;
+    final textColor = isEmpty
+        ? AppTheme.textMuted
+        : positive
+            ? AppTheme.goodInk
+            : AppTheme.dangerInk;
 
     return Container(
       padding: const EdgeInsets.all(14),
@@ -657,7 +665,7 @@ class _TotalCard extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            '${positive ? '+' : '−'} \$ ${_fmt(amount)}',
+            isEmpty ? '\$ 0' : '${positive ? '+' : '−'} \$ ${_fmt(amount)}',
             style: GoogleFonts.bricolageGrotesque(
               fontWeight: FontWeight.w700,
               fontSize: 18,
