@@ -70,6 +70,7 @@ class _AgendaPageState extends ConsumerState<AgendaPage> {
       return a.eventDate.compareTo(b.eventDate);
     });
 
+    final isDesktop = MediaQuery.sizeOf(context).width >= 900;
     return SafeArea(
       bottom: false,
       child: Column(
@@ -84,15 +85,16 @@ class _AgendaPageState extends ConsumerState<AgendaPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        'Agenda',
-                        style: GoogleFonts.bricolageGrotesque(
-                          fontWeight: FontWeight.w700,
-                          fontSize: 24,
-                          letterSpacing: -0.4,
-                          color: AppTheme.text,
+                      if (!isDesktop)
+                        Text(
+                          'Agenda',
+                          style: GoogleFonts.bricolageGrotesque(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 24,
+                            letterSpacing: -0.4,
+                            color: AppTheme.text,
+                          ),
                         ),
-                      ),
                       const Text(
                         'Eventos de tus grupos privados y favoritos',
                         style: TextStyle(
@@ -648,7 +650,10 @@ class _EventCard extends StatelessWidget {
             : AppTheme.primarySoft;
 
     return GestureDetector(
-      onTap: () => context.push('/group/${g.id}/noticias'),
+      onTap: () => context.push(
+        '/group/${g.id}/noticias/${n.id}/comentarios'
+        '?titulo=${Uri.encodeComponent(n.titulo)}',
+      ),
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
