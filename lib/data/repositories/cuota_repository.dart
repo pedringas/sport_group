@@ -1,5 +1,7 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'dart:developer';
+import 'dart:typed_data';
 import 'package:uuid/uuid.dart';
+import '../datasources/cuota_datasource.dart';
 import '../models/cuota_model.dart';
 import '../models/pago_model.dart';
 import '../models/enums.dart';
@@ -8,20 +10,15 @@ import '../models/notificacion_rol_model.dart';
 import 'notificacion_repository.dart';
 
 class CuotaRepository {
-  final _db = FirebaseFirestore.instance;
+  final CuotaDatasource _ds;
   final _uuid = const Uuid();
+  CuotaRepository([CuotaDatasource? ds]) : _ds = ds ?? CuotaDatasource();
 
-  Stream<List<CuotaModel>> getCuotas(String grupoId) {
-    return _db
-        .collection('grupos')
-        .doc(grupoId)
-        .collection('cuotas')
-        .orderBy('vencimiento', descending: false)
-        .snapshots()
-        .map((s) => s.docs.map(CuotaModel.fromFirestore).toList());
-  }
+  // ── Cuotas ──────────────────────────────────────────────────────────────────
 
-  /// Creates a single cuota (non-recurring).
+  Stream<List<CuotaModel>> getCuotas(String grupoId) =>
+      _ds.getCuotas(grupoId);
+
   Future<String> createCuota({
     required String grupoId,
     required String titulo,
@@ -31,23 +28,16 @@ class CuotaRepository {
     List<String>? miembrosUids,
     List<String>? excluidosUids,
   }) async {
-    final ref = _db.collection('grupos').doc(grupoId).collection('cuotas').doc();
-    await ref.set({
-      'grupoId': grupoId,
-      'titulo': titulo,
-      'descripcion': descripcion,
-      'monto': monto,
-      'vencimiento': Timestamp.fromDate(vencimiento),
-      'activa': true,
-      'esRecurrente': false,
-      'createdAt': Timestamp.now(),
-      if (miembrosUids != null && miembrosUids.isNotEmpty)
-        'miembrosUids': miembrosUids,
-      if (excluidosUids != null && excluidosUids.isNotEmpty)
-        'excluidosUids': excluidosUids,
-    });
+    final id = await _ds.createCuotaDoc(
+      grupoId: grupoId,
+      titulo: titulo,
+      descripcion: descripcion,
+      monto: monto,
+      vencimiento: vencimiento,
+      miembrosUids: miembrosUids,
+      excluidosUids: excluidosUids,
+    );
 
-    // Write group activity (fire-and-forget)
     try {
       final fmt = '\$${monto.round()}';
       await NotificacionRepository().writeActividad(
@@ -60,17 +50,17 @@ class CuotaRepository {
           actorNombre: '',
           grupoId: grupoId,
           grupoNombre: '',
-          referenciaId: ref.id,
+          referenciaId: id,
           createdAt: DateTime.now(),
         ),
       );
-    } catch (_) {}
+    } catch (e) {
+      log('[Actividad] $e');
+    }
 
-    return ref.id;
+    return id;
   }
 
-  /// Creates N cuotas in a batch (recurring series).
-  /// Returns the serieId shared by all generated cuotas.
   Future<String> createCuotasSerie({
     required String grupoId,
     required String titulo,
@@ -81,164 +71,63 @@ class CuotaRepository {
     required int totalCuotas,
     List<String>? miembrosUids,
     List<String>? excluidosUids,
-  }) async {
-    final serieId = _uuid.v4();
-    final batch = _db.batch();
-    final colRef = _db.collection('grupos').doc(grupoId).collection('cuotas');
+  }) =>
+      _ds.createCuotasSerie(
+        grupoId: grupoId,
+        serieId: _uuid.v4(),
+        titulo: titulo,
+        descripcion: descripcion,
+        monto: monto,
+        primerVencimiento: primerVencimiento,
+        frecuencia: frecuencia,
+        totalCuotas: totalCuotas,
+        miembrosUids: miembrosUids,
+        excluidosUids: excluidosUids,
+      );
 
-    for (int i = 0; i < totalCuotas; i++) {
-      final venc = _addPeriods(primerVencimiento, frecuencia, i);
-      final ref = colRef.doc();
-      batch.set(ref, {
-        'grupoId': grupoId,
-        'titulo': titulo,
-        'descripcion': descripcion,
-        'monto': monto,
-        'vencimiento': Timestamp.fromDate(venc),
-        'activa': true,
-        'esRecurrente': true,
-        'frecuencia': frecuencia.name,
-        'totalCuotas': totalCuotas,
-        'numeroCuota': i + 1,
-        'serieId': serieId,
-        'createdAt': Timestamp.now(),
-        if (miembrosUids != null && miembrosUids.isNotEmpty)
-          'miembrosUids': miembrosUids,
-        if (excluidosUids != null && excluidosUids.isNotEmpty)
-          'excluidosUids': excluidosUids,
-      });
-    }
+  Future<CuotaModel?> getCuota(String grupoId, String cuotaId) =>
+      _ds.getCuota(grupoId, cuotaId);
 
-    await batch.commit();
-    return serieId;
-  }
+  Stream<List<PagoModel>> getPagosDeCuota(String grupoId, String cuotaId) =>
+      _ds.getPagosDeCuota(grupoId, cuotaId);
 
-  DateTime _addPeriods(DateTime base, FrecuenciaCuota freq, int n) {
-    switch (freq) {
-      case FrecuenciaCuota.mensual:
-        return DateTime(base.year, base.month + n, base.day);
-      case FrecuenciaCuota.bimestral:
-        return DateTime(base.year, base.month + (n * 2), base.day);
-      case FrecuenciaCuota.trimestral:
-        return DateTime(base.year, base.month + (n * 3), base.day);
-      case FrecuenciaCuota.anual:
-        return DateTime(base.year + n, base.month, base.day);
-      default:
-        // semanal / quincenal — add days
-        return base.add(Duration(days: freq.dias * n));
-    }
-  }
+  Stream<PagoModel?> getMiPago(String grupoId, String cuotaId, String uid) =>
+      _ds.getMiPago(grupoId, cuotaId, uid);
 
-  Future<CuotaModel?> getCuota(String grupoId, String cuotaId) async {
-    final doc = await _db
-        .collection('grupos')
-        .doc(grupoId)
-        .collection('cuotas')
-        .doc(cuotaId)
-        .get();
-    if (!doc.exists) return null;
-    return CuotaModel.fromFirestore(doc);
-  }
+  Future<void> deleteCuota(String grupoId, String cuotaId) =>
+      _ds.deleteCuota(grupoId, cuotaId);
 
-  Stream<List<PagoModel>> getPagosDeCuota(String grupoId, String cuotaId) {
-    return _db
-        .collection('pagos')
-        .where('grupoId', isEqualTo: grupoId)
-        .where('cuotaId', isEqualTo: cuotaId)
-        .snapshots()
-        .map((s) => s.docs.map(PagoModel.fromFirestore).toList());
-  }
+  Future<void> updateCuota(
+    String grupoId,
+    String cuotaId, {
+    required String titulo,
+    String? descripcion,
+    required double monto,
+    required DateTime vencimiento,
+  }) =>
+      _ds.updateCuotaDoc(grupoId, cuotaId,
+          titulo: titulo,
+          descripcion: descripcion,
+          monto: monto,
+          vencimiento: vencimiento);
 
-  Stream<PagoModel?> getMiPago(String grupoId, String cuotaId, String uid) {
-    return _db
-        .collection('pagos')
-        .where('grupoId', isEqualTo: grupoId)
-        .where('cuotaId', isEqualTo: cuotaId)
-        .where('usuarioUid', isEqualTo: uid)
-        .limit(1)
-        .snapshots()
-        .map((s) => s.docs.isEmpty ? null : PagoModel.fromFirestore(s.docs.first));
-  }
+  Future<void> deleteSerie(String grupoId, String serieId) =>
+      _ds.deleteSerie(grupoId, serieId);
 
-  Future<void> deleteCuota(String grupoId, String cuotaId) async {
-    await _db
-        .collection('grupos')
-        .doc(grupoId)
-        .collection('cuotas')
-        .doc(cuotaId)
-        .delete();
-  }
+  Stream<List<PagoModel>> getPagosDeGrupo(String grupoId) =>
+      _ds.getPagosDeGrupo(grupoId);
 
-  /// Deletes every cuota in a series (same serieId) using batched writes.
-  Future<void> deleteSerie(String grupoId, String serieId) async {
-    final snap = await _db
-        .collection('grupos')
-        .doc(grupoId)
-        .collection('cuotas')
-        .where('serieId', isEqualTo: serieId)
-        .get();
+  Stream<List<PagoModel>> getMisPagosGrupo(String grupoId, String uid) =>
+      _ds.getMisPagosGrupo(grupoId, uid);
 
-    // Firestore batch limit = 500 ops
-    const batchSize = 400;
-    for (int i = 0; i < snap.docs.length; i += batchSize) {
-      final batch = _db.batch();
-      final chunk = snap.docs.sublist(
-          i, (i + batchSize).clamp(0, snap.docs.length));
-      for (final d in chunk) {
-        batch.delete(d.reference);
-      }
-      await batch.commit();
-    }
-  }
+  Future<void> deletePago(String pagoId) => _ds.deletePago(pagoId);
 
-  /// Admin: all pagos for a group (to build completion matrix).
-  Stream<List<PagoModel>> getPagosDeGrupo(String grupoId) {
-    return _db
-        .collection('pagos')
-        .where('grupoId', isEqualTo: grupoId)
-        .snapshots()
-        .map((s) => s.docs.map(PagoModel.fromFirestore).toList());
-  }
+  Future<void> updatePagoEstado(String pagoId, EstadoPago nuevoEstado) =>
+      _ds.updatePagoEstadoDoc(pagoId, nuevoEstado);
 
-  /// Current user's own pagos for a group — safe for members.
-  /// Only queries documents where usuarioUid == uid, so the Firestore rule
-  /// `resource.data.usuarioUid == request.auth.uid` is satisfied without
-  /// any get() calls (avoids the 10-get() limit on list evaluations).
-  Stream<List<PagoModel>> getMisPagosGrupo(String grupoId, String uid) {
-    return _db
-        .collection('pagos')
-        .where('grupoId', isEqualTo: grupoId)
-        .where('usuarioUid', isEqualTo: uid)
-        .snapshots()
-        .map((s) => s.docs.map(PagoModel.fromFirestore).toList());
-  }
+  Stream<List<PagoModel>> getMisPagosAprobados(String grupoId, String uid) =>
+      _ds.getMisPagosAprobados(grupoId, uid);
 
-  /// Delete a pago document (e.g. member cancels a pending cash payment).
-  Future<void> deletePago(String pagoId) async {
-    await _db.collection('pagos').doc(pagoId).delete();
-  }
-
-  /// Admin: approve or reject a payment.
-  Future<void> updatePagoEstado(String pagoId, EstadoPago nuevoEstado) async {
-    await _db.collection('pagos').doc(pagoId).update({
-      'estado': nuevoEstado.name,
-      'updatedAt': Timestamp.now(),
-    });
-  }
-
-  /// Stream of approved payments for a specific user in a group (for Caja).
-  Stream<List<PagoModel>> getMisPagosAprobados(String grupoId, String uid) {
-    return _db
-        .collection('pagos')
-        .where('grupoId', isEqualTo: grupoId)
-        .where('usuarioUid', isEqualTo: uid)
-        .where('estado', isEqualTo: EstadoPago.aprobado.name)
-        .orderBy('createdAt', descending: true)
-        .snapshots()
-        .map((s) => s.docs.map(PagoModel.fromFirestore).toList());
-  }
-
-  /// Registra un pago en efectivo y notifica a tesoros + admins del grupo.
   Future<String> registrarPagoEfectivo({
     required String grupoId,
     required String cuotaId,
@@ -247,44 +136,26 @@ class CuotaRepository {
     required double monto,
     String? nota,
   }) async {
-    final ref = _db.collection('pagos').doc();
-    final data = {
-      'grupoId': grupoId,
-      'cuotaId': cuotaId,
-      'usuarioUid': usuarioUid,
-      'usuarioNombre': usuarioNombre,
-      'montoEsperado': monto,
-      'estado': EstadoPago.pendiente.name,
-      'metodo': MetodoPago.efectivo.name,
-      'createdAt': Timestamp.now(),
-      'updatedAt': Timestamp.now(),
-    };
-    if (nota != null && nota.trim().isNotEmpty) data['nota'] = nota.trim();
-    await ref.set(data);
+    final pagoId = await _ds.createPagoEfectivoDoc(
+      grupoId: grupoId,
+      cuotaId: cuotaId,
+      usuarioUid: usuarioUid,
+      usuarioNombre: usuarioNombre,
+      monto: monto,
+      nota: nota,
+    );
 
-    // Notify all tesoros and admins of the group
     try {
-      final snap = await _db
-          .collection('grupos')
-          .doc(grupoId)
-          .collection('miembros')
-          .where('rol', whereIn: [
-            RolMiembro.tesorero.name,
-            RolMiembro.administrador.name,
-          ])
-          .get();
-
+      final adminUids = await _ds.getAdminsTesoreros(grupoId, usuarioUid);
       final notifRepo = NotificacionRepository();
-      for (final doc in snap.docs) {
-        if (doc.id == usuarioUid) continue; // no notificar a uno mismo
+      for (final uid in adminUids) {
         await notifRepo.writeNotificacionRol(
-          doc.id,
+          uid,
           NotificacionRolModel(
             id: '',
             tipo: 'pago_efectivo_registrado',
             titulo: 'Nuevo pago en efectivo',
-            mensaje:
-                '$usuarioNombre registró un pago de \$${monto.round()} (cuota)',
+            mensaje: '$usuarioNombre registró un pago de \$${monto.round()} (cuota)',
             grupoId: grupoId,
             grupoNombre: '',
             leida: false,
@@ -292,12 +163,13 @@ class CuotaRepository {
           ),
         );
       }
-    } catch (_) {}
+    } catch (e) {
+      log('[Actividad] $e');
+    }
 
-    return ref.id;
+    return pagoId;
   }
 
-  /// Aprueba o rechaza un pago y notifica al miembro.
   Future<void> confirmarPago({
     required String pagoId,
     required EstadoPago nuevoEstado,
@@ -305,12 +177,8 @@ class CuotaRepository {
     required String grupoId,
     required double monto,
   }) async {
-    await _db.collection('pagos').doc(pagoId).update({
-      'estado': nuevoEstado.name,
-      'updatedAt': Timestamp.now(),
-    });
+    await _ds.updatePagoEstadoDoc(pagoId, nuevoEstado);
 
-    // Notify the member
     try {
       final aprobado = nuevoEstado == EstadoPago.aprobado;
       await NotificacionRepository().writeNotificacionRol(
@@ -320,15 +188,17 @@ class CuotaRepository {
           tipo: aprobado ? 'pago_aprobado' : 'pago_rechazado',
           titulo: aprobado ? '¡Pago aprobado!' : 'Pago rechazado',
           mensaje: aprobado
-              ? 'Tu pago de \$${monto.round()} fue confirmado por el tesorero.'
-              : 'Tu pago de \$${monto.round()} fue rechazado. Contactá al tesorero.',
+              ? 'Tu pago de \$${monto.round()} fue confirmado por el administrador.'
+              : 'Tu pago de \$${monto.round()} fue rechazado. Contactá al administrador.',
           grupoId: grupoId,
           grupoNombre: '',
           leida: false,
           createdAt: DateTime.now(),
         ),
       );
-    } catch (_) {}
+    } catch (e) {
+      log('[Actividad] $e');
+    }
   }
 
   Future<String> initPagoManual({
@@ -337,19 +207,29 @@ class CuotaRepository {
     required String usuarioUid,
     required String usuarioNombre,
     required double monto,
-  }) async {
-    final ref = _db.collection('pagos').doc();
-    await ref.set({
-      'grupoId': grupoId,
-      'cuotaId': cuotaId,
-      'usuarioUid': usuarioUid,
-      'usuarioNombre': usuarioNombre,
-      'montoEsperado': monto,
-      'estado': EstadoPago.pendiente.name,
-      'metodo': MetodoPago.transferencia.name,
-      'createdAt': Timestamp.now(),
-      'updatedAt': Timestamp.now(),
-    });
-    return ref.id;
-  }
+  }) =>
+      _ds.initPagoManual(
+        grupoId: grupoId,
+        cuotaId: cuotaId,
+        usuarioUid: usuarioUid,
+        usuarioNombre: usuarioNombre,
+        monto: monto,
+      );
+
+  Future<void> uploadComprobante({
+    required String pagoId,
+    required String grupoId,
+    required Uint8List bytes,
+    String? bancoOrigen,
+    String? nroOperacion,
+    String? mensajeAlTesorero,
+  }) =>
+      _ds.uploadComprobante(
+        pagoId: pagoId,
+        grupoId: grupoId,
+        bytes: bytes,
+        bancoOrigen: bancoOrigen,
+        nroOperacion: nroOperacion,
+        mensajeAlTesorero: mensajeAlTesorero,
+      );
 }

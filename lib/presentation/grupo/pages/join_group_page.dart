@@ -6,6 +6,7 @@ import '../../../data/models/enums.dart';
 import '../../../providers/grupo_provider.dart';
 import '../../../providers/auth_provider.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/theme/sg_widgets.dart';
 
 class JoinGroupPage extends ConsumerWidget {
   final String grupoId;
@@ -21,7 +22,7 @@ class JoinGroupPage extends ConsumerWidget {
     return Scaffold(
       body: grupoAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Error: $e')),
+        error: (e, _) => const SGErrorState(message: 'Error al cargar el grupo'),
         data: (grupo) {
           if (grupo == null) {
             return const Center(child: Text('Grupo no encontrado'));

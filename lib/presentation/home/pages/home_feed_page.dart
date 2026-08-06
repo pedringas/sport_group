@@ -9,6 +9,7 @@ import '../../../core/theme/sg_widgets.dart';
 import '../../../data/models/enums.dart';
 import '../../../providers/auth_provider.dart';
 import '../../../providers/dashboard_provider.dart';
+import '../../../providers/feed_provider.dart';
 import '../../grupo/widgets/noticias_tab.dart' show showNoticiaDetail;
 import '../../../providers/notificacion_provider.dart';
 
@@ -44,7 +45,7 @@ class HomeFeedPage extends ConsumerWidget {
         .first;
 
     final hasHero = featuredEvent != null || tareasPrioritarias.isNotEmpty;
-    final isDesktop = MediaQuery.sizeOf(context).width >= 900;
+    final isDesktop = MediaQuery.sizeOf(context).width >= AppTheme.kResponsiveBreakpoint;
 
     return Scaffold(
       backgroundColor: AppTheme.bg(context),
@@ -261,7 +262,7 @@ class HomeFeedPage extends ConsumerWidget {
               )
             else
               SliverPadding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, AppTheme.kBottomNavPadding),
                 sliver: SliverList.separated(
                   itemCount: feedNoticias.length,
                   separatorBuilder: (_, __) => const SizedBox(height: 12),

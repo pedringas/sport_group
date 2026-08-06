@@ -1,0 +1,1939 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Análisis · sports_groups_app</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --coral:       #E2693F;
+      --coral-soft:  #FADBCC;
+      --coral-ink:   #95371F;
+      --plum:        #8868B8;
+      --plum-soft:   #ECE2F1;
+      --plum-ink:    #553F86;
+      --green:       #2DA67D;
+      --green-soft:  #D9F1E5;
+      --green-ink:   #1A6B4F;
+      --red:         #DA4A2C;
+      --red-soft:    #FCD9D0;
+      --red-ink:     #8C1F0C;
+      --canvas:      #F8F5F3;
+      --chalk:       #F1ECE7;
+      --white:       #FFFFFF;
+      --dugout:      #2A211E;
+      --muted:       #756864;
+      --line-light:  #E8E2DD;
+      --line-strong: #D6CFC8;
+      --amber:       #D4872A;
+      --amber-soft:  #FDE9C6;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'DM Sans', system-ui, sans-serif;
+      background: var(--canvas);
+      color: var(--dugout);
+      line-height: 1.5;
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* ── SIDEBAR ── */
+    .sidebar {
+      width: 248px;
+      flex-shrink: 0;
+      background: var(--white);
+      border-right: 1px solid var(--line-light);
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      padding: 24px 0;
+    }
+
+    .sidebar-brand {
+      padding: 0 20px 20px;
+      border-bottom: 1px solid var(--line-light);
+    }
+
+    .sidebar-project {
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: 0.3px;
+      margin-bottom: 6px;
+    }
+
+    .sidebar-title {
+      font-family: 'Bricolage Grotesque', sans-serif;
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--dugout);
+      letter-spacing: -0.3px;
+      line-height: 1.2;
+    }
+
+    .sidebar-date {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      margin-top: 8px;
+      background: var(--chalk);
+      border-radius: 999px;
+      padding: 3px 10px;
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--muted);
+    }
+
+    .sidebar-section-label {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.8px;
+      color: var(--muted);
+      text-transform: uppercase;
+      padding: 16px 20px 8px;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 20px;
+      cursor: pointer;
+      border-radius: 0;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--muted);
+      text-decoration: none;
+      transition: background 150ms, color 150ms;
+      border-left: 3px solid transparent;
+    }
+
+    .nav-item:hover {
+      background: var(--canvas);
+      color: var(--dugout);
+    }
+
+    .nav-item.active {
+      color: var(--dugout);
+      font-weight: 600;
+    }
+
+    .nav-item.active.area-sec  { border-left-color: var(--red);   background: color-mix(in srgb, var(--red) 6%, transparent); }
+    .nav-item.active.area-test { border-left-color: var(--plum);  background: color-mix(in srgb, var(--plum) 6%, transparent); }
+    .nav-item.active.area-ux   { border-left-color: var(--coral); background: color-mix(in srgb, var(--coral) 6%, transparent); }
+    .nav-item.active.area-arq  { border-left-color: var(--green); background: color-mix(in srgb, var(--green) 6%, transparent); }
+    .nav-item.active.area-all  { border-left-color: var(--dugout); background: var(--chalk); color: var(--dugout); }
+
+    .nav-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .dot-all  { background: var(--dugout); }
+    .dot-sec  { background: var(--red); }
+    .dot-test { background: var(--plum); }
+    .dot-ux   { background: var(--coral); }
+    .dot-arq  { background: var(--green); }
+
+    .nav-count {
+      margin-left: auto;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 1px 7px;
+      border-radius: 999px;
+      background: var(--chalk);
+      color: var(--muted);
+    }
+
+    .nav-item.active .nav-count { background: color-mix(in srgb, currentColor 15%, transparent); color: inherit; }
+
+    .sidebar-divider { height: 1px; background: var(--line-light); margin: 12px 20px; }
+
+    .filter-chips {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      padding: 0 12px;
+    }
+
+    .filter-chip {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 10px;
+      border-radius: 10px;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 150ms, color 150ms;
+      color: var(--muted);
+      border: none;
+      background: none;
+      text-align: left;
+      width: 100%;
+    }
+
+    .filter-chip:hover { background: var(--canvas); color: var(--dugout); }
+    .filter-chip.active { font-weight: 600; }
+    .filter-chip.active.sev-all      { background: var(--chalk); color: var(--dugout); }
+    .filter-chip.active.sev-critical { background: var(--red-soft); color: var(--red-ink); }
+    .filter-chip.active.sev-medium   { background: var(--amber-soft); color: var(--amber); }
+    .filter-chip.active.sev-low      { background: var(--green-soft); color: var(--green-ink); }
+
+    .filter-swatch {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .sw-all      { background: var(--dugout); }
+    .sw-critical { background: var(--red); }
+    .sw-medium   { background: var(--amber); }
+    .sw-low      { background: var(--green); }
+
+    .sidebar-footer {
+      margin-top: auto;
+      padding: 16px 20px 0;
+      border-top: 1px solid var(--line-light);
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    /* ── MAIN ── */
+    .main {
+      flex: 1;
+      min-width: 0;
+      padding: 32px 40px 64px;
+      max-width: 900px;
+    }
+
+    /* ── PAGE HEADER ── */
+    .page-header { margin-bottom: 32px; }
+
+    .page-eyebrow {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--muted);
+      letter-spacing: 0.2px;
+      margin-bottom: 8px;
+    }
+
+    .page-title {
+      font-family: 'Bricolage Grotesque', sans-serif;
+      font-size: 32px;
+      font-weight: 700;
+      letter-spacing: -0.6px;
+      line-height: 1.1;
+      color: var(--dugout);
+      text-wrap: balance;
+      margin-bottom: 12px;
+    }
+
+    .stack-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--chalk);
+      border: 1px solid var(--line-light);
+      border-radius: 999px;
+      padding: 4px 12px;
+      font-size: 12px;
+      font-family: 'DM Mono', monospace;
+      color: var(--muted);
+    }
+
+    /* ── STATS ── */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-bottom: 32px;
+    }
+
+    .stat-card {
+      background: var(--white);
+      border: 1px solid var(--line-light);
+      border-radius: 16px;
+      padding: 16px;
+    }
+
+    .stat-card-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+
+    .stat-label {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--muted);
+    }
+
+    .stat-icon {
+      width: 28px; height: 28px;
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px;
+    }
+
+    .stat-number {
+      font-family: 'Bricolage Grotesque', sans-serif;
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      line-height: 1;
+      color: var(--dugout);
+    }
+
+    .stat-sub {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    /* ── TOP 5 ── */
+    .top5-section {
+      background: var(--white);
+      border: 1px solid var(--line-light);
+      border-top: 3px solid var(--red);
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 32px;
+    }
+
+    .top5-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .top5-badge {
+      background: var(--red-soft);
+      color: var(--red-ink);
+      border-radius: 999px;
+      padding: 4px 12px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+    }
+
+    .top5-title {
+      font-family: 'Bricolage Grotesque', sans-serif;
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--dugout);
+    }
+
+    .top5-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .top5-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 12px 14px;
+      background: var(--canvas);
+      border-radius: 10px;
+      font-size: 13px;
+      cursor: pointer;
+      transition: background 150ms;
+    }
+
+    .top5-item:hover { background: var(--chalk); }
+
+    .top5-num {
+      width: 22px; height: 22px;
+      border-radius: 50%;
+      background: var(--red);
+      color: var(--white);
+      font-size: 11px;
+      font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    .top5-id {
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      font-weight: 500;
+      padding: 2px 8px;
+      border-radius: 6px;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .top5-text { color: var(--dugout); line-height: 1.4; flex: 1; }
+    .top5-text strong { font-weight: 600; }
+    .top5-effort {
+      font-size: 11px;
+      color: var(--muted);
+      flex-shrink: 0;
+      margin-top: 2px;
+      white-space: nowrap;
+    }
+
+    /* ── SECTION ── */
+    .section {
+      margin-bottom: 40px;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 2px solid var(--line-light);
+    }
+
+    .section-icon {
+      width: 36px; height: 36px;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+
+    .section-title {
+      font-family: 'Bricolage Grotesque', sans-serif;
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+      color: var(--dugout);
+    }
+
+    .section-count {
+      margin-left: auto;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 999px;
+    }
+
+    /* ── ISSUE CARD ── */
+    .issue-card {
+      background: var(--white);
+      border: 1px solid var(--line-light);
+      border-radius: 16px;
+      padding: 18px 20px;
+      margin-bottom: 10px;
+      transition: border-color 150ms, box-shadow 150ms;
+    }
+
+    .issue-card:hover {
+      border-color: var(--line-strong);
+      box-shadow: 0 1px 4px rgba(42,33,30,0.06);
+    }
+
+    .issue-card.hidden { display: none; }
+
+    .issue-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+    }
+
+    .issue-id {
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      font-weight: 500;
+      padding: 3px 8px;
+      border-radius: 7px;
+      flex-shrink: 0;
+    }
+
+    .id-sec  { background: var(--red-soft);  color: var(--red-ink); }
+    .id-test { background: var(--plum-soft); color: var(--plum-ink); }
+    .id-ux   { background: var(--coral-soft); color: var(--coral-ink); }
+    .id-arq  { background: var(--green-soft); color: var(--green-ink); }
+
+    .issue-title {
+      font-family: 'Bricolage Grotesque', sans-serif;
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: -0.1px;
+      color: var(--dugout);
+      line-height: 1.3;
+      flex: 1;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      padding: 3px 10px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.1px;
+      flex-shrink: 0;
+    }
+
+    .chip-critical { background: var(--red-soft);   color: var(--red-ink);   }
+    .chip-medium   { background: var(--amber-soft);  color: var(--amber);     }
+    .chip-low      { background: var(--chalk);       color: var(--muted);     }
+    .chip-plum     { background: var(--plum-soft);   color: var(--plum-ink);  }
+    .chip-coral    { background: var(--coral-soft);  color: var(--coral-ink); }
+    .chip-green    { background: var(--green-soft);  color: var(--green-ink); }
+    .chip-muted    { background: var(--chalk);       color: var(--muted);     }
+
+    .issue-body {
+      font-size: 13.5px;
+      color: #4A3C38;
+      line-height: 1.55;
+      margin-bottom: 12px;
+    }
+
+    .issue-meta {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .meta-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      font-size: 12.5px;
+    }
+
+    .meta-label {
+      font-weight: 600;
+      color: var(--muted);
+      flex-shrink: 0;
+      width: 52px;
+      padding-top: 1px;
+    }
+
+    .file-tag {
+      font-family: 'DM Mono', monospace;
+      font-size: 11.5px;
+      background: var(--chalk);
+      border: 1px solid var(--line-light);
+      border-radius: 6px;
+      padding: 2px 7px;
+      color: var(--dugout);
+      display: inline-block;
+      margin: 1px 2px 1px 0;
+      line-height: 1.4;
+    }
+
+    .files-wrap { display: flex; flex-wrap: wrap; gap: 3px; flex: 1; }
+
+    .fix-block {
+      background: var(--canvas);
+      border: 1px solid var(--line-light);
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-size: 12.5px;
+      color: var(--dugout);
+      flex: 1;
+      line-height: 1.5;
+    }
+
+    .fix-code {
+      font-family: 'DM Mono', monospace;
+      font-size: 11.5px;
+      white-space: pre-wrap;
+      word-break: break-all;
+      background: #2A211E;
+      color: #F1ECE7;
+      border-radius: 8px;
+      padding: 10px 14px;
+      margin-top: 8px;
+      line-height: 1.6;
+      display: block;
+    }
+
+    .type-chips { display: flex; gap: 4px; flex-wrap: wrap; }
+
+    /* ── EFFORT ── */
+    .effort {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 6px;
+      background: var(--chalk);
+      color: var(--muted);
+    }
+
+    .effort-s { background: var(--green-soft); color: var(--green-ink); }
+    .effort-m { background: var(--amber-soft); color: var(--amber); }
+    .effort-l { background: var(--red-soft);   color: var(--red-ink); }
+
+    /* ── SECTION COLORS ── */
+    .sec-sec  .section-icon { background: var(--red-soft);  }
+    .sec-test .section-icon { background: var(--plum-soft); }
+    .sec-ux   .section-icon { background: var(--coral-soft);}
+    .sec-arq  .section-icon { background: var(--green-soft);}
+
+    .sec-sec  .section-count { background: var(--red-soft);  color: var(--red-ink);  }
+    .sec-test .section-count { background: var(--plum-soft); color: var(--plum-ink); }
+    .sec-ux   .section-count { background: var(--coral-soft); color: var(--coral-ink); }
+    .sec-arq  .section-count { background: var(--green-soft); color: var(--green-ink);}
+
+    .sec-sec  .section-header  { border-bottom-color: var(--red);  }
+    .sec-test .section-header  { border-bottom-color: var(--plum); }
+    .sec-ux   .section-header  { border-bottom-color: var(--coral);}
+    .sec-arq  .section-header  { border-bottom-color: var(--green);}
+
+    /* ── SEPARATOR ── */
+    .section-sep {
+      height: 1px;
+      background: var(--line-light);
+      margin: 28px 0;
+    }
+
+    /* ── RESULTS COUNTER ── */
+    .results-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 16px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .results-count {
+      font-weight: 700;
+      color: var(--dugout);
+    }
+
+    /* ── NO RESULTS ── */
+    .no-results {
+      text-align: center;
+      padding: 48px 24px;
+      color: var(--muted);
+      font-size: 14px;
+      display: none;
+    }
+
+    .no-results.visible { display: block; }
+
+    /* ── PRINT ── */
+    @media print {
+      .sidebar { display: none; }
+      .main { padding: 24px; max-width: 100%; }
+      .issue-card { page-break-inside: avoid; }
+    }
+
+    /* ── SCROLLBAR ── */
+    .sidebar::-webkit-scrollbar { width: 4px; }
+    .sidebar::-webkit-scrollbar-thumb { background: var(--line-strong); border-radius: 4px; }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { transition: none !important; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══ SIDEBAR ═══ -->
+<aside class="sidebar">
+  <div class="sidebar-brand">
+    <div class="sidebar-project">sports_groups_app</div>
+    <div class="sidebar-title">Análisis de Código</div>
+    <div class="sidebar-date">📅 2026-06-06</div>
+  </div>
+
+  <div class="sidebar-section-label">Áreas</div>
+
+  <a href="#all" class="nav-item area-all active" data-filter-area="all" onclick="filterArea('all', this)">
+    <span class="nav-dot dot-all"></span>
+    Todos los issues
+    <span class="nav-count">46</span>
+  </a>
+  <a href="#sec" class="nav-item area-sec" data-filter-area="sec" onclick="filterArea('sec', this)">
+    <span class="nav-dot dot-sec"></span>
+    Seguridad
+    <span class="nav-count">10</span>
+  </a>
+  <a href="#test" class="nav-item area-test" data-filter-area="test" onclick="filterArea('test', this)">
+    <span class="nav-dot dot-test"></span>
+    Testing
+    <span class="nav-count">12</span>
+  </a>
+  <a href="#ux" class="nav-item area-ux" data-filter-area="ux" onclick="filterArea('ux', this)">
+    <span class="nav-dot dot-ux"></span>
+    Frontend / UX
+    <span class="nav-count">14</span>
+  </a>
+  <a href="#arq" class="nav-item area-arq" data-filter-area="arq" onclick="filterArea('arq', this)">
+    <span class="nav-dot dot-arq"></span>
+    Arquitectura
+    <span class="nav-count">10</span>
+  </a>
+
+  <div class="sidebar-divider"></div>
+  <div class="sidebar-section-label">Severidad</div>
+
+  <div class="filter-chips">
+    <button class="filter-chip sev-all active" onclick="filterSeverity('all', this)">
+      <span class="filter-swatch sw-all"></span>
+      Todas
+      <span style="margin-left:auto;font-size:11px;color:var(--muted)">46</span>
+    </button>
+    <button class="filter-chip sev-critical" onclick="filterSeverity('critical', this)">
+      <span class="filter-swatch sw-critical"></span>
+      Crítica / ALTA
+      <span style="margin-left:auto;font-size:11px;color:var(--muted)">14</span>
+    </button>
+    <button class="filter-chip sev-medium" onclick="filterSeverity('medium', this)">
+      <span class="filter-swatch sw-medium"></span>
+      Media / MEDIA
+      <span style="margin-left:auto;font-size:11px;color:var(--muted)">22</span>
+    </button>
+    <button class="filter-chip sev-low" onclick="filterSeverity('low', this)">
+      <span class="filter-swatch sw-low"></span>
+      Baja / Mejora
+      <span style="margin-left:auto;font-size:11px;color:var(--muted)">10</span>
+    </button>
+  </div>
+
+  <div class="sidebar-footer">
+    Flutter · Firebase · Riverpod<br>
+    GoRouter · TypeScript Functions
+  </div>
+</aside>
+
+<!-- ═══ MAIN ═══ -->
+<main class="main">
+
+  <!-- PAGE HEADER -->
+  <header class="page-header">
+    <div class="page-eyebrow">Reporte de análisis</div>
+    <h1 class="page-title">46 issues en 4 áreas</h1>
+    <span class="stack-tag">Flutter · Firebase · Riverpod · GoRouter</span>
+  </header>
+
+  <!-- STATS -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-card-top">
+        <span class="stat-label">Total issues</span>
+        <span class="stat-icon" style="background:var(--chalk)">📋</span>
+      </div>
+      <div class="stat-number">46</div>
+      <div class="stat-sub">en 4 áreas</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card-top">
+        <span class="stat-label">Crítico / ALTA</span>
+        <span class="stat-icon" style="background:var(--red-soft)">🔴</span>
+      </div>
+      <div class="stat-number" style="color:var(--red)">14</div>
+      <div class="stat-sub">atención inmediata</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card-top">
+        <span class="stat-label">Medio / MEDIA</span>
+        <span class="stat-icon" style="background:var(--amber-soft)">🟠</span>
+      </div>
+      <div class="stat-number" style="color:var(--amber)">22</div>
+      <div class="stat-sub">corto plazo</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card-top">
+        <span class="stat-label">Baja / Mejora</span>
+        <span class="stat-icon" style="background:var(--green-soft)">🟢</span>
+      </div>
+      <div class="stat-number" style="color:var(--green)">10</div>
+      <div class="stat-sub">backlog futuro</div>
+    </div>
+  </div>
+
+  <!-- TOP 5 -->
+  <div class="top5-section">
+    <div class="top5-header">
+      <span class="top5-badge">TOP 5</span>
+      <span class="top5-title">Atacar primero</span>
+    </div>
+    <ul class="top5-list">
+      <li class="top5-item" onclick="highlightCard('sec-01')">
+        <span class="top5-num">1</span>
+        <span class="top5-id id-sec">SEC-01</span>
+        <span class="top5-text"><strong>Escalada de privilegios</strong> — Cualquier usuario puede escribir <code style="font-family:monospace;font-size:11px">rol: "administrador"</code> directo a Firestore</span>
+        <span class="top5-effort">Fix: 5 líneas</span>
+      </li>
+      <li class="top5-item" onclick="highlightCard('sec-02')">
+        <span class="top5-num">2</span>
+        <span class="top5-id id-sec">SEC-02</span>
+        <span class="top5-text"><strong>Datos sensibles en Firestore</strong> — <code style="font-family:monospace;font-size:11px">ocrRaw</code> guarda texto completo de comprobantes (números de tarjeta, cuentas bancarias)</span>
+        <span class="top5-effort">ALTA</span>
+      </li>
+      <li class="top5-item" onclick="highlightCard('ux-01')">
+        <span class="top5-num">3</span>
+        <span class="top5-id id-ux">UX-01</span>
+        <span class="top5-text"><strong>Crash en SGAvatar</strong> — <code style="font-family:monospace;font-size:11px">name.trim()[0]</code> rompe con IndexError si el nombre queda vacío</span>
+        <span class="top5-effort">Fix: 1 línea</span>
+      </li>
+      <li class="top5-item" onclick="highlightCard('ux-02')">
+        <span class="top5-num">4</span>
+        <span class="top5-id id-ux">UX-02</span>
+        <span class="top5-text"><strong>Doble submit en formularios</strong> — Crear cuota, gasto o noticia permite doble tap e inserciones duplicadas</span>
+        <span class="top5-effort">P1</span>
+      </li>
+      <li class="top5-item" onclick="highlightCard('arq-02')">
+        <span class="top5-num">5</span>
+        <span class="top5-id id-arq">ARQ-02</span>
+        <span class="top5-text"><strong>Datasource layer faltante</strong> — 8 de 9 repositorios acceden directo a Firestore, bloqueando todos los tests</span>
+        <span class="top5-effort">Alta</span>
+      </li>
+    </ul>
+  </div>
+
+  <!-- RESULTS BAR -->
+  <div class="results-bar">
+    <span>Mostrando</span>
+    <span class="results-count" id="results-count">46</span>
+    <span>issues</span>
+  </div>
+
+  <!-- NO RESULTS -->
+  <div class="no-results" id="no-results">No hay issues que coincidan con los filtros seleccionados.</div>
+
+  <!-- ═══ SEGURIDAD ═══ -->
+  <section class="section sec-sec" id="sec">
+    <div class="section-header">
+      <div class="section-icon">🔐</div>
+      <h2 class="section-title">Seguridad</h2>
+      <span class="section-count">10 issues</span>
+    </div>
+
+    <div id="card-sec-01" class="issue-card" data-area="sec" data-severity="critical">
+      <div class="issue-header">
+        <span class="issue-id id-sec">SEC-01</span>
+        <span class="issue-title">Escalada de privilegios al unirse a grupo</span>
+        <span class="chip chip-critical">ALTA</span>
+      </div>
+      <p class="issue-body">La regla Firestore permite que cualquier usuario cree su propio documento en <code class="file-tag">grupos/{grupoId}/miembros/{uid}</code> sin validar el campo <code class="file-tag">rol</code>. Un atacante puede escribir directamente con <code class="file-tag">rol: "administrador"</code> usando la API de Firestore.</p>
+      <div class="issue-meta">
+        <div class="meta-row">
+          <span class="meta-label">Archivo</span>
+          <div class="files-wrap"><span class="file-tag">firestore.rules línea 80</span></div>
+        </div>
+        <div class="meta-row">
+          <span class="meta-label">Fix</span>
+          <div class="fix-block">Agregar validación de campos inmutables en la regla de create:
+<code class="fix-code">allow create: if (isAdmin(grupoId) || isSelf(uid))
+  &amp;&amp; request.resource.data.rol == 'miembro'
+  &amp;&amp; request.resource.data.estado == 'activo';</code></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="card-sec-02" class="issue-card" data-area="sec" data-severity="critical">
+      <div class="issue-header">
+        <span class="issue-id id-sec">SEC-02</span>
+        <span class="issue-title">OCR almacena texto sensible de comprobantes en Firestore</span>
+        <span class="chip chip-critical">ALTA</span>
+      </div>
+      <p class="issue-body"><code class="file-tag">validateComprobante</code> guarda el campo <code class="file-tag">ocrRaw</code> con el texto completo extraído del comprobante de pago. Puede contener números de tarjeta, CVV, cuentas bancarias. Texto sensible en claro, sin encriptación, accesible por cualquier miembro del grupo.</p>
+      <div class="issue-meta">
+        <div class="meta-row">
+          <span class="meta-label">Archivos</span>
+          <div class="files-wrap">
+            <span class="file-tag">functions/src/index.ts línea 43</span>
+            <span class="file-tag">lib/data/models/pago_model.dart línea 15</span>
+          </div>
+        </div>
+        <div class="meta-row">
+          <span class="meta-label">Fix</span>
+          <div class="fix-block">Eliminar el campo <code class="file-tag">ocrRaw</code> del update a Firestore. Solo persistir <code class="file-tag">montoDetectado</code> y <code class="file-tag">ocrConfianza</code>. El texto crudo nunca debe salir de la Cloud Function.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="issue-card" data-area="sec" data-severity="medium">
+      <div class="issue-header">
+        <span class="issue-id id-sec">SEC-03</span>
+        <span class="issue-title">Storage rules sin validación de membresía</span>
+        <span class="chip chip-medium">MEDIA</span>
+      </div>
+      <p class="issue-body">Cualquier usuario autenticado puede leer Y escribir en <code class="file-tag">grupos/{grupoId}/**</code>, incluyendo sobrescribir el logo o portada de un grupo al que no pertenece. No hay verificación de membresía activa.</p>
+      <div class="issue-meta">
+        <div class="meta-row">
+          <span class="meta-label">Archivo</span>
+          <div class="files-wrap"><span class="file-tag">storage.rules líneas 7-19</span></div>
+        </div>
+        <div class="meta-row">
+          <span class="meta-label">Fix</span>
+          <div class="fix-block">Restringir writes a admins/mods del grupo, reads a miembros activos. Requiere reescribir la lógica ya que Storage Rules no puede llamar helpers de Firestore Rules directamente.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="issue-card" data-area="sec" data-severity="medium">
+      <div class="issue-header">
+        <span class="issue-id id-sec">SEC-04</span>
+        <span class="issue-title">Cloud Vision API sin validación de ownership</span>
+        <span class="chip chip-medium">MEDIA</span>
+      </div>
+      <p class="issue-body">La función <code class="file-tag">validateComprobante</code> procesa cualquier comprobante sin verificar que el usuario que lo subió sea miembro activo del grupo. Permite abusar la quota de Vision API (costo inesperado) o procesar comprobantes de grupos ajenos.</p>
+      <div class="issue-meta">
+        <div class="meta-row">
+          <span class="meta-label">Archivo</span>
+          <div class="files-wrap"><span class="file-tag">functions/src/index.ts líneas 12-76</span></div>
+        </div>
+        <div class="meta-row">
+          <span class="meta-label">Fix</span>
+          <div class="fix-block">Verificar que <code class="file-tag">pagoDoc.usuarioUid</code> sea miembro activo del grupo antes de llamar Vision API. Si no lo es, return inmediato sin procesar.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="issue-card" data-area="sec" data-severity="medium">
+      <div class="issue-header">
+        <span class="issue-id id-sec">SEC-05</span>
+        <span class="issue-title">Gastos: el pagador puede modificar monto y participantes post-creación</span>
+        <span class="chip chip-medium">MEDIA</span>
+      </div>
+      <p class="issue-body">La regla <code class="file-tag">allow update: if resource.data.pagadorUid == request.auth.uid</code> no restringe qué campos se pueden cambiar. Un usuario podría reducir su propia deuda o cambiar quiénes participan en el gasto.</p>
+      <div class="issue-meta">
+        <div class="meta-row">
+          <span class="meta-label">Archivo</span>
+          <div class="files-wrap"><span class="file-tag">firestore.rules línea 157</span></div>
+        </div>
+        <div class="meta-row">
+          <span class="meta-label">Fix</span>
+          <div class="fix-block">Usar <code class="file-tag">request.resource.data.diff(resource.data).affectedKeys()</code> para bloquear campos inmutables: <code class="file-tag">monto</code>, <code class="file-tag">participantes</code>, <code class="file-tag">pagadorUid</code>.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="issue-card" data-area="sec" data-severity="medium">
+      <div class="issue-header">
+        <span class="issue-id id-sec">SEC-06</span>
+        <span class="issue-title">Tareas: cualquier miembro puede crear y actualizar</span>
+        <span class="chip chip-medium">MEDIA</span>
+      </div>
+      <p class="issue-body">Las reglas Firestore permiten que cualquier miembro activo cree y actualice tareas. Según los roles definidos, esto debería estar restringido a delegado, moderador o admin.</p>
+      <div class="issue-meta">
+        <div class="meta-row">
+          <span class="meta-label">Archivo</span>
+          <div class="files-wrap"><span class="file-tag">firestore.rules líneas 175-182</span></div>
+        </div>
+        <div class="meta-row">
+          <span class="meta-label">Fix</span>
+          <div class="fix-block">Agregar <code class="file-tag">&amp;&amp; (isAdminOrMod(grupoId) || hasRol(grupoId, 'delegado'))</code> en las reglas de create y update de tareas.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="issue-card" data-area="sec" data-severity="medium">
+      <div class="issue-header">
+        <span class="issue-id id-sec">SEC-07</span>
+        <span class="issue-title">Información financiera logueada en Cloud Functions</span>
+        <span class="chip chip-medium">MEDIA</span>
+      </div>
+      <p class="issue-body"><code class="file-tag">logger.info()</code> registra montos de pagos detectados por OCR. Viola principios de privacidad mínima; los montos transaccionales no deberían aparecer en logs de Cloud Functions.</p>
+      <div class="issue-meta">
+        <div class="meta-row">
+          <span class="meta-label">Archivo</span>
+          <div class="files-wrap"><span class="file-tag">functions/src/index.ts líneas 24, 68, 70</span></div>
+        </div>
+        <div class="meta-row">
+          <span class="meta-label">Fix</span>
+          <div class="fix-block">Remover los valores monetarios de los logs. Solo loguear IDs de documentos y estados (<code class="file-tag">pendiente → aprobado</code>), nunca montos.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="issue-card" data-area="sec" data-severity="medium">
+      <div class="issue-header">
+        <span class="issue-id id-sec">SEC-08</span>
+        <span class="issue-title">Solicitudes de unión: sin bloqueo contra race condition</span>
+        <span class="chip chip-medium">MEDIA</span>
+      </div>
+      <p class="issue-body">No se valida que una solicitud esté en estado <code class="file-tag">pendiente</code> antes de responderla. Un doble-click podría procesar la misma solicitud dos veces, dejando el estado inconsistente.</p>
+      <div class="issue-meta">
+        <div class="meta-row">
+          <span class="meta-label">Archivo</span>
+          <div class="files-wrap"><span class="file-tag">lib/data/repositories/grupo_repository.dart líneas 235-265</span></div>
+        </div>
+        <div class="meta-row">
+          <span class="meta-label">Fix</span>
+          <div class="fix-block">Agregar en la Firestore rule que el update solo es válido si <code class="file-tag">resource.data.estado == 'pendiente'</code> y el nuevo estado es <code class="file-tag">aprobado</code> o <code class="file-tag">rechazado</code>.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="issue-card" data-area="sec" data-severity="low">
+      <div class="issue-header">
+        <span class="issue-id id-sec">SEC-09</span>
+        <span class="issue-title">Usuarios: read global sin restricción</span>
+        <span class="chip chip-low">BAJA</span>
+      </div>
+      <p class="issue-body">Cualquier usuario autenticado puede leer todos los documentos de usuarios: nombres, teléfonos y fcmToken. Permite enumeración de usuarios del sistema.</p>
+      <div class="issue-meta">
+        <div class="meta-row">
+          <span class="meta-label">Archivo</span>
+          <div class="files-wrap"><span class="file-tag">firestore.rules línea 47</span></div>
+        </div>
+        <div class="meta-row">
+          <span class="meta-label">Fix</span>
+          <div class="fix-block"><code class="file-tag">allow read: if isSelf(uid);</code> — para búsqueda de usuarios, usar una Cloud Function controlada que no exponga todos los campos.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="issue-card" data-area="sec" data-severity="low">
+      <div class="issue-header">
+        <span class="issue-id id-sec">SEC-10</span>
+        <span class="issue-title">Campañas: aportes auto-aprobados sin límite de monto</span>
+        <span class="chip chip-low">BAJA</span>
+      </div>
+      <p class="issue-body">Los aportes a campañas se auto-aprueban al crearse sin verificar que la campaña esté activa ni que el monto sea razonable. Un miembro podría ingresar un aporte de $999.999 completando la campaña artificialmente.</p>
+      <div class="issue-meta">
+        <div class="meta-row">
+          <span class="meta-label">Archivo</span>
+          <div class="files-wrap"><span class="file-tag">lib/data/repositories/campana_repository.dart línea 140</span></div>
+        </div>
+        <div class="meta-row">
+          <span class="meta-label">Fix</span>
+          <div class="fix-block">Validar en Firestore rule que <code class="file-tag">campaña.estado == 'activa'</code> y establecer un límite de monto máximo por aporte.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="section-sep"></div>
+
+  <!-- ═══ TESTING ═══ -->
+  <section class="section sec-test" id="test">
+    <div class="section-header">
+      <div class="section-icon">🧪</div>
+      <h2 class="section-title">Testing</h2>
+      <span class="section-count">12 issues</span>
+    </div>
+
+    <div class="issue-card" data-area="test" data-severity="critical">
+      <div class="issue-header">
+        <span class="issue-id id-test">TEST-01</span>
+        <span class="issue-title">Auth flow completo sin cobertura</span>
+        <span class="chip chip-critical">Crítico</span>
+        <span class="effort effort-l">L</span>
+      </div>
+      <p class="issue-body">Login, registro, OTP, Google Sign-in y manejo de errores sin un solo test. Es la puerta de entrada de toda la app; cualquier regresión aquí bloquea a todos los usuarios.</p>
+      <div class="issue-meta">
+        <div class="meta-row">
+          <span class="meta-label">Archivos</span>
+          <div class="files-wrap">
+            <span class="file-tag">lib/providers/auth_provider.dart</span>
+            <span class="file-tag">lib/data/repositories/auth_repository.dart</span>
+            <span class="file-tag">lib/data/datasources/auth_datasource.dart</span>
+          </div>
+        </div>
+        <div class="meta-row">
+          <span class="meta-label">Tipo</span>
+          <div class="type-chips">
+            <span class="chip chip-plum">Unit</span>
+            <span class="chip chip-coral">Widget</span>
+          </div>
+        </div>
+        <div class="meta-row">
+          <span class="meta-label">Fix</span>
+          <div class="fix-block">Unit tests para <code class="file-tag">AuthFlowNotifier</code> con mock de <code class="file-tag">auth_datasource</code>. Widget test del login form validando estados loading/error/success.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="issue-card" data-area="test" data-severity="medium">
+      <div class="issue-header">
+        <span class="issue-id id-test">TEST-02</span>
+        <span class="issue-title">Error mapping de Firebase Auth sin tests</span>
+        <span class="chip chip-medium">Alto</span>
+        <span class="effort effort-s">S</span>
+      </div>
+      <p class="issue-body">Los mapeos de códigos de error Firebase a mensajes en español (<code class="file-tag">_mapError</code>, <code class="file-tag">_mapEmailError</code>) no tienen cobertura. Errores no mapeados muestran mensajes vacíos al usuario.</p>
+      <div class="issue-meta">
+        <div class="meta-row">
+          <span class="meta-label">Archivo</span>
+          <div class="files-wrap"><span class="file-tag">lib/providers/auth_provider.dart líneas 123-149</span></div>
+        </div>
+        <div class="meta-row">
+          <span class="meta-label">Tipo</span>
+          <div class="type-chips"><span class="chip chip-plum">Unit</span></div>
+        </div>
+        <div class="meta-row">
+          <span class="meta-label">Fix</span>
+          <div class="fix-block">Parametrizar casos: <code class="file-tag">phone-not-found</code>, <code class="file-tag">weak-password</code>, <code class="file-tag">quota-exceeded</code>, <code class="file-tag">session-expired</code>, código desconocido.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="issue-card" data-area="test" data-severity="critical">
+      <div class="issue-header">
+        <span class="issue-id id-test">TEST-03</span>
+        <span class="issue-title">OCR: extractMonto con múltiples formatos numéricos</span>
+        <span class="chip chip-critical">Crítico</span>
+        <span class="effort effort-m">M</span>
+      </div>
+      <p class="issue-body">La función de extracción de monto con regex no tiene tests. Montos detectados incorrectamente pueden aprobar pagos falsos automáticamente.</p>
+      <div class="issue-meta">
+        <div class="meta-row">
+          <span class="meta-label">Archivo</span>
+          <div class="files-wrap"><span class="file-tag">functions/src/ocr.ts líneas 5-40</span></div>
+        </div>
+        <div class="meta-row">
+          <span class="meta-label">Tipo</span>
+          <div class="type-chips"><span class="chip chip-plum">Unit (firebase-functions-test)</span></div>
+        </div>
+        <div class="meta-row">
+          <span class="meta-label">Fix</span>
+          <div class="fix-block">Tests con samples: <code class="file-tag">"$1.234,56"</code>, <code class="file-tag">"$1234.56"</code>, <code class="file-tag">"ARS 500"</code>, texto sin monto, texto con múltiples montos.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="issue-card" data-area="test" data-severity="critical">
+      <div class="issue-header">
+        <span class="issue-id id-test">TEST-04</span>
+        <span class="issue-title">validateComprobante: error handling si Vision API falla</span>
+        <span class="chip chip-critical">Crítico</span>
+        <span class="effort effort-s">S</span>
+      </div>
+      <p class="issue-body">Si la Cloud Function crashea por un error de Vision API, el pago queda en estado incierto sin notificación al usuario ni retry automático.</p>
+      <div class="issue-meta">
+        <div class="meta-row">
+          <span class="meta-label">Archivo</span>
+          <div class="files-wrap"><span class="file-tag">functions/src/index.ts líneas 69-75</span></div>
+        </div>
+        <div class="meta-row">
+          <span class="meta-label">Tipo</span>
+          <div class="type-chips"><span class="chip chip-plum">Unit (firebase-functions-test)</span></div>
+        </div>
+        <div class="meta-row">
+          <span class="meta-label">Fix</span>
+          <div class="fix-block">Test que simula un error de Vision API y verifica: (1) pago queda en estado <code class="file-tag">revision</code>, (2) la función no lanza excepción no manejada, (3) se loguea el error.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="issue-card" data-area="test" data-severity="critical">
+      <div class="issue-header">
+        <span class="issue-id id-test">TEST-05</span>
+        <span class="issue-title">computeBalances: lógica de deudas y créditos</span>
+        <span class="chip chip-critical">Crítico</span>
+        <span class="effort effort-m">M</span>
+      </div>
+      <p class="issue-body">Los balances financieros del sistema de gastos no tienen ningún test. Balances incorrectos generan disputas entre miembros del grupo.</p>
+      <div class="issue-meta">
+        <div class="meta-row">
+          <span class="meta-label">Archivo</span>
+          <div class="files-wrap"><span class="file-tag">lib/data/repositories/gasto_repository.dart (computeBalances)</span></div>
+        </div>
+        <div class="meta-row">
+          <span class="meta-label">Tipo</span>
+          <div class="type-chips"><span class="chip chip-plum">Unit</span></div>
+        </div>
+        <div class="meta-row">
+          <span class="meta-label">Fix</span>
+          <div class="fix-block">Tests con escenarios: gasto $300 entre 3 personas ($100 c/u), liquidación parcial, múltiples gastos del mismo usuario, gasto con un solo participante.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="issue-card" data-area="test" data-severity="critical">
+      <div class="issue-header">
+        <span class="issue-id id-test">TEST-06</span>
+        <span class="issue-title">CrearSerie de cuotas: fechas y distribución a miembros</span>
+        <span class="chip chip-critical">Crítico</span>
+        <span class="effort effort-m">M</span>
+      </div>
+      <p class="issue-body">La generación de cuotas recurrentes (mensual, semanal) puede crear vencimientos duplicados o asignar cuotas a miembros equivocados si la lógica de serie falla.</p>
+      <div class="issue-meta">
+        <div class="meta-row">
+          <span class="meta-label">Archivo</span>
+          <div class="files-wrap"><span class="file-tag">lib/providers/cuota_provider.dart líneas 85-114</span></div>
+        </div>
+        <div class="meta-row">
+          <span class="meta-label">Tipo</span>
+          <div class="type-chips">
+            <span class="chip chip-plum">Unit</span>
+            <span class="chip chip-coral">Integration</span>
+          </div>
+        </div>
+        <div class="meta-row">
+          <span class="meta-label">Fix</span>
+          <div class="fix-block">Tests de fechas generadas con distintas frecuencias y tests de inclusión/exclusión de UIDs (<code class="file-tag">excluidosUids</code>).</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="issue-card" data-area="test" data-severity="medium">
+      <div class="issue-header">
+        <span class="issue-id id-test">TEST-07</span>
+        <span class="issue-title">Notificaciones por rol: sendNotificationToRole</span>
+        <span class="chip chip-medium">Alto</span>
+        <span class="effort effort-m">M</span>
+      </div>
+      <p class="issue-body">Tesoreros no reciben notificaciones de pagos si la función falla silenciosamente al filtrar por rol. No hay tests que validen el filtrado correcto.</p>
+      <div class="issue-meta">
+        <div class="meta-row">
+          <span class="meta-label">Archivo</span>
+          <div class="files-wrap"><span class="file-tag">functions/src/index.ts líneas 102-127</span></div>
+        </div>
+        <div class="meta-row">
+          <span class="meta-label">Tipo</span>
+          <div class="type-chips"><span class="chip chip-plum">Unit (firebase-functions-test)</span></div>
+        </div>
+        <div class="meta-row">
+          <span class="meta-label">Fix</span>
+          <div class="fix-block">Mock de Firestore + FCM Admin, verificar que se filtra correctamente por rol y estado activo, sin duplicar notificaciones.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="issue-card" data-area="test" data-severity="critical">
+      <div class="issue-header">
+        <span class="issue-id id-test">TEST-08</span>
+        <span class="issue-title">CrearGrupo: atomicidad del batch (grupo + miembro admin)</span>
+        <span class="chip chip-critical">Crítico</span>
+        <span class="effort effort-l">L</span>
+      </div>
+      <p class="issue-body">La batch transaction puede crear el grupo pero fallar al agregar el miembro admin. No hay rollback visible y el grupo quedaría huérfano sin administrador.</p>
+      <div class="issue-meta">
+        <div class="meta-row">
+          <span class="meta-label">Archivos</span>
+          <div class="files-wrap">
+            <span class="file-tag">lib/providers/grupo_provider.dart líneas 179-232</span>
+            <span class="file-tag">lib/data/repositories/grupo_repository.dart</span>
+          </div>
+        </div>
+        <div class="meta-row">
+          <span class="meta-label">Tipo</span>
+          <div class="type-chips"><span class="chip chip-coral">Integration</span></div>
+        </div>
+        <div class="meta-row">
+          <span class="meta-label">Fix</span>
+          <div class="fix-block">Test con Firestore emulator que simule fallo en el segundo write del batch y verifique que no queda grupo huérfano.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="issue-card" data-area="test" data-severity="medium">
+      <div class="issue-header">
+        <span class="issue-id id-test">TEST-09</span>
+        <span class="issue-title">Unirse a grupo: datos del usuario fallback chain</span>
+        <span class="chip chip-medium">Alto</span>
+        <span class="effort effort-m">M</span>
+      </div>
+      <p class="issue-body">Si <code class="file-tag">nombreCompleto</code> es vacío, hay una cadena de fallbacks (<code class="file-tag">displayName</code>, UID) que no están cubiertos por tests. Miembros con datos faltantes rompen vistas de comentarios y listas.</p>
+      <div class="issue-meta">
+        <div class="meta-row">
+          <span class="meta-label">Archivo</span>
+          <div class="files-wrap"><span class="file-tag">lib/providers/grupo_provider.dart líneas 87-103</span></div>
+        </div>
+        <div class="meta-row">
+          <span class="meta-label">Tipo</span>
+          <div class="type-chips"><span class="chip chip-coral">Integration</span></div>
+        </div>
+        <div class="meta-row">
+          <span class="meta-label">Fix</span>
+          <div class="fix-block">Tests con: usuario sin nombre, sin displayName, con nombre completo válido. Verificar que el miembro persiste con datos correctos en cada caso.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="issue-card" data-area="test" data-severity="medium">
+      <div class="issue-header">
+        <span class="issue-id id-test">TEST-10</span>
+        <span class="issue-title">PagoManualPage: validación de form y prevención de doble submit</span>
+        <span class="chip chip-medium">Alto</span>
+        <span class="effort effort-m">M</span>
+      </div>
+      <p class="issue-body">El usuario puede hacer doble-tap en "Enviar" y subir el mismo comprobante dos veces, creando pagos duplicados en el sistema.</p>
+      <div class="issue-meta">
+        <div class="meta-row">
+          <span class="meta-label">Archivo</span>
+          <div class="files-wrap"><span class="file-tag">lib/presentation/cuota/pages/pago_manual_page.dart</span></div>
+        </div>
+        <div class="meta-row">
+          <span class="meta-label">Tipo</span>
+          <div class="type-chips"><span class="chip chip-coral">Widget</span></div>
+        </div>
+        <div class="meta-row">
+          <span class="meta-label">Fix</span>
+          <div class="fix-block">Widget test que verifica: botón deshabilitado durante upload, segundo tap ignorado, estado de loading visible.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="issue-card" data-area="test" data-severity="medium">
+      <div class="issue-header">
+        <span class="issue-id id-test">TEST-11</span>
+        <span class="issue-title">CrearGastoPage: cálculo de split y selección de participantes</span>
+        <span class="chip chip-medium">Alto</span>
+        <span class="effort effort-m">M</span>
+      </div>
+      <p class="issue-body">Splits mal calculados significa que usuarios pagan montos equivocados. La lógica de división no tiene cobertura de tests.</p>
+      <div class="issue-meta">
+        <div class="meta-row">
+          <span class="meta-label">Archivo</span>
+          <div class="files-wrap"><span class="file-tag">lib/presentation/gasto/pages/crear_gasto_page.dart</span></div>
+        </div>
+        <div class="meta-row">
+          <span class="meta-label">Tipo</span>
+          <div class="type-chips">
+            <span class="chip chip-coral">Widget</span>
+            <span class="chip chip-plum">Unit</span>
+          </div>
+        </div>
+        <div class="meta-row">
+          <span class="meta-label">Fix</span>
+          <div class="fix-block">Unit test del split ($300 / 3 = $100 c/u, $100 / 3 = $33.33 c/u con residuo). Widget test del selector de participantes all/subset.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="issue-card" data-area="test" data-severity="medium">
+      <div class="issue-header">
+        <span class="issue-id id-test">TEST-12</span>
+        <span class="issue-title">Eliminar grupo: cascada de subcollections</span>
+        <span class="chip chip-medium">Alto</span>
+        <span class="effort effort-l">L</span>
+      </div>
+      <p class="issue-body">Datos huérfanos en Firestore después de eliminar un grupo pueden causar security rule errors o data leaks. La cascada de borrado no está testeada.</p>
+      <div class="issue-meta">
+        <div class="meta-row">
+          <span class="meta-label">Archivo</span>
+          <div class="files-wrap"><span class="file-tag">lib/data/repositories/grupo_repository.dart (deleteGrupo)</span></div>
+        </div>
+        <div class="meta-row">
+          <span class="meta-label">Tipo</span>
+          <div class="type-chips"><span class="chip chip-coral">Integration</span></div>
+        </div>
+        <div class="meta-row">
+          <span class="meta-label">Fix</span>
+          <div class="fix-block">Test con Firestore emulator que verifique borrado completo de: miembros, cuotas, pagos, gastos, campañas, tareas, recursos, noticias y comentarios del grupo eliminado.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="section-sep"></div>
+
+  <!-- ═══ FRONTEND / UX ═══ -->
+  <section class="section sec-ux" id="ux">
+    <div class="section-header">
+      <div class="section-icon">🎨</div>
+      <h2 class="section-title">Frontend / UX</h2>
+      <span class="section-count">14 issues</span>
+    </div>
+
+    <div id="card-ux-01" class="issue-card" data-area="ux" data-severity="critical">
+      <div class="issue-header">
+        <span class="issue-id id-ux">UX-01</span>
+        <span class="issue-title">SGAvatar: crash en nombre vacío</span>
+        <span class="chip chip-critical">P1 · Crítico</span>
+      </div>
+      <p class="issue-body"><code class="file-tag">name.trim()[0]</code> lanza <code class="file-tag">IndexError</code> si el string queda vacío después del trim. Puede ocurrir hoy con usuarios que tienen nombres solo de espacios o string vacío.</p>
+      <div class="issue-meta">
+        <div class="meta-row">
+          <span class="meta-label">Archivo</span>
+          <div class="files-wrap"><span class="file-tag">lib/core/theme/sg_widgets.dart línea 256</span></div>
+        </div>
+        <div class="meta-row">
+          <span class="meta-label">Fix</span>
+          <div class="fix-block"><code class="fix-code">final initial = name.trim().isEmpty ? '?' : name.trim()[0].toUpperCase();</code></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="card-ux-02" class="issue-card" data-area="ux" data-severity="critical">
+      <div class="issue-header">
+        <span class="issue-id id-ux">UX-02</span>
+        <span class="issue-title">Botones de acción activos durante async (doble submit)</span>
+        <span class="chip chip-critical">P1 · Importante</span>
+      </div>
+      <p class="issue-body">Crear cuota, gasto o noticia no deshabilita el botón durante la petición asíncrona. El usuario puede hacer doble-tap e insertar el mismo registro dos veces.</p>
+      <div class="issue-meta">
+        <div class="meta-row">
+          <span class="meta-label">Archivos</span>
+          <div class="files-wrap">
+            <span class="file-tag">lib/presentation/cuota/pages/crear_cuota_page.dart</span>
+            <span class="file-tag">lib/presentation/gasto/pages/crear_gasto_page.dart</span>
+          </div>
+        </div>
+        <div class="meta-row">
+          <span class="meta-label">Fix</span>
+          <div class="fix-block"><code class="fix-code">onPressed: ref.watch(provider).isLoading ? null : () => _submit(ref),</code></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="issue-card" data-area="ux" data-severity="medium">
+      <div class="issue-header">
+        <span class="issue-id id-ux">UX-03</span>
+        <span class="issue-title">Sin validación inline en campos de monto</span>
+        <span class="chip chip-medium">P2 · Importante</span>
+      </div>
+      <p class="issue-body">El usuario puede escribir montos negativos o texto inválido sin feedback inmediato. El error solo aparece en SnackBar después de intentar guardar.</p>
+      <div class="issue-meta">
+        <div class="meta-row">
+          <span class="meta-label">Archivos</span>
+          <div class="files-wrap">
+            <span class="file-tag">crear_cuota_page.dart línea 55</span>
+            <span class="file-tag">crear_gasto_page.dart</span>
+          </div>
+        </div>
+        <div class="meta-row">
+          <span class="meta-label">Fix</span>
+          <div class="fix-block">Agregar <code class="file-tag">FilteringTextInputFormatter.allow(RegExp(r'[0-9,.]'))</code> y <code class="file-tag">validator</code> inline en <code class="file-tag">TextFormField</code>.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="issue-card" data-area="ux" data-severity="medium">
+      <div class="issue-header">
+        <span class="issue-id id-ux">UX-04</span>
+        <span class="issue-title">Empty states incompletos por filtro de sección</span>
+        <span class="chip chip-medium">P2 · Importante</span>
+      </div>
+      <p class="issue-body">En campañas y tareas, si el filtro activo (ej: "Historial") resulta vacío, no hay UI diferenciada para indicar que el filtro no tiene resultados vs. que la lista global está vacía.</p>
+      <div class="issue-meta">
+        <div class="meta-row">
+          <span class="meta-label">Archivos</span>
+          <div class="files-wrap">
+            <span class="file-tag">campanas_tab.dart líneas 35-42</span>
+            <span class="file-tag">tareas_tab.dart línea 138</span>
+          </div>
+        </div>
+        <div class="meta-row">
+          <span class="meta-label">Fix</span>
+          <div class="fix-block">Verificar <code class="file-tag">filtered.isEmpty</code> dentro de cada sección y mostrar un empty state específico: "No hay campañas en Historial".</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="issue-card" data-area="ux" data-severity="medium">
+      <div class="issue-header">
+        <span class="issue-id id-ux">UX-05</span>
+        <span class="issue-title">Falta widget reutilizable para estados de error</span>
+        <span class="chip chip-medium">P2 · Importante</span>
+      </div>
+      <p class="issue-body">Los errores se muestran como <code class="file-tag">Center(child: Text('...'))</code> sin ícono, sin botón de reintentar y sin estilo consistente. Cada página tiene su propio approach.</p>
+      <div class="issue-meta">
+        <div class="meta-row">
+          <span class="meta-label">Archivos</span>
+          <div class="files-wrap">
+            <span class="file-tag">cuota_detail_page.dart línea 51</span>
+            <span class="file-tag">campana_detail_page.dart línea 40</span>
+          </div>
+        </div>
+        <div class="meta-row">
+          <span class="meta-label">Fix</span>
+          <div class="fix-block">Crear <code class="file-tag">SGErrorState({required String message, VoidCallback? onRetry})</code> en <code class="file-tag">sg_widgets.dart</code> y aplicar en todas las páginas.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="issue-card" data-area="ux" data-severity="medium">
+      <div class="issue-header">
+        <span class="issue-id id-ux">UX-06</span>
+        <span class="issue-title">Breakpoint 900px hardcodeado en 14+ archivos</span>
+        <span class="chip chip-medium">P2 · Importante</span>
+      </div>
+      <p class="issue-body">El valor <code class="file-tag">900</code> para el breakpoint responsive aparece hardcodeado en más de 14 lugares. Cambiar el breakpoint requiere actualizar todos, con alta probabilidad de inconsistencias.</p>
+      <div class="issue-meta">
+        <div class="meta-row">
+          <span class="meta-label">Archivos</span>
+          <div class="files-wrap">
+            <span class="file-tag">responsive_shell.dart línea 18</span>
+            <span class="file-tag">home_shell.dart línea 16</span>
+            <span class="file-tag">grupo_page.dart línea 134</span>
+            <span class="file-tag">+11 más</span>
+          </div>
+        </div>
+        <div class="meta-row">
+          <span class="meta-label">Fix</span>
+          <div class="fix-block"><code class="fix-code">// En lib/core/theme/app_theme.dart
+const double kResponsiveBreakpoint = 900;</code></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="issue-card" data-area="ux" data-severity="medium">
+      <div class="issue-header">
+        <span class="issue-id id-ux">UX-07</span>
+        <span class="issue-title">Color hardcodeado en hero cards (no respeta dark mode)</span>
+        <span class="chip chip-medium">P2 · Importante</span>
+      </div>
+      <p class="issue-body">Hero cards usan <code class="file-tag">color: AppTheme.text</code> que es negro en light mode y blanco en dark mode, pero el texto sobre el fondo es siempre blanco. En dark mode el texto desaparece.</p>
+      <div class="issue-meta">
+        <div class="meta-row">
+          <span class="meta-label">Archivo</span>
+          <div class="files-wrap"><span class="file-tag">lib/presentation/cuota/pages/cuotas_tab.dart línea 113</span></div>
+        </div>
+        <div class="meta-row">
+          <span class="meta-label">Fix</span>
+          <div class="fix-block">Usar <code class="file-tag">Theme.of(context).colorScheme.inverseSurface</code> o calcular contraste automático con <code class="file-tag">computeLuminance()</code>.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="issue-card" data-area="ux" data-severity="medium">
+      <div class="issue-header">
+        <span class="issue-id id-ux">UX-08</span>
+        <span class="issue-title">FAB: ícono blanco invisible sobre color de grupo claro</span>
+        <span class="chip chip-medium">P2 · Importante</span>
+      </div>
+      <p class="issue-body">El FAB usa el color del grupo como fondo y siempre blanco como foreground. Si el color del grupo es claro (ej: <code class="file-tag">#FADBCC</code> coral soft), el ícono blanco es invisible.</p>
+      <div class="issue-meta">
+        <div class="meta-row">
+          <span class="meta-label">Archivos</span>
+          <div class="files-wrap">
+            <span class="file-tag">campanas_tab.dart línea 112</span>
+            <span class="file-tag">recursos_tab.dart línea 122</span>
+          </div>
+        </div>
+        <div class="meta-row">
+          <span class="meta-label">Fix</span>
+          <div class="fix-block">Calcular luminancia del color de grupo y elegir ícono negro o blanco dinámicamente: <code class="file-tag">gc.computeLuminance() &gt; 0.5 ? Colors.black : Colors.white</code>.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="issue-card" data-area="ux" data-severity="medium">
+      <div class="issue-header">
+        <span class="issue-id id-ux">UX-09</span>
+        <span class="issue-title">Desktop sidebar: GestureDetector sin ripple ni Semantics</span>
+        <span class="chip chip-medium">P2 · Importante</span>
+      </div>
+      <p class="issue-body">Los items del sidebar usan <code class="file-tag">GestureDetector</code> en lugar de <code class="file-tag">InkWell</code>. Sin feedback visual (ripple) ni semántica para teclado o screen readers.</p>
+      <div class="issue-meta">
+        <div class="meta-row">
+          <span class="meta-label">Archivo</span>
+          <div class="files-wrap"><span class="file-tag">lib/presentation/shell/responsive_shell.dart líneas 247, 313</span></div>
+        </div>
+        <div class="meta-row">
+          <span class="meta-label">Fix</span>
+          <div class="fix-block">Reemplazar <code class="file-tag">GestureDetector</code> por <code class="file-tag">Material</code> + <code class="file-tag">InkWell</code>. Agregar <code class="file-tag">Semantics(button: true, label: label)</code>.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="issue-card" data-area="ux" data-severity="medium">
+      <div class="issue-header">
+        <span class="issue-id id-ux">UX-10</span>
+        <span class="issue-title">Sin validación de contraste WCAG en tarjetas financieras</span>
+        <span class="chip chip-medium">P2 · Importante</span>
+      </div>
+      <p class="issue-body">Hero cards con fondos oscuros dinámicos pueden no cumplir WCAG AA (4.5:1) en ciertos temas o colores de grupo. No hay verificación de contraste en runtime.</p>
+      <div class="issue-meta">
+        <div class="meta-row">
+          <span class="meta-label">Archivos</span>
+          <div class="files-wrap">
+            <span class="file-tag">lib/presentation/home/pages/caja_page.dart</span>
+            <span class="file-tag">lib/presentation/cuota/pages/cuotas_tab.dart</span>
+          </div>
+        </div>
+        <div class="meta-row">
+          <span class="meta-label">Fix</span>
+          <div class="fix-block">Verificar ratio de contraste con <code class="file-tag">Color.alphaBlend</code> + <code class="file-tag">computeLuminance()</code>. Si el ratio es menor a 4.5:1, aplicar text shadow o cambiar el color de fondo.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="issue-card" data-area="ux" data-severity="low">
+      <div class="issue-header">
+        <span class="issue-id id-ux">UX-11</span>
+        <span class="issue-title">Bottom nav padding hardcodeado (100px) sin constante</span>
+        <span class="chip chip-low">P3 · Mejora</span>
+      </div>
+      <p class="issue-body"><code class="file-tag">EdgeInsets.fromLTRB(16, 12, 16, 100)</code> duplicado en 4+ tabs sin constante compartida. Si cambia la altura de la bottom nav, hay que actualizar todos.</p>
+      <div class="issue-meta">
+        <div class="meta-row">
+          <span class="meta-label">Archivos</span>
+          <div class="files-wrap">
+            <span class="file-tag">cuotas_tab.dart línea 107</span>
+            <span class="file-tag">gastos_tab.dart línea 107</span>
+            <span class="file-tag">tareas_tab.dart línea 140</span>
+            <span class="file-tag">recursos_tab.dart</span>
+          </div>
+        </div>
+        <div class="meta-row">
+          <span class="meta-label">Fix</span>
+          <div class="fix-block"><code class="fix-code">const double kBottomNavPadding = 100; // en sg_widgets.dart</code></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="issue-card" data-area="ux" data-severity="low">
+      <div class="issue-header">
+        <span class="issue-id id-ux">UX-12</span>
+        <span class="issue-title">Skeleton screens: solo spinner sin contexto de layout</span>
+        <span class="chip chip-low">P3 · Mejora</span>
+      </div>
+      <p class="issue-body">Durante carga inicial se muestra <code class="file-tag">CircularProgressIndicator</code> genérico centrado, sin contexto del layout que va a aparecer. Degrada la percepción de velocidad.</p>
+      <div class="issue-meta">
+        <div class="meta-row">
+          <span class="meta-label">Archivos</span>
+          <div class="files-wrap">
+            <span class="file-tag">grupo_page.dart línea 127</span>
+            <span class="file-tag">cuotas_tab.dart línea 47</span>
+            <span class="file-tag">campanas_tab.dart línea 25</span>
+          </div>
+        </div>
+        <div class="meta-row">
+          <span class="meta-label">Fix</span>
+          <div class="fix-block">Implementar skeleton cards con el package <code class="file-tag">shimmer</code> para la carga inicial de listas principales.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="issue-card" data-area="ux" data-severity="low">
+      <div class="issue-header">
+        <span class="issue-id id-ux">UX-13</span>
+        <span class="issue-title">Desktop sidebar: sin tooltip en nombre de grupo truncado</span>
+        <span class="chip chip-low">P3 · Mejora</span>
+      </div>
+      <p class="issue-body">Nombres de grupo largos se truncan con ellipsis en el sidebar pero no hay forma de ver el nombre completo al hacer hover.</p>
+      <div class="issue-meta">
+        <div class="meta-row">
+          <span class="meta-label">Archivo</span>
+          <div class="files-wrap"><span class="file-tag">lib/presentation/shell/responsive_shell.dart línea 345</span></div>
+        </div>
+        <div class="meta-row">
+          <span class="meta-label">Fix</span>
+          <div class="fix-block"><code class="fix-code">Tooltip(message: grupo.nombre, child: Text(grupo.nombre, maxLines: 1, overflow: TextOverflow.ellipsis))</code></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="issue-card" data-area="ux" data-severity="low">
+      <div class="issue-header">
+        <span class="issue-id id-ux">UX-14</span>
+        <span class="issue-title">Sin indicación visual del filtro activo cuando resulta vacío</span>
+        <span class="chip chip-low">P3 · Mejora</span>
+      </div>
+      <p class="issue-body">Al filtrar tareas o miembros por categoría, si el resultado es vacío, no hay badge ni label que muestre qué filtro está activo. El usuario no entiende por qué la lista está vacía.</p>
+      <div class="issue-meta">
+        <div class="meta-row">
+          <span class="meta-label">Archivos</span>
+          <div class="files-wrap">
+            <span class="file-tag">tareas_tab.dart líneas 79-96</span>
+            <span class="file-tag">miembros_page.dart líneas 69-79</span>
+          </div>
+        </div>
+        <div class="meta-row">
+          <span class="meta-label">Fix</span>
+          <div class="fix-block">Mostrar chip con el filtro activo y mensaje diferenciado: "No hay tareas con estado <em>Completada</em>" vs. el empty state global.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="section-sep"></div>
+
+  <!-- ═══ ARQUITECTURA ═══ -->
+  <section class="section sec-arq" id="arq">
+    <div class="section-header">
+      <div class="section-icon">🏗️</div>
+      <h2 class="section-title">Arquitectura</h2>
+      <span class="section-count">10 issues</span>
+    </div>
+
+    <div class="issue-card" data-area="arq" data-severity="critical">
+      <div class="issue-header">
+        <span class="issue-id id-arq">ARQ-01</span>
+        <span class="issue-title">Acceso directo a Firebase Storage desde la UI</span>
+        <span class="chip chip-critical">Alta</span>
+      </div>
+      <p class="issue-body"><code class="file-tag">pago_manual_page.dart</code> instancia <code class="file-tag">FirebaseStorage.instance</code> directamente en un widget de presentación. Viola Clean Architecture e imposibilita los tests de esa página.</p>
+      <div class="issue-meta">
+        <div class="meta-row">
+          <span class="meta-label">Archivo</span>
+          <div class="files-wrap"><span class="file-tag">lib/presentation/cuota/pages/pago_manual_page.dart líneas 87-96</span></div>
+        </div>
+        <div class="meta-row">
+          <span class="meta-label">Fix</span>
+          <div class="fix-block">Crear <code class="file-tag">cuotaRepository.uploadComprobante()</code> y exponerlo como provider. La UI solo llama al provider, nunca toca Firebase directamente.</div>
+        </div>
+      </div>
+    </div>
+
+    <div id="card-arq-02" class="issue-card" data-area="arq" data-severity="critical">
+      <div class="issue-header">
+        <span class="issue-id id-arq">ARQ-02</span>
+        <span class="issue-title">Datasource layer faltante en 8 de 9 repositorios</span>
+        <span class="chip chip-critical">Alta</span>
+      </div>
+      <p class="issue-body">Solo <code class="file-tag">auth_datasource.dart</code> existe. Los 8 repositorios restantes acceden directamente a <code class="file-tag">FirebaseFirestore.instance</code>. Esto hace imposible el mocking para tests de integración.</p>
+      <div class="issue-meta">
+        <div class="meta-row">
+          <span class="meta-label">Archivos</span>
+          <div class="files-wrap"><span class="file-tag">lib/data/repositories/ (8 repositorios sin datasource)</span></div>
+        </div>
+        <div class="meta-row">
+          <span class="meta-label">Fix</span>
+          <div class="fix-block">Crear <code class="file-tag">{grupo,gasto,noticia,cuota,campana,tarea,recurso}_datasource.dart</code> con interfaces abstractas. Repositorios consumen datasources, no Firestore directamente.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="issue-card" data-area="arq" data-severity="critical">
+      <div class="issue-header">
+        <span class="issue-id id-arq">ARQ-03</span>
+        <span class="issue-title">Patrón "leer usuario" duplicado en 11 providers</span>
+        <span class="chip chip-critical">Alta</span>
+      </div>
+      <p class="issue-body"><code class="file-tag">ref.read(authRepositoryProvider).getUser(user.uid)</code> más los fallbacks de nombre y avatar se repiten en 11 lugares. 11 llamadas redundantes a Firestore en cada operación.</p>
+      <div class="issue-meta">
+        <div class="meta-row">
+          <span class="meta-label">Archivos</span>
+          <div class="files-wrap"><span class="file-tag">lib/providers/{grupo,gasto,tarea,noticia,recurso,campana}_provider.dart</span></div>
+        </div>
+        <div class="meta-row">
+          <span class="meta-label">Fix</span>
+          <div class="fix-block">Crear <code class="file-tag">cachedCurrentUserProvider</code> que retorne <code class="file-tag">(nombre: String, avatarUrl: String?)</code> cacheado por Riverpod. Un solo punto de acceso.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="issue-card" data-area="arq" data-severity="medium">
+      <div class="issue-header">
+        <span class="issue-id id-arq">ARQ-04</span>
+        <span class="issue-title">dashboard_provider.dart: 322 líneas con responsabilidades mixtas</span>
+        <span class="chip chip-medium">Media</span>
+      </div>
+      <p class="issue-body">Agrega 7+ providers distintos (cuotas, tareas, noticias, eventos) en un solo archivo. Dificulta tests y causa rebuilds innecesarios en UI cuando cualquiera de los streams cambia.</p>
+      <div class="issue-meta">
+        <div class="meta-row">
+          <span class="meta-label">Archivo</span>
+          <div class="files-wrap"><span class="file-tag">lib/providers/dashboard_provider.dart</span></div>
+        </div>
+        <div class="meta-row">
+          <span class="meta-label">Fix</span>
+          <div class="fix-block">Dividir en sub-providers independientes: <code class="file-tag">tareasPrioritariasProvider</code>, <code class="file-tag">proximosEventosProvider</code>. Exponer <code class="file-tag">CajaFacadeProvider</code> como un único <code class="file-tag">AsyncValue&lt;CajaState&gt;</code>.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="issue-card" data-area="arq" data-severity="medium">
+      <div class="issue-header">
+        <span class="issue-id id-arq">ARQ-05</span>
+        <span class="issue-title">8+ AsyncNotifiers con patrones de error inconsistentes</span>
+        <span class="chip chip-medium">Media</span>
+      </div>
+      <p class="issue-body">Algunos notifiers hacen <code class="file-tag">rethrow</code>, otros ignoran excepciones silenciosamente. La UI nunca sabe de forma consistente si una acción falló.</p>
+      <div class="issue-meta">
+        <div class="meta-row">
+          <span class="meta-label">Archivos</span>
+          <div class="files-wrap"><span class="file-tag">lib/providers/{grupo,gasto,cuota,tarea,noticia,campana,recurso}_provider.dart</span></div>
+        </div>
+        <div class="meta-row">
+          <span class="meta-label">Fix</span>
+          <div class="fix-block">Crear <code class="file-tag">BaseAsyncNotifier&lt;T&gt;</code> que estandarice <code class="file-tag">state = AsyncLoading()</code>, try/catch y rethrow. Todos los notifiers extienden el base.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="issue-card" data-area="arq" data-severity="medium">
+      <div class="issue-header">
+        <span class="issue-id id-arq">ARQ-06</span>
+        <span class="issue-title">Repositorios con responsabilidades múltiples (Firestore + Storage)</span>
+        <span class="chip chip-medium">Media</span>
+      </div>
+      <p class="issue-body"><code class="file-tag">grupo_repository.dart</code> y <code class="file-tag">noticia_repository.dart</code> manejan Firestore, Storage y subcollections simultáneamente. Imposible mockear selectivamente para tests.</p>
+      <div class="issue-meta">
+        <div class="meta-row">
+          <span class="meta-label">Archivos</span>
+          <div class="files-wrap">
+            <span class="file-tag">lib/data/repositories/grupo_repository.dart</span>
+            <span class="file-tag">lib/data/repositories/noticia_repository.dart</span>
+          </div>
+        </div>
+        <div class="meta-row">
+          <span class="meta-label">Fix</span>
+          <div class="fix-block">Separar en <code class="file-tag">GrupoDataRepository</code> (Firestore) + <code class="file-tag">GrupoStorageRepository</code> (Storage) + <code class="file-tag">GrupoMembershipRepository</code> (subcollection miembros).</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="issue-card" data-area="arq" data-severity="medium">
+      <div class="issue-header">
+        <span class="issue-id id-arq">ARQ-07</span>
+        <span class="issue-title">Routing type-unsafe: casts sin manejo de error</span>
+        <span class="chip chip-medium">Media</span>
+      </div>
+      <p class="issue-body"><code class="file-tag">state.extra as Map&lt;String, dynamic&gt;</code> y <code class="file-tag">as GastoModel?</code> crashean en runtime si el tipo no coincide. Sin manejo de error, el usuario ve pantalla rota.</p>
+      <div class="issue-meta">
+        <div class="meta-row">
+          <span class="meta-label">Archivo</span>
+          <div class="files-wrap"><span class="file-tag">lib/core/router/app_router.dart líneas 106, 253-259</span></div>
+        </div>
+        <div class="meta-row">
+          <span class="meta-label">Fix</span>
+          <div class="fix-block">Crear <code class="file-tag">sealed class RouteExtra</code> con subclases tipadas (<code class="file-tag">CrearGastoExtra</code>, <code class="file-tag">EditarCuotaExtra</code>) y usar pattern matching.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="issue-card" data-area="arq" data-severity="medium">
+      <div class="issue-header">
+        <span class="issue-id id-arq">ARQ-08</span>
+        <span class="issue-title">Modelos sin validación (12 modelos)</span>
+        <span class="chip chip-medium">Media</span>
+      </div>
+      <p class="issue-body"><code class="file-tag">GrupoModel.nombre</code> puede ser vacío, <code class="file-tag">CuotaModel.monto</code> puede ser 0 o negativo. Datos inválidos persisten en Firestore sin ser atrapados.</p>
+      <div class="issue-meta">
+        <div class="meta-row">
+          <span class="meta-label">Archivos</span>
+          <div class="files-wrap"><span class="file-tag">lib/data/models/*.dart (12 modelos)</span></div>
+        </div>
+        <div class="meta-row">
+          <span class="meta-label">Fix</span>
+          <div class="fix-block">Agregar <code class="file-tag">assert(monto &gt; 0, 'Monto debe ser positivo')</code> en constructores y factories con excepciones descriptivas en los puntos de entrada.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="issue-card" data-area="arq" data-severity="medium">
+      <div class="issue-header">
+        <span class="issue-id id-arq">ARQ-09</span>
+        <span class="issue-title">Escritura de Actividad fire-and-forget sin retry</span>
+        <span class="chip chip-medium">Media</span>
+      </div>
+      <p class="issue-body">Si Firestore falla al registrar la actividad, la noticia o acción se crea exitosamente pero el registro de actividad se pierde silenciosamente. Sin log, sin retry, sin visibilidad.</p>
+      <div class="issue-meta">
+        <div class="meta-row">
+          <span class="meta-label">Archivos</span>
+          <div class="files-wrap">
+            <span class="file-tag">lib/data/repositories/noticia_repository.dart</span>
+            <span class="file-tag">lib/data/repositories/grupo_repository.dart</span>
+          </div>
+        </div>
+        <div class="meta-row">
+          <span class="meta-label">Fix</span>
+          <div class="fix-block">Loguear fallos a Firebase Analytics. Opcional: queue local con retry usando <code class="file-tag">WorkManager</code> para plataformas mobile.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="issue-card" data-area="arq" data-severity="low">
+      <div class="issue-header">
+        <span class="issue-id id-arq">ARQ-10</span>
+        <span class="issue-title">grupoColorProvider retorna Color (acoplado al UI layer)</span>
+        <span class="chip chip-low">Baja</span>
+      </div>
+      <p class="issue-body">Un provider de la capa de datos retorna el tipo Flutter <code class="file-tag">Color</code>, acoplando la capa de datos a los widgets. Dificulta migrar o reutilizar la lógica fuera de Flutter.</p>
+      <div class="issue-meta">
+        <div class="meta-row">
+          <span class="meta-label">Archivo</span>
+          <div class="files-wrap"><span class="file-tag">lib/providers/grupo_provider.dart líneas 52-54</span></div>
+        </div>
+        <div class="meta-row">
+          <span class="meta-label">Fix</span>
+          <div class="fix-block">Retornar <code class="file-tag">String</code> (hex) desde el provider. Convertir a <code class="file-tag">Color</code> en la UI: <code class="file-tag">Color(int.parse(hex, radix: 16))</code>.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<script>
+  let currentArea = 'all';
+  let currentSeverity = 'all';
+
+  function filterArea(area, el) {
+    currentArea = area;
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    el.classList.add('active');
+    applyFilters();
+    if (area !== 'all') {
+      setTimeout(() => {
+        const target = document.getElementById(area);
+        if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 50);
+    }
+    return false;
+  }
+
+  function filterSeverity(sev, el) {
+    currentSeverity = sev;
+    document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+    el.classList.add('active');
+    applyFilters();
+  }
+
+  function applyFilters() {
+    const cards = document.querySelectorAll('.issue-card');
+    let visible = 0;
+
+    cards.forEach(card => {
+      const area = card.dataset.area;
+      const sev = card.dataset.severity;
+
+      const areaMatch = currentArea === 'all' || area === currentArea;
+      const sevMatch = currentSeverity === 'all' || sev === currentSeverity;
+
+      if (areaMatch && sevMatch) {
+        card.classList.remove('hidden');
+        visible++;
+      } else {
+        card.classList.add('hidden');
+      }
+    });
+
+    document.getElementById('results-count').textContent = visible;
+
+    const sections = document.querySelectorAll('.section');
+    sections.forEach(section => {
+      const visibleCards = section.querySelectorAll('.issue-card:not(.hidden)');
+      section.style.display = (currentArea === 'all' || section.classList.contains('sec-' + currentArea))
+        ? '' : 'none';
+    });
+
+    const noResults = document.getElementById('no-results');
+    noResults.classList.toggle('visible', visible === 0);
+  }
+
+  function highlightCard(id) {
+    // Reset filters
+    currentArea = 'all';
+    currentSeverity = 'all';
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.querySelector('[data-filter-area="all"]').classList.add('active');
+    document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+    document.querySelector('.sev-all').classList.add('active');
+    applyFilters();
+
+    const card = document.getElementById('card-' + id);
+    if (card) {
+      setTimeout(() => {
+        card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        card.style.outline = '2px solid var(--coral)';
+        card.style.outlineOffset = '2px';
+        setTimeout(() => {
+          card.style.outline = '';
+          card.style.outlineOffset = '';
+        }, 2000);
+      }, 100);
+    }
+  }
+</script>
+</body>
+</html>

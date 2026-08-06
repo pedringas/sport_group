@@ -42,8 +42,15 @@ class _SplashPageState extends ConsumerState<SplashPage>
       context.go('/home');
       return;
     }
-    final prefs = await SharedPreferences.getInstance();
-    final seen = prefs.getBool('onboarding_seen') ?? false;
+
+    bool seen = true; // default: ir a login si no se puede leer storage
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      seen = prefs.getBool('onboarding_seen') ?? false;
+    } catch (_) {
+      // iOS Safari (modo privado) puede bloquear localStorage
+    }
+
     if (!mounted) return;
     context.go(seen ? '/login' : '/onboarding');
   }
@@ -78,10 +85,10 @@ class _SplashPageState extends ConsumerState<SplashPage>
                   ),
                   child: Center(
                     child: Text(
-                      'SG',
+                      'T',
                       style: GoogleFonts.bricolageGrotesque(
                         fontWeight: FontWeight.w800,
-                        fontSize: 28,
+                        fontSize: 34,
                         color: Colors.white,
                       ),
                     ),
@@ -91,7 +98,7 @@ class _SplashPageState extends ConsumerState<SplashPage>
             ),
             const SizedBox(height: 20),
             Text(
-              'SportGroups',
+              'Tacheros',
               style: GoogleFonts.bricolageGrotesque(
                 fontWeight: FontWeight.w800,
                 fontSize: 22,

@@ -1,19 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/sg_widgets.dart';
+import '../../../data/models/cuota_model.dart';
 import '../../../data/models/enums.dart';
 import '../../../providers/cuota_provider.dart';
 import '../../../providers/grupo_provider.dart';
 import '../../../providers/auth_provider.dart';
 
-/// Crear/emitir cuota (vista tesorero/admin).
-/// La lógica de persistencia se conecta a tu `cuotaRepositoryProvider`.
+/// Crear/emitir cuota (vista tesorero/admin). También sirve para editar
+/// una cuota existente cuando se pasa [cuotaParaEditar].
 class CrearCuotaPage extends ConsumerStatefulWidget {
   final String grupoId;
-  const CrearCuotaPage({super.key, required this.grupoId});
+  final CuotaModel? cuotaParaEditar;
+  const CrearCuotaPage({super.key, required this.grupoId, this.cuotaParaEditar});
 
   @override
   ConsumerState<CrearCuotaPage> createState() => _CrearCuotaPageState();
@@ -23,9 +26,9 @@ enum _Recurrencia { unaVez, mensual, trimestral, anual, custom }
 enum _AQuien { todos, algunos, exceptoAlgunos }
 
 class _CrearCuotaPageState extends ConsumerState<CrearCuotaPage> {
-  final _conceptoCtrl = TextEditingController(text: 'Suscripción mensual — Mayo 2026');
-  final _montoCtrl = TextEditingController(text: '8500');
-  DateTime _vencimiento = DateTime.now().add(const Duration(days: 1));
+  late final TextEditingController _conceptoCtrl;
+  late final TextEditingController _montoCtrl;
+  late DateTime _vencimiento;
   _Recurrencia _rec = _Recurrencia.mensual;
   _AQuien _quien = _AQuien.todos;
   bool _pagoParcial = true;
@@ -33,6 +36,18 @@ class _CrearCuotaPageState extends ConsumerState<CrearCuotaPage> {
   bool _recordatorio = true;
   // Member targeting: uid → nombreCompleto
   final Map<String, String> _seleccionados = {};
+  bool _saving = false;
+
+  bool get _editMode => widget.cuotaParaEditar != null;
+
+  @override
+  void initState() {
+    super.initState();
+    final c = widget.cuotaParaEditar;
+    _conceptoCtrl = TextEditingController(text: c?.titulo ?? 'Suscripción mensual — Mayo 2026');
+    _montoCtrl = TextEditingController(text: c != null ? c.monto.toInt().toString() : '8500');
+    _vencimiento = c?.vencimiento ?? DateTime.now().add(const Duration(days: 1));
+  }
 
   @override
   void dispose() {
@@ -50,6 +65,34 @@ class _CrearCuotaPageState extends ConsumerState<CrearCuotaPage> {
     if (d != null) setState(() => _vencimiento = d);
   }
 
+  Future<void> _guardarEdicion(String titulo, double monto) async {
+    setState(() => _saving = true);
+    try {
+      await ref.read(cuotaRepositoryProvider).updateCuota(
+        widget.grupoId,
+        widget.cuotaParaEditar!.id,
+        titulo: titulo,
+        descripcion: widget.cuotaParaEditar!.descripcion,
+        monto: monto,
+        vencimiento: _vencimiento,
+      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Suscripción actualizada ✓')),
+        );
+        context.pop();
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
   Future<void> _emitir() async {
     final titulo = _conceptoCtrl.text.trim();
     final monto = double.tryParse(_montoCtrl.text.replaceAll('.', '').replaceAll(',', '.'));
@@ -57,6 +100,11 @@ class _CrearCuotaPageState extends ConsumerState<CrearCuotaPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Completá el concepto y el monto')),
       );
+      return;
+    }
+
+    if (_editMode) {
+      await _guardarEdicion(titulo, monto);
       return;
     }
 
@@ -114,6 +162,7 @@ class _CrearCuotaPageState extends ConsumerState<CrearCuotaPage> {
   @override
   Widget build(BuildContext context) {
     final gc = ref.watch(grupoColorProvider(widget.grupoId));
+    final loading = _editMode ? _saving : ref.watch(crearCuotaProvider).isLoading;
     final miembros = ref.watch(miembrosProvider(widget.grupoId)).valueOrNull ?? [];
     final miembrosTotales = miembros.isEmpty ? 0 : miembros.length;
     final monto = int.tryParse(_montoCtrl.text) ?? 0;
@@ -125,19 +174,20 @@ class _CrearCuotaPageState extends ConsumerState<CrearCuotaPage> {
             : miembrosTotales;
     final total = monto * efectivos;
 
-    final isDesktop = MediaQuery.sizeOf(context).width >= 900;
+    final isDesktop = MediaQuery.sizeOf(context).width >= AppTheme.kResponsiveBreakpoint;
     return Scaffold(
       appBar: isDesktop ? null : AppBar(
         leading: IconButton(
           icon: const Icon(Icons.close_rounded, size: 22),
           onPressed: () => context.pop(),
         ),
-        title: const Text('Nueva suscripción'),
+        title: Text(_editMode ? 'Editar suscripción' : 'Nueva suscripción'),
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 12),
             child: SGPillButton(
-              label: 'Emitir', size: SGSize.sm, onPressed: _emitir,
+              label: _editMode ? 'Guardar' : 'Emitir', size: SGSize.sm,
+              onPressed: loading ? null : _emitir,
             ),
           ),
         ],
@@ -147,9 +197,9 @@ class _CrearCuotaPageState extends ConsumerState<CrearCuotaPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const SGChip(
-              icon: Icons.account_balance_outlined,
-              label: 'Panel tesorero',
+            SGChip(
+              icon: _editMode ? Icons.edit_outlined : Icons.account_balance_outlined,
+              label: _editMode ? 'Editar cuota' : 'Emitir cuota',
               tone: SGChipTone.good, filled: true,
             ),
 
@@ -178,6 +228,9 @@ class _CrearCuotaPageState extends ConsumerState<CrearCuotaPage> {
                       child: TextField(
                         controller: _montoCtrl,
                         keyboardType: TextInputType.number,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]')),
+                        ],
                         onChanged: (_) => setState(() {}),
                         style: GoogleFonts.bricolageGrotesque(
                             color: Colors.white, fontWeight: FontWeight.w700,
@@ -266,8 +319,9 @@ class _CrearCuotaPageState extends ConsumerState<CrearCuotaPage> {
               ]),
             ),
 
-            // Recurrencia
-            const SGEyebrow('Repetición'),
+            // Recurrencia — oculta en modo edición
+            if (!_editMode) const SGEyebrow('Repetición'),
+            if (!_editMode)
             Wrap(spacing: 6, runSpacing: 6, children: [
               _PillChip(label: 'Una vez',     selected: _rec == _Recurrencia.unaVez,     onTap: () => setState(() => _rec = _Recurrencia.unaVez)),
               _PillChip(label: 'Mensual',     selected: _rec == _Recurrencia.mensual,    onTap: () => setState(() => _rec = _Recurrencia.mensual)),
@@ -275,7 +329,7 @@ class _CrearCuotaPageState extends ConsumerState<CrearCuotaPage> {
               _PillChip(label: 'Anual',       selected: _rec == _Recurrencia.anual,      onTap: () => setState(() => _rec = _Recurrencia.anual)),
               _PillChip(label: 'Personalizado',selected: _rec == _Recurrencia.custom,    onTap: () => setState(() => _rec = _Recurrencia.custom)),
             ]),
-            if (_rec == _Recurrencia.mensual)
+            if (!_editMode && _rec == _Recurrencia.mensual)
               Padding(
                 padding: const EdgeInsets.only(top: 8),
                 child: Container(
@@ -299,8 +353,9 @@ class _CrearCuotaPageState extends ConsumerState<CrearCuotaPage> {
                 ),
               ),
 
-            // A quien
-            const SGEyebrow('A quién se le cobra'),
+            // A quien — oculta en modo edición
+            if (!_editMode) const SGEyebrow('A quién se le cobra'),
+            if (!_editMode)
             SGCard(
               padding: const EdgeInsets.symmetric(vertical: 4),
               child: Column(children: [
@@ -333,8 +388,8 @@ class _CrearCuotaPageState extends ConsumerState<CrearCuotaPage> {
               ]),
             ),
 
-            // Member picker (shown when not "todos")
-            if (_quien != _AQuien.todos) ...[
+            // Member picker (shown when not "todos" and not editing)
+            if (!_editMode && _quien != _AQuien.todos) ...[
               const SizedBox(height: 10),
               SGEyebrow(_quien == _AQuien.algunos
                   ? 'Elegí a quién cobrarle'
@@ -401,8 +456,9 @@ class _CrearCuotaPageState extends ConsumerState<CrearCuotaPage> {
                 ),
             ],
 
-            // Opciones
-            const SGEyebrow('Opciones'),
+            // Opciones — ocultas en modo edición
+            if (!_editMode) const SGEyebrow('Opciones'),
+            if (!_editMode)
             SGCard(
               padding: const EdgeInsets.symmetric(vertical: 4),
               child: Column(children: [
@@ -452,10 +508,12 @@ class _CrearCuotaPageState extends ConsumerState<CrearCuotaPage> {
         child: Padding(
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
           child: SGPillButton(
-            icon: Icons.send_rounded,
-            label: 'Emitir suscripción a $efectivos miembros',
+            icon: _editMode ? Icons.save_rounded : Icons.send_rounded,
+            label: _editMode
+                ? 'Guardar cambios'
+                : 'Emitir suscripción a $efectivos miembros',
             expand: true, size: SGSize.lg,
-            onPressed: _emitir,
+            onPressed: loading ? null : _emitir,
           ),
         ),
       ),

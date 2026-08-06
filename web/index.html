@@ -5,25 +5,30 @@
 
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="SportGroups — Administrá tu grupo o equipo deportivo">
+  <meta name="description" content="Tacheros — Gestión del grupo">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <!-- iOS PWA -->
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <meta name="apple-mobile-web-app-title" content="SportGroups">
+  <meta name="apple-mobile-web-app-title" content="Tacheros">
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
 
   <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="favicon.svg"/>
   <link rel="icon" type="image/png" href="favicon.png"/>
 
-  <title>SportGroups</title>
+  <title>Tacheros</title>
   <link rel="manifest" href="manifest.json">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@800&family=DM+Sans:wght@500&display=swap" rel="stylesheet">
 
   <style>
     body {
       margin: 0;
-      background-color: #FFFFFF;
+      background-color: #F8F5F3;
     }
     #loading {
       display: flex;
@@ -31,28 +36,43 @@
       justify-content: center;
       align-items: center;
       height: 100vh;
-      font-family: sans-serif;
-      color: #6200EE;
+      font-family: 'DM Sans', sans-serif;
     }
-    #loading h2 {
-      margin-top: 16px;
+    .sg-logo {
+      width: 80px;
+      height: 80px;
+      background: #E2693F;
+      border-radius: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 8px 32px rgba(226, 105, 63, 0.35);
+      animation: pulse 0.8s ease-in-out infinite alternate;
+    }
+    .sg-logo span {
+      font-family: 'Bricolage Grotesque', sans-serif;
+      font-size: 28px;
+      font-weight: 800;
+      color: #ffffff;
+      letter-spacing: -0.5px;
+    }
+    #loading p {
+      margin-top: 18px;
+      font-size: 18px;
       font-weight: 500;
+      color: #2A211E;
+      letter-spacing: -0.3px;
     }
-    .spinner {
-      width: 48px;
-      height: 48px;
-      border: 5px solid #EDE7F6;
-      border-top-color: #6200EE;
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
+    @keyframes pulse {
+      from { transform: scale(1);   box-shadow: 0 8px 24px rgba(226,105,63,0.30); }
+      to   { transform: scale(1.04); box-shadow: 0 12px 36px rgba(226,105,63,0.50); }
     }
-    @keyframes spin { to { transform: rotate(360deg); } }
   </style>
 </head>
 <body>
   <div id="loading">
-    <div class="spinner"></div>
-    <h2>SportGroups</h2>
+    <div class="sg-logo"><span>T</span></div>
+    <p>Tacheros</p>
   </div>
 
   <script>
@@ -61,15 +81,43 @@
       if (loading) loading.style.display = 'none';
     });
 
-    // Force service worker to update immediately so new deployments
-    // are visible without the user needing to manually clear cache.
     if ('serviceWorker' in navigator) {
+      // Reload whenever a new service worker takes control.
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        window.location.reload();
+      });
+
       navigator.serviceWorker.getRegistrations().then(function(registrations) {
         for (let reg of registrations) {
           reg.update();
+          reg.addEventListener('updatefound', () => {
+            const sw = reg.installing;
+            if (!sw) return;
+            sw.addEventListener('statechange', () => {
+              // New SW installed while old SW still controls — skip waiting.
+              if (sw.state === 'installed' && navigator.serviceWorker.controller) {
+                sw.postMessage({ type: 'SKIP_WAITING' });
+              }
+            });
+          });
         }
       });
     }
+  </script>
+
+  <script>
+    (async function checkVersion() {
+      try {
+        const res = await fetch('/version.json?_t=' + Date.now(), { cache: 'no-store' });
+        const data = await res.json();
+        const current = data.version + '+' + data.build_number;
+        const stored = localStorage.getItem('sg_version');
+        localStorage.setItem('sg_version', current);
+        if (stored && stored !== current) {
+          location.reload(true);
+        }
+      } catch (e) {}
+    })();
   </script>
 
   <script src="flutter_bootstrap.js" async></script>

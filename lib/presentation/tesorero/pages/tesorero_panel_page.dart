@@ -194,7 +194,7 @@ class TesoreroPanelPage extends ConsumerWidget {
                     const Spacer(),
                     GestureDetector(
                       onTap: () =>
-                          context.push('/group/$grupoId/cuotas'),
+                          context.push('/group/$grupoId/suscripciones'),
                       child: Text(
                         'Ver todas →',
                         style: TextStyle(

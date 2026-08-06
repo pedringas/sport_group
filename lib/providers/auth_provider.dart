@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/repositories/auth_repository.dart';
 import '../data/models/usuario_model.dart';
@@ -61,7 +62,7 @@ class AuthFlowNotifier extends Notifier<AuthFlowState> {
     state = AuthVerifying();
     try {
       await _repo.verifyOtp(verificationId, smsCode);
-      await NotificationService.instance.onUserLoggedIn();
+      try { await NotificationService.instance.onUserLoggedIn(); } catch (_) {}
       state = AuthDone();
     } on FirebaseAuthException catch (e) {
       state = AuthError(_mapError(e.code));
@@ -120,7 +121,8 @@ class AuthFlowNotifier extends Notifier<AuthFlowState> {
     }
   }
 
-  String _mapEmailError(String code) => switch (code) {
+  @visibleForTesting
+  static String mapEmailError(String code) => switch (code) {
         'user-not-found' => 'No existe una cuenta con ese email',
         'wrong-password' => 'Contraseña incorrecta',
         'invalid-credential' => 'Email o contraseña incorrectos',
@@ -132,6 +134,8 @@ class AuthFlowNotifier extends Notifier<AuthFlowState> {
         _ => 'Error de autenticación. Intentá de nuevo',
       };
 
+  String _mapEmailError(String code) => mapEmailError(code);
+
   Future<void> signOut() async {
     await _repo.signOut();
     state = AuthIdle();
@@ -139,7 +143,8 @@ class AuthFlowNotifier extends Notifier<AuthFlowState> {
 
   void reset() => state = AuthIdle();
 
-  String _mapError(String code) => switch (code) {
+  @visibleForTesting
+  static String mapError(String code) => switch (code) {
         'invalid-phone-number' => 'Número de teléfono inválido',
         'too-many-requests' => 'Demasiados intentos. Esperá unos minutos',
         'invalid-verification-code' => 'Código incorrecto',
@@ -147,6 +152,8 @@ class AuthFlowNotifier extends Notifier<AuthFlowState> {
         'quota-exceeded' => 'Límite de SMS alcanzado. Intentá más tarde',
         _ => 'Error de autenticación. Intentá de nuevo',
       };
+
+  String _mapError(String code) => mapError(code);
 }
 
 final authFlowProvider = NotifierProvider<AuthFlowNotifier, AuthFlowState>(

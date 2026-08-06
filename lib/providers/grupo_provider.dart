@@ -2,6 +2,7 @@ import 'dart:typed_data';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../core/config/app_config.dart';
 import '../data/repositories/grupo_repository.dart';
 import '../data/models/grupo_model.dart';
 import '../data/models/miembro_model.dart';
@@ -11,6 +12,23 @@ import '../core/theme/app_theme.dart';
 import 'auth_provider.dart';
 
 final grupoRepositoryProvider = Provider<GrupoRepository>((ref) => GrupoRepository());
+
+/// App de grupo único: al autenticarse, garantiza que el grupo Tacheros exista
+/// y que el usuario sea miembro (auto-ingreso). Se observa una vez desde el
+/// shell principal. Idempotente.
+final ensureTacherosMembershipProvider = FutureProvider<void>((ref) async {
+  final user = ref.watch(authStateProvider).valueOrNull;
+  if (user == null) return;
+  final userData = await ref.read(currentUserProvider.future);
+  await ref.read(grupoRepositoryProvider).ensureMembership(
+        kGrupoId,
+        uid: user.uid,
+        nombreCompleto:
+            userData?.nombreCompleto ?? user.displayName ?? 'Miembro',
+        avatarUrl: userData?.avatarUrl ?? user.photoURL,
+        grupoNombre: kGrupoNombre,
+      );
+});
 
 final userGruposProvider = StreamProvider<List<GrupoModel>>((ref) {
   final user = ref.watch(authStateProvider).valueOrNull;
@@ -88,7 +106,7 @@ class UnirseGrupoNotifier extends AsyncNotifier<void> {
     state = const AsyncLoading();
     try {
       final user = ref.read(authStateProvider).valueOrNull!;
-      final userData = await ref.read(authRepositoryProvider).getUser(user.uid);
+      final userData = await ref.read(currentUserProvider.future);
       await ref.read(grupoRepositoryProvider).joinGrupo(
             grupoId,
             user.uid,
@@ -106,7 +124,7 @@ class UnirseGrupoNotifier extends AsyncNotifier<void> {
     state = const AsyncLoading();
     try {
       final user = ref.read(authStateProvider).valueOrNull!;
-      final userData = await ref.read(authRepositoryProvider).getUser(user.uid);
+      final userData = await ref.read(currentUserProvider.future);
       await ref.read(grupoRepositoryProvider).requestJoinGrupo(
             grupoId,
             user.uid,
@@ -187,7 +205,7 @@ class CrearGrupoNotifier extends AsyncNotifier<void> {
     try {
       final user = ref.read(authStateProvider).valueOrNull!;
       final repo = ref.read(grupoRepositoryProvider);
-      final userData = await ref.read(authRepositoryProvider).getUser(user.uid);
+      final userData = await ref.read(currentUserProvider.future);
 
       final adminNombre =
           userData?.nombreCompleto.isNotEmpty == true

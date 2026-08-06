@@ -165,7 +165,7 @@ class _GrupoGastoDetailPageState extends ConsumerState<GrupoGastoDetailPage> {
     final canAdd = !cerrado;
 
     // â”€â”€ Body â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-    final isDesktop = MediaQuery.sizeOf(context).width >= 900;
+    final isDesktop = MediaQuery.sizeOf(context).width >= AppTheme.kResponsiveBreakpoint;
     return Scaffold(
       backgroundColor: AppTheme.bg(context),
       appBar: isDesktop ? null : _buildAppBar(

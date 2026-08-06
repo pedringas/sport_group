@@ -29,7 +29,7 @@ class GruposListPage extends ConsumerWidget {
           }
           final grupos = gruposAsync.valueOrNull ?? [];
 
-          final isDesktop = MediaQuery.sizeOf(context).width >= 900;
+          final isDesktop = MediaQuery.sizeOf(context).width >= AppTheme.kResponsiveBreakpoint;
           return CustomScrollView(
             slivers: [
               // Header

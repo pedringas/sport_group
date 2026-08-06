@@ -201,7 +201,7 @@ class _NoticiasList extends StatelessWidget {
     return Opacity(
       opacity: dimmed ? 0.65 : 1.0,
       child: ListView.separated(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 100),
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, AppTheme.kBottomNavPadding),
         itemCount: noticias.length,
         separatorBuilder: (_, __) => const SizedBox(height: 12),
         itemBuilder: (_, i) => _NoticiaCard(

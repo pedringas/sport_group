@@ -26,7 +26,8 @@ class CampanaModel {
     this.imagenUrl,
     required this.creadoPor,
     required this.createdAt,
-  });
+  })  : assert(objetivo > 0, 'CampanaModel.objetivo debe ser mayor a 0'),
+        assert(titulo.length > 0, 'CampanaModel.titulo no puede estar vacío');
 
   double get porcentaje => objetivo > 0 ? (montoActual / objetivo).clamp(0.0, 1.0) : 0.0;
   double get faltante => (objetivo - montoActual).clamp(0.0, double.infinity);

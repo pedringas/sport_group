@@ -27,7 +27,7 @@ class GrupoModel {
     required this.miembrosCount,
     required this.createdAt,
     required this.codigoAcceso,
-  });
+  }) : assert(nombre.length > 0, 'GrupoModel.nombre no puede estar vacío');
 
   factory GrupoModel.fromFirestore(DocumentSnapshot doc) {
     final d = doc.data() as Map<String, dynamic>;

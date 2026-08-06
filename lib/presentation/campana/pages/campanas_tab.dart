@@ -26,7 +26,7 @@ class CampanasTab extends ConsumerWidget {
       return const Center(child: CircularProgressIndicator());
     }
     if (campanasAsync.hasError && !campanasAsync.hasValue) {
-      return Center(child: Text('Error: ${campanasAsync.error}'));
+      return const SGErrorState(message: 'Error al cargar las campañas');
     }
 
     final campanas = campanasAsync.valueOrNull ?? [];
@@ -54,6 +54,13 @@ class CampanasTab extends ConsumerWidget {
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
                 child: _HeroCampana(campana: activas.first, grupoId: grupoId, gc: gc),
+              ),
+            )
+          else
+            const SliverToBoxAdapter(
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(16, 24, 16, 8),
+                child: SGErrorState(message: 'No hay campañas activas en este momento'),
               ),
             ),
 
@@ -110,7 +117,7 @@ class CampanasTab extends ConsumerWidget {
               icon: const Icon(Icons.add_rounded),
               label: const Text('Nueva campaña'),
               backgroundColor: gc,
-              foregroundColor: Colors.white,
+              foregroundColor: gc.computeLuminance() > 0.3 ? Colors.black87 : Colors.white,
             )
           : null,
     );

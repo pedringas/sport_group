@@ -1,18 +1,14 @@
-import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:firebase_storage/firebase_storage.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/sg_widgets.dart';
 import '../../../providers/cuota_provider.dart';
 import '../../../providers/grupo_provider.dart';
 import '../../../providers/auth_provider.dart';
-import '../../../data/models/enums.dart';
 
 class PagoManualPage extends ConsumerStatefulWidget {
   final String grupoId;
@@ -70,7 +66,7 @@ class _PagoManualPageState extends ConsumerState<PagoManualPage> {
 
     try {
       final user = ref.read(authStateProvider).valueOrNull!;
-      final userData = await ref.read(authRepositoryProvider).getUser(user.uid);
+      final userData = await ref.read(currentUserProvider.future);
       final cuota = await ref
           .read(cuotaRepositoryProvider)
           .getCuota(widget.grupoId, widget.cuotaId);
@@ -83,32 +79,21 @@ class _PagoManualPageState extends ConsumerState<PagoManualPage> {
             monto: cuota?.monto ?? 0,
           );
 
-      // Upload comprobante bytes ”” path triggers Cloud Function OCR
-      final storageRef = FirebaseStorage.instance
-          .ref('grupos/${widget.grupoId}/comprobantes/$pagoId.jpg');
-      await storageRef.putData(
-          _comprobanteBytes!, SettableMetadata(contentType: 'image/jpeg'));
-      final url = await storageRef.getDownloadURL();
-
-      final extra = <String, dynamic>{
-        'comprobanteUrl': url,
-        'estado': EstadoPago.validando.name,
-        'updatedAt': Timestamp.now(),
-      };
-      if (_bancoCtrl.text.trim().isNotEmpty) {
-        extra['bancoOrigen'] = _bancoCtrl.text.trim();
-      }
-      if (_opCtrl.text.trim().isNotEmpty) {
-        extra['nroOperacion'] = _opCtrl.text.trim();
-      }
-      if (_msgCtrl.text.trim().isNotEmpty) {
-        extra['mensajeAlTesorero'] = _msgCtrl.text.trim();
-      }
-
-      await FirebaseFirestore.instance
-          .collection('pagos')
-          .doc(pagoId)
-          .update(extra);
+      // Upload comprobante — triggers Cloud Function OCR
+      await ref.read(cuotaRepositoryProvider).uploadComprobante(
+            pagoId: pagoId,
+            grupoId: widget.grupoId,
+            bytes: _comprobanteBytes!,
+            bancoOrigen: _bancoCtrl.text.trim().isNotEmpty
+                ? _bancoCtrl.text.trim()
+                : null,
+            nroOperacion: _opCtrl.text.trim().isNotEmpty
+                ? _opCtrl.text.trim()
+                : null,
+            mensajeAlTesorero: _msgCtrl.text.trim().isNotEmpty
+                ? _msgCtrl.text.trim()
+                : null,
+          );
 
       if (mounted) {
         // Push a clean confirmation screen instead of just a snackbar.
@@ -176,7 +161,7 @@ class _PagoManualPageState extends ConsumerState<PagoManualPage> {
               ),
               const SizedBox(height: 12),
               const Text(
-                'El tesorero lo va a revisar y te llega\nuna notificación cuando lo confirme.',
+                'El administrador lo va a revisar y te llega\nuna notificación cuando lo confirme.',
                 textAlign: TextAlign.center,
                 style: TextStyle(color: AppTheme.textMuted, fontSize: 14, height: 1.5),
               ),
@@ -199,7 +184,7 @@ class _PagoManualPageState extends ConsumerState<PagoManualPage> {
     final gc = ref.watch(grupoColorProvider(widget.grupoId));
     final hasFile = _comprobanteBytes != null;
 
-    final isDesktop = MediaQuery.sizeOf(context).width >= 900;
+    final isDesktop = MediaQuery.sizeOf(context).width >= AppTheme.kResponsiveBreakpoint;
     return Scaffold(
       appBar: isDesktop ? null : AppBar(
         title: const Text('Subir comprobante'),
@@ -306,7 +291,7 @@ class _PagoManualPageState extends ConsumerState<PagoManualPage> {
                   ),
                   const Divider(height: 1),
                   _FormRow(
-                    label: 'Mensaje al tesorero',
+                    label: 'Mensaje al administrador',
                     controller: _msgCtrl,
                     hint: 'Hola, pagué la cuota de mayo...',
                     maxLines: 3,
@@ -322,7 +307,7 @@ class _PagoManualPageState extends ConsumerState<PagoManualPage> {
                 Icon(Icons.lock_outline_rounded, size: 14, color: AppTheme.textMuted),
                 SizedBox(width: 4),
                 Text(
-                  'Solo el tesorero ve tu comprobante.',
+                  'Solo el administrador ve tu comprobante.',
                   style: TextStyle(color: AppTheme.textMuted, fontSize: 12),
                 ),
               ],
@@ -342,7 +327,7 @@ class _PagoManualPageState extends ConsumerState<PagoManualPage> {
           ),
           child: SGPillButton(
             icon: _loading ? null : Icons.send_rounded,
-            label: _loading ? 'Enviando...' : 'Enviar al tesorero',
+            label: _loading ? 'Enviando...' : 'Enviar comprobante',
             expand: true,
             size: SGSize.lg,
             onPressed: (_loading || !hasFile) ? null : _enviar,

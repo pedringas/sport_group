@@ -1,21 +1,15 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import '../datasources/gasto_datasource.dart';
 import '../models/gasto_model.dart';
 import '../models/grupo_gasto_model.dart';
 
 class GastoRepository {
-  final _db = FirebaseFirestore.instance;
+  final GastoDatasource _ds;
+  GastoRepository([GastoDatasource? ds]) : _ds = ds ?? GastoDatasource();
 
   // ── Grupos de gastos ────────────────────────────────────────────────────────
 
-  Stream<List<GrupoGastoModel>> getGruposGasto(String grupoId) {
-    return _db
-        .collection('grupos')
-        .doc(grupoId)
-        .collection('gruposGasto')
-        .orderBy('createdAt', descending: false)
-        .snapshots()
-        .map((s) => s.docs.map(GrupoGastoModel.fromFirestore).toList());
-  }
+  Stream<List<GrupoGastoModel>> getGruposGasto(String grupoId) =>
+      _ds.getGruposGasto(grupoId);
 
   Future<String> createGrupoGasto({
     required String grupoId,
@@ -23,84 +17,32 @@ class GastoRepository {
     String? descripcion,
     required String creadoPorUid,
     required String creadoPorNombre,
-  }) async {
-    final ref = _db
-        .collection('grupos')
-        .doc(grupoId)
-        .collection('gruposGasto')
-        .doc();
-    await ref.set({
-      'grupoId': grupoId,
-      'nombre': nombre,
-      'descripcion': descripcion,
-      'cerrado': false,
-      'creadoPorUid': creadoPorUid,
-      'creadoPorNombre': creadoPorNombre,
-      'createdAt': Timestamp.now(),
-    });
-    return ref.id;
-  }
+  }) =>
+      _ds.createGrupoGasto(
+        grupoId: grupoId,
+        nombre: nombre,
+        descripcion: descripcion,
+        creadoPorUid: creadoPorUid,
+        creadoPorNombre: creadoPorNombre,
+      );
 
-  Future<void> cerrarGrupoGasto(String grupoId, String grupoGastoId) async {
-    await _db
-        .collection('grupos')
-        .doc(grupoId)
-        .collection('gruposGasto')
-        .doc(grupoGastoId)
-        .update({'cerrado': true, 'cerradoAt': Timestamp.now()});
-  }
+  Future<void> cerrarGrupoGasto(String grupoId, String grupoGastoId) =>
+      _ds.cerrarGrupoGasto(grupoId, grupoGastoId);
 
-  Future<void> reabrirGrupoGasto(String grupoId, String grupoGastoId) async {
-    await _db
-        .collection('grupos')
-        .doc(grupoId)
-        .collection('gruposGasto')
-        .doc(grupoGastoId)
-        .update({'cerrado': false, 'cerradoAt': null});
-  }
+  Future<void> reabrirGrupoGasto(String grupoId, String grupoGastoId) =>
+      _ds.reabrirGrupoGasto(grupoId, grupoGastoId);
 
-  Future<void> deleteGrupoGasto(String grupoId, String grupoGastoId) async {
-    await _db
-        .collection('grupos')
-        .doc(grupoId)
-        .collection('gruposGasto')
-        .doc(grupoGastoId)
-        .delete();
-  }
+  Future<void> deleteGrupoGasto(String grupoId, String grupoGastoId) =>
+      _ds.deleteGrupoGasto(grupoId, grupoGastoId);
 
   // ── Gastos ──────────────────────────────────────────────────────────────────
 
-  Stream<List<GastoModel>> getGastos(String grupoId) {
-    return _db
-        .collection('grupos')
-        .doc(grupoId)
-        .collection('gastos')
-        .orderBy('createdAt', descending: true)
-        .snapshots()
-        .map((s) => s.docs.map(GastoModel.fromFirestore).toList());
-  }
+  Stream<List<GastoModel>> getGastos(String grupoId) =>
+      _ds.getGastos(grupoId);
 
   Stream<List<GastoModel>> getGastosPorGrupoGasto(
-      String grupoId, String? grupoGastoId) {
-    if (grupoGastoId == null) {
-      return _db
-          .collection('grupos')
-          .doc(grupoId)
-          .collection('gastos')
-          .where('grupoGastoId', isNull: true)
-          .orderBy('createdAt', descending: true)
-          .snapshots()
-          .map((s) => s.docs.map(GastoModel.fromFirestore).toList());
-    }
-    return _db
-        .collection('grupos')
-        .doc(grupoId)
-        .collection('gastos')
-        .where('grupoGastoId', isEqualTo: grupoGastoId)
-        .orderBy('createdAt', descending: true)
-        .snapshots()
-        .map((s) => s.docs.map(GastoModel.fromFirestore).toList());
-  }
+          String grupoId, String? grupoGastoId) =>
+      _ds.getGastosPorGrupoGasto(grupoId, grupoGastoId);
 
   Future<void> createGasto({
     required String grupoId,
@@ -114,27 +56,20 @@ class GastoRepository {
     TipoMovimiento tipo = TipoMovimiento.gasto,
     String? grupoGastoId,
     DateTime? fecha,
-  }) async {
-    final fechaTs = Timestamp.fromDate(fecha ?? DateTime.now());
-    await _db
-        .collection('grupos')
-        .doc(grupoId)
-        .collection('gastos')
-        .add({
-      'grupoId': grupoId,
-      if (grupoGastoId != null) 'grupoGastoId': grupoGastoId,
-      'pagadorUid': pagadorUid,
-      'pagadorNombre': pagadorNombre,
-      'titulo': titulo,
-      'descripcion': descripcion,
-      'monto': monto,
-      'participantes': participantes.map((p) => p.toMap()).toList(),
-      'categoria': categoria.name,
-      'tipo': tipo.name,
-      'fecha': fechaTs,
-      'createdAt': Timestamp.now(),
-    });
-  }
+  }) =>
+      _ds.createGasto(
+        grupoId: grupoId,
+        pagadorUid: pagadorUid,
+        pagadorNombre: pagadorNombre,
+        titulo: titulo,
+        descripcion: descripcion,
+        monto: monto,
+        participantes: participantes,
+        categoria: categoria,
+        tipo: tipo,
+        grupoGastoId: grupoGastoId,
+        fecha: fecha,
+      );
 
   Future<void> updateGasto({
     required String grupoId,
@@ -147,44 +82,27 @@ class GastoRepository {
     TipoMovimiento tipo = TipoMovimiento.gasto,
     String? grupoGastoId,
     DateTime? fecha,
-  }) async {
-    await _db
-        .collection('grupos')
-        .doc(grupoId)
-        .collection('gastos')
-        .doc(gastoId)
-        .update({
-      'titulo': titulo,
-      'descripcion': descripcion,
-      'monto': monto,
-      'participantes': participantes.map((p) => p.toMap()).toList(),
-      'categoria': categoria.name,
-      'tipo': tipo.name,
-      if (grupoGastoId != null) 'grupoGastoId': grupoGastoId,
-      if (fecha != null) 'fecha': Timestamp.fromDate(fecha),
-    });
-  }
+  }) =>
+      _ds.updateGasto(
+        grupoId: grupoId,
+        gastoId: gastoId,
+        titulo: titulo,
+        descripcion: descripcion,
+        monto: monto,
+        participantes: participantes,
+        categoria: categoria,
+        tipo: tipo,
+        grupoGastoId: grupoGastoId,
+        fecha: fecha,
+      );
 
-  Future<void> deleteGasto(String grupoId, String gastoId) async {
-    await _db
-        .collection('grupos')
-        .doc(grupoId)
-        .collection('gastos')
-        .doc(gastoId)
-        .delete();
-  }
+  Future<void> deleteGasto(String grupoId, String gastoId) =>
+      _ds.deleteGasto(grupoId, gastoId);
 
   // ── Liquidaciones ───────────────────────────────────────────────────────────
 
-  Stream<List<LiquidacionModel>> getLiquidaciones(String grupoId) {
-    return _db
-        .collection('grupos')
-        .doc(grupoId)
-        .collection('liquidaciones')
-        .orderBy('createdAt', descending: true)
-        .snapshots()
-        .map((s) => s.docs.map(LiquidacionModel.fromFirestore).toList());
-  }
+  Stream<List<LiquidacionModel>> getLiquidaciones(String grupoId) =>
+      _ds.getLiquidaciones(grupoId);
 
   Future<void> createLiquidacion({
     required String grupoId,
@@ -194,36 +112,22 @@ class GastoRepository {
     required String acreedorNombre,
     required double monto,
     String? grupoGastoId,
-  }) async {
-    await _db
-        .collection('grupos')
-        .doc(grupoId)
-        .collection('liquidaciones')
-        .add({
-      'grupoId': grupoId,
-      if (grupoGastoId != null) 'grupoGastoId': grupoGastoId,
-      'deudorUid': deudorUid,
-      'deudorNombre': deudorNombre,
-      'acreedorUid': acreedorUid,
-      'acreedorNombre': acreedorNombre,
-      'monto': monto,
-      'createdAt': Timestamp.now(),
-    });
-  }
+  }) =>
+      _ds.createLiquidacion(
+        grupoId: grupoId,
+        deudorUid: deudorUid,
+        deudorNombre: deudorNombre,
+        acreedorUid: acreedorUid,
+        acreedorNombre: acreedorNombre,
+        monto: monto,
+        grupoGastoId: grupoGastoId,
+      );
 
-  Future<void> deleteLiquidacion(String grupoId, String liqId) async {
-    await _db
-        .collection('grupos')
-        .doc(grupoId)
-        .collection('liquidaciones')
-        .doc(liqId)
-        .delete();
-  }
+  Future<void> deleteLiquidacion(String grupoId, String liqId) =>
+      _ds.deleteLiquidacion(grupoId, liqId);
 
   // ── Balance computation ─────────────────────────────────────────────────────
 
-  /// Computes the net balance for [currentUid] against every other member.
-  /// Only [TipoMovimiento.gasto] entries create debts; ingresos are ignored.
   static List<BalanceConMiembro> computeBalances({
     required String currentUid,
     required List<GastoModel> gastos,
@@ -232,7 +136,6 @@ class GastoRepository {
     final Map<String, double> balances = {};
     final Map<String, String> nombres = {};
 
-    // Only gastos (not ingresos) generate debts between members
     for (final g in gastos.where((g) => g.tipo == TipoMovimiento.gasto)) {
       if (g.pagadorUid == currentUid) {
         for (final p in g.participantes) {
@@ -254,12 +157,10 @@ class GastoRepository {
 
     for (final l in liquidaciones) {
       if (l.deudorUid == currentUid) {
-        balances[l.acreedorUid] =
-            (balances[l.acreedorUid] ?? 0) + l.monto;
+        balances[l.acreedorUid] = (balances[l.acreedorUid] ?? 0) + l.monto;
         nombres[l.acreedorUid] = l.acreedorNombre;
       } else if (l.acreedorUid == currentUid) {
-        balances[l.deudorUid] =
-            (balances[l.deudorUid] ?? 0) - l.monto;
+        balances[l.deudorUid] = (balances[l.deudorUid] ?? 0) - l.monto;
         nombres[l.deudorUid] = l.deudorNombre;
       }
     }
@@ -281,11 +182,6 @@ class GastoRepository {
   static double totalDebeA(List<BalanceConMiembro> balances) =>
       balances.where((b) => b.monto < 0).fold(0.0, (s, b) => s + b.monto.abs());
 
-  // ── All-member net balances (for conciliation view) ─────────────────────────
-
-  /// Returns each participant's net position across all gastos and liquidaciones.
-  /// Positive saldo → this member is owed money.
-  /// Negative saldo → this member owes money.
   static Map<String, ({String nombre, double saldo})> computeNetBalances({
     required List<GastoModel> gastos,
     required List<LiquidacionModel> liquidaciones,
@@ -299,27 +195,22 @@ class GastoRepository {
 
     for (final g in gastos) {
       if (g.tipo != TipoMovimiento.gasto) continue;
-      // Pagador advances the full amount
       add(g.pagadorUid, g.pagadorNombre, g.monto);
-      // Each participant (including pagador) owes their share back
       for (final p in g.participantes) {
         add(p.uid, p.nombre, -p.monto);
       }
     }
 
-    // Liquidaciones settle debts
     for (final l in liquidaciones) {
-      add(l.deudorUid, l.deudorNombre, l.monto);   // debtor paid → balance improves
-      add(l.acreedorUid, l.acreedorNombre, -l.monto); // creditor received
+      add(l.deudorUid, l.deudorNombre, l.monto);
+      add(l.acreedorUid, l.acreedorNombre, -l.monto);
     }
 
     return res;
   }
 
-  /// Generates the minimum set of payments to settle all debts in [balances].
   static List<PagoSugerido> computeSettlements(
       Map<String, ({String nombre, double saldo})> balances) {
-    // Build mutable amount maps
     final debtAmounts = <String, double>{};
     final creditAmounts = <String, double>{};
     final nombres = <String, String>{};
@@ -327,7 +218,7 @@ class GastoRepository {
     for (final e in balances.entries) {
       nombres[e.key] = e.value.nombre;
       if (e.value.saldo < -0.5) {
-        debtAmounts[e.key] = -e.value.saldo; // store as positive
+        debtAmounts[e.key] = -e.value.saldo;
       } else if (e.value.saldo > 0.5) {
         creditAmounts[e.key] = e.value.saldo;
       }

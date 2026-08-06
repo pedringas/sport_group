@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import '../../../core/config/app_config.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../data/models/campana_model.dart';
 import '../../../data/models/gasto_model.dart';
@@ -127,9 +128,37 @@ class _CajaPageState extends ConsumerState<CajaPage> {
               child: Padding(
                 padding: EdgeInsets.fromLTRB(16, 2, 16, 0),
                 child: Text(
-                  'Historial financiero de todos tus grupos',
+                  'Movimientos y cobros de Tacheros',
                   style: TextStyle(fontSize: 13, color: AppTheme.textMuted),
                 ),
+              ),
+            ),
+
+            // ── Accesos: Cuotas / Gastos ─────────────────────────────────────
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
+                child: Row(children: [
+                  Expanded(
+                    child: _AccesoBtn(
+                      icon: Icons.payments_outlined,
+                      label: 'Cuotas',
+                      color: AppTheme.danger,
+                      onTap: () =>
+                          context.push('/group/$kGrupoId/cuotas'),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _AccesoBtn(
+                      icon: Icons.receipt_long_outlined,
+                      label: 'Gastos',
+                      color: AppTheme.good,
+                      onTap: () =>
+                          context.push('/group/$kGrupoId/gastos'),
+                    ),
+                  ),
+                ]),
               ),
             ),
 
@@ -228,24 +257,7 @@ class _CajaPageState extends ConsumerState<CajaPage> {
       ),
     ));
 
-    // Campañas
-    sections.add(SliverToBoxAdapter(
-      child: _Section(
-        title: 'Campañas',
-        icon: Icons.campaign_rounded,
-        total: aportes.fold(0, (s, e) => s + e.aporte.monto),
-        color: AppTheme.primary,
-        emptyText: 'Ningún aporte a campañas aún',
-        items: aportes.map((e) => _TxRow(
-          title: e.aporte.campanaId.isNotEmpty ? 'Aporte a campaña' : 'Aporte',
-          subtitle: e.grupo.nombre,
-          amount: e.aporte.monto,
-          date: e.aporte.createdAt,
-          color: AppTheme.primary,
-          onTap: () => context.push('/group/${e.grupo.id}/campanas'),
-        )).toList(),
-      ),
-    ));
+    // Campañas — módulo en pausa (sección oculta).
 
     // Gastos de grupo (liquidaciones como deudor)
     sections.add(SliverToBoxAdapter(
@@ -391,6 +403,60 @@ class _BalanceItem {
   final String grupoNombre;
   final BalanceConMiembro balance;
   const _BalanceItem({required this.grupoId, required this.grupoNombre, required this.balance});
+}
+
+// ── _AccesoBtn (acceso a Cuotas / Gastos) ─────────────────────────────────────
+
+class _AccesoBtn extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+  final VoidCallback onTap;
+  const _AccesoBtn({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: AppTheme.surface,
+      borderRadius: BorderRadius.circular(14),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(14),
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: AppTheme.border),
+          ),
+          child: Row(children: [
+            Container(
+              width: 34,
+              height: 34,
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              alignment: Alignment.center,
+              child: Icon(icon, size: 18, color: color),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(label,
+                  style: const TextStyle(
+                      fontWeight: FontWeight.w700, fontSize: 14)),
+            ),
+            const Icon(Icons.chevron_right_rounded,
+                size: 18, color: AppTheme.textMuted),
+          ]),
+        ),
+      ),
+    );
+  }
 }
 
 // ── _SummaryCard ──────────────────────────────────────────────────────────────

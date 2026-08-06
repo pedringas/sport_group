@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../theme/app_theme.dart';
 import '../../presentation/auth/pages/splash_page.dart';
 import '../../presentation/auth/pages/login_page.dart';
 import '../../presentation/auth/pages/onboarding_page.dart';
@@ -20,13 +21,18 @@ import '../../presentation/grupo/pages/comentarios_page.dart';
 import '../../presentation/cuota/pages/cuota_detail_page.dart';
 import '../../presentation/cuota/pages/cuotas_tab.dart';
 import '../../presentation/cuota/pages/crear_cuota_page.dart';
+import '../../presentation/cuota/pages/crear_cuota_grupo_page.dart';
+import '../../presentation/cuota/pages/cuota_grupo_detail_page.dart';
+import '../../presentation/cuota/pages/suscripciones_page.dart';
 import '../../presentation/cuota/pages/pago_manual_page.dart';
+import '../../data/models/cuota_grupo_model.dart';
 import '../../presentation/campana/pages/campana_detail_page.dart';
 import '../../presentation/campana/pages/campanas_tab.dart';
 import '../../presentation/gasto/pages/gastos_tab.dart';
 import '../../presentation/gasto/pages/crear_gasto_page.dart';
 import '../../presentation/gasto/pages/grupo_gasto_detail_page.dart';
 import '../../data/models/gasto_model.dart';
+import '../../data/models/cuota_model.dart';
 import '../../presentation/home/pages/notificaciones_page.dart';
 import '../../presentation/recurso/pages/recursos_tab.dart';
 import '../../presentation/recurso/pages/archivo_preview_page.dart';
@@ -61,7 +67,7 @@ class _TabPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDesktop = MediaQuery.sizeOf(context).width >= 900;
+    final isDesktop = MediaQuery.sizeOf(context).width >= AppTheme.kResponsiveBreakpoint;
     return Scaffold(
       appBar: isDesktop ? null : AppBar(title: Text(title)),
       body: child,
@@ -81,9 +87,9 @@ final routerProvider = Provider<GoRouter>((ref) {
     redirect: (context, state) {
       final isAuth = ref.read(authStateProvider).valueOrNull != null;
       final loc = state.matchedLocation;
-      if (loc.startsWith('/join/')) return null;
+      if (loc.startsWith('/join/') || loc == '/onboarding') return null;
       final onAuthScreen =
-          ['/splash', '/onboarding', '/login', '/register', '/otp', '/forgot-password']
+          ['/splash', '/login', '/register', '/otp', '/forgot-password']
               .contains(loc);
       if (isAuth && onAuthScreen && loc != '/splash') {
         // After login, honour a ?redirect param (e.g. /login?redirect=/join/abc)
@@ -103,7 +109,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/otp',
         builder: (_, state) =>
-            OtpPage(extra: state.extra as Map<String, dynamic>),
+            OtpPage(extra: (state.extra as Map<String, dynamic>?) ?? const {}),
       ),
       GoRoute(
         path: '/join/:groupId',
@@ -240,6 +246,37 @@ final routerProvider = Provider<GoRouter>((ref) {
             builder: (_, state) =>
                 CrearCuotaPage(grupoId: state.pathParameters['groupId']!),
           ),
+          GoRoute(
+            path: '/group/:groupId/cuota/:cuotaId/edit',
+            builder: (_, state) => CrearCuotaPage(
+              grupoId: state.pathParameters['groupId']!,
+              cuotaParaEditar: state.extra as CuotaModel?,
+            ),
+          ),
+          GoRoute(
+            path: '/group/:groupId/suscripciones',
+            builder: (_, state) =>
+                SuscripcionesPage(grupoId: state.pathParameters['groupId']!),
+          ),
+          GoRoute(
+            path: '/group/:groupId/cuotas/grupo/crear',
+            builder: (_, state) =>
+                CrearCuotaGrupoPage(grupoId: state.pathParameters['groupId']!),
+          ),
+          GoRoute(
+            path: '/group/:groupId/cuotas/grupo/:cuotaGrupoId',
+            builder: (_, state) => CuotaGrupoDetailPage(
+              grupoId: state.pathParameters['groupId']!,
+              cuotaGrupoId: state.pathParameters['cuotaGrupoId']!,
+            ),
+          ),
+          GoRoute(
+            path: '/group/:groupId/cuotas/grupo/:cuotaGrupoId/editar',
+            builder: (_, state) => CrearCuotaGrupoPage(
+              grupoId: state.pathParameters['groupId']!,
+              para: state.extra as CuotaGrupoModel?,
+            ),
+          ),
 
           // ── Gastos
           GoRoute(
@@ -265,7 +302,7 @@ final routerProvider = Provider<GoRouter>((ref) {
               final raw = state.pathParameters['grupoGastoId']!;
               return GrupoGastoDetailPage(
                 grupoId: state.pathParameters['groupId']!,
-                grupoGastoId: raw == 'general' ? null : raw,
+                grupoGastoId: raw,
               );
             },
           ),

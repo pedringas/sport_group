@@ -43,7 +43,8 @@ class CuotaModel {
     this.serieId,
     this.miembrosUids,
     this.excluidosUids,
-  });
+  })  : assert(monto > 0, 'CuotaModel.monto debe ser mayor a 0'),
+        assert(titulo.length > 0, 'CuotaModel.titulo no puede estar vacío');
 
   factory CuotaModel.fromFirestore(DocumentSnapshot doc) {
     final d = doc.data() as Map<String, dynamic>;

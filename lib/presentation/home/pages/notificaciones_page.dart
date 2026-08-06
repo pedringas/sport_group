@@ -42,7 +42,7 @@ class _NotificacionesPageState extends ConsumerState<NotificacionesPage>
   Widget build(BuildContext context) {
     final unread = ref.watch(unreadRolCountProvider).valueOrNull ?? 0;
 
-    final isDesktop = MediaQuery.sizeOf(context).width >= 900;
+    final isDesktop = MediaQuery.sizeOf(context).width >= AppTheme.kResponsiveBreakpoint;
 
     final tabBar = TabBar(
       controller: _tab,
@@ -202,7 +202,7 @@ class _GeneralesTab extends ConsumerWidget {
       loading: () => const Center(
         child: CircularProgressIndicator(color: AppTheme.primary),
       ),
-      error: (e, _) => Center(child: Text('Error: $e')),
+      error: (e, _) => const SGErrorState(message: 'Error al cargar las notificaciones'),
       data: (items) {
         if (items.isEmpty) {
           return const _EmptyState(
@@ -245,7 +245,7 @@ class _RolTab extends ConsumerWidget {
       loading: () => const Center(
         child: CircularProgressIndicator(color: AppTheme.primary),
       ),
-      error: (e, _) => Center(child: Text('Error: $e')),
+      error: (e, _) => const SGErrorState(message: 'Error al cargar las notificaciones'),
       data: (notifs) {
         if (notifs.isEmpty) {
           return const _EmptyState(

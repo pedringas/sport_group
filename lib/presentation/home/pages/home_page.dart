@@ -30,7 +30,7 @@ class HomePage extends ConsumerWidget {
             return const Center(child: CircularProgressIndicator());
           }
           if (gruposAsync.hasError && !gruposAsync.hasValue) {
-            return Center(child: Text('Error: ${gruposAsync.error}'));
+            return const SGErrorState(message: 'Error al cargar los grupos');
           }
           final grupos = gruposAsync.valueOrNull ?? [];
 

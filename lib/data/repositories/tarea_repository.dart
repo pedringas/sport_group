@@ -1,19 +1,13 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import '../datasources/tarea_datasource.dart';
 import '../models/tarea_model.dart';
 import '../models/enums.dart';
 
 class TareaRepository {
-  final _db = FirebaseFirestore.instance;
+  final TareaDatasource _ds;
+  TareaRepository([TareaDatasource? ds]) : _ds = ds ?? TareaDatasource();
 
-  CollectionReference _col(String grupoId) =>
-      _db.collection('grupos').doc(grupoId).collection('tareas');
-
-  Stream<List<TareaModel>> getTareas(String grupoId) {
-    return _col(grupoId)
-        .orderBy('createdAt', descending: true)
-        .snapshots()
-        .map((s) => s.docs.map(TareaModel.fromFirestore).toList());
-  }
+  Stream<List<TareaModel>> getTareas(String grupoId) =>
+      _ds.getTareas(grupoId);
 
   Future<String> createTarea({
     required String grupoId,
@@ -23,34 +17,24 @@ class TareaRepository {
     required String creadoPorNombre,
     List<AsignadoTarea> asignadosA = const [],
     DateTime? fechaVencimiento,
-  }) async {
-    final ref = _col(grupoId).doc();
-    await ref.set({
-      'grupoId': grupoId,
-      'titulo': titulo,
-      'descripcion': descripcion,
-      'creadoPorUid': creadoPorUid,
-      'creadoPorNombre': creadoPorNombre,
-      'asignadosA': asignadosA.map((a) => a.toMap()).toList(),
-      'estado': TareaEstado.pendiente.name,
-      if (fechaVencimiento != null)
-        'fechaVencimiento': Timestamp.fromDate(fechaVencimiento),
-      'createdAt': Timestamp.now(),
-    });
-    return ref.id;
-  }
+  }) =>
+      _ds.createTarea(
+        grupoId: grupoId,
+        titulo: titulo,
+        descripcion: descripcion,
+        creadoPorUid: creadoPorUid,
+        creadoPorNombre: creadoPorNombre,
+        asignadosA: asignadosA,
+        fechaVencimiento: fechaVencimiento,
+      );
 
   Future<void> updateEstado(
-      String grupoId, String tareaId, TareaEstado estado) async {
-    await _col(grupoId).doc(tareaId).update({'estado': estado.name});
-  }
+          String grupoId, String tareaId, TareaEstado estado) =>
+      _ds.updateEstado(grupoId, tareaId, estado);
 
   Future<void> updateAsignados(String grupoId, String tareaId,
-      List<AsignadoTarea> asignadosA) async {
-    await _col(grupoId)
-        .doc(tareaId)
-        .update({'asignadosA': asignadosA.map((a) => a.toMap()).toList()});
-  }
+          List<AsignadoTarea> asignadosA) =>
+      _ds.updateAsignados(grupoId, tareaId, asignadosA);
 
   Future<void> updateTarea({
     required String grupoId,
@@ -60,18 +44,17 @@ class TareaRepository {
     required List<AsignadoTarea> asignadosA,
     required TareaEstado estado,
     DateTime? fechaVencimiento,
-  }) async {
-    await _col(grupoId).doc(tareaId).update({
-      'titulo': titulo,
-      'descripcion': descripcion,
-      'asignadosA': asignadosA.map((a) => a.toMap()).toList(),
-      'estado': estado.name,
-      'fechaVencimiento':
-          fechaVencimiento != null ? Timestamp.fromDate(fechaVencimiento) : null,
-    });
-  }
+  }) =>
+      _ds.updateTarea(
+        grupoId: grupoId,
+        tareaId: tareaId,
+        titulo: titulo,
+        descripcion: descripcion,
+        asignadosA: asignadosA,
+        estado: estado,
+        fechaVencimiento: fechaVencimiento,
+      );
 
-  Future<void> deleteTarea(String grupoId, String tareaId) async {
-    await _col(grupoId).doc(tareaId).delete();
-  }
+  Future<void> deleteTarea(String grupoId, String tareaId) =>
+      _ds.deleteTarea(grupoId, tareaId);
 }

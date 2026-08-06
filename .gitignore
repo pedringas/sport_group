@@ -43,3 +43,20 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# ── Local AI tooling (ruflo / claude-flow / superpowers) — no forma parte de la app ──
+.claude-flow/
+.swarm/
+.superpowers/
+.impeccable/
+.claude/agents/
+.claude/commands/
+.claude/helpers/
+.claude/skills/
+.claude/memory.db
+.mcp.json
+ruvector.db
+
+# Archivos de scratch/preview accidentales
+preview_*.html
+/imagenes para pantallas nuevas/

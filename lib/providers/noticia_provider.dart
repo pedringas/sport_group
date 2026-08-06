@@ -97,7 +97,7 @@ class CrearNoticiaNotifier extends AsyncNotifier<void> {
     state = const AsyncLoading();
     try {
       final user = ref.read(authStateProvider).valueOrNull!;
-      final userData = await ref.read(authRepositoryProvider).getUser(user.uid);
+      final userData = await ref.read(currentUserProvider.future);
       await ref.read(noticiaRepositoryProvider).createNoticia(
             grupoId: grupoId,
             autorUid: user.uid,
@@ -184,7 +184,7 @@ class CrearNoticiaNotifier extends AsyncNotifier<void> {
   Future<void> markAsRead(String grupoId, String noticiaId) async {
     final user = ref.read(authStateProvider).valueOrNull;
     if (user == null) return;
-    final userData = await ref.read(authRepositoryProvider).getUser(user.uid);
+    final userData = await ref.read(currentUserProvider.future);
     final nombre = userData?.nombreCompleto ?? user.displayName ?? '';
     await ref.read(noticiaRepositoryProvider).markAsRead(
           grupoId: grupoId,
@@ -201,7 +201,7 @@ class CrearNoticiaNotifier extends AsyncNotifier<void> {
   }) async {
     final user = ref.read(authStateProvider).valueOrNull;
     if (user == null) return;
-    final userData = await ref.read(authRepositoryProvider).getUser(user.uid);
+    final userData = await ref.read(currentUserProvider.future);
     await ref.read(noticiaRepositoryProvider).setAsistencia(
           grupoId: grupoId,
           noticiaId: noticiaId,
@@ -227,7 +227,7 @@ class CrearNoticiaNotifier extends AsyncNotifier<void> {
   }) async {
     final user = ref.read(authStateProvider).valueOrNull;
     if (user == null) return;
-    final userData = await ref.read(authRepositoryProvider).getUser(user.uid);
+    final userData = await ref.read(currentUserProvider.future);
     await ref.read(noticiaRepositoryProvider).addComentario(
           grupoId: grupoId,
           noticiaId: noticiaId,

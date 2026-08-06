@@ -8,11 +8,11 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/theme/sg_widgets.dart';
 import '../../../data/models/recurso_model.dart';
 import '../../../data/models/enums.dart';
 import '../../../providers/recurso_provider.dart';
 import '../../../providers/grupo_provider.dart';
-import '../../../core/theme/sg_widgets.dart';
 
 class RecursosTab extends ConsumerWidget {
   final String grupoId;
@@ -35,7 +35,7 @@ class RecursosTab extends ConsumerWidget {
         child: recursosAsync.when(
           loading: () =>
               const Center(child: CircularProgressIndicator()),
-          error: (e, _) => Center(child: Text('Error: $e')),
+          error: (e, _) => const SGErrorState(message: 'Error al cargar los recursos'),
           data: (recursos) {
             final links = recursos
                 .where((r) => r.tipo == TipoRecurso.link)
@@ -120,7 +120,7 @@ class RecursosTab extends ConsumerWidget {
           ? FloatingActionButton(
               onPressed: () => _showAgregarRecurso(context, ref),
               backgroundColor: gc,
-              foregroundColor: Colors.white,
+              foregroundColor: gc.computeLuminance() > 0.3 ? Colors.black87 : Colors.white,
               child: const Icon(Icons.add),
             )
           : null,

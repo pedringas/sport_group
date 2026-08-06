@@ -40,7 +40,7 @@ class ArchivoPreviewPage extends ConsumerWidget {
             onPressed: () => context.pop(),
           ),
         ),
-        body: Center(child: Text('Error: $e')),
+        body: const SGErrorState(message: 'Error al cargar el archivo'),
       ),
       data: (recursos) {
         final recurso = recursos.cast<RecursoModel?>().firstWhere(

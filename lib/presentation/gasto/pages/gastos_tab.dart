@@ -69,7 +69,7 @@ class GastosTab extends ConsumerWidget {
 
     final gruposGasto = ref.watch(_gruposGastoFiltradosProvider(grupoId));
     final totalGastosMes = ref.watch(_totalGastosMesProvider(grupoId));
-    final isDesktop = MediaQuery.sizeOf(context).width >= 900;
+    final isDesktop = MediaQuery.sizeOf(context).width >= AppTheme.kResponsiveBreakpoint;
 
     return Scaffold(
       backgroundColor: AppTheme.bg(context),
@@ -105,7 +105,7 @@ class GastosTab extends ConsumerWidget {
       ),
 
       body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 100),
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, AppTheme.kBottomNavPadding),
         children: [
           // â”€â”€ Month navigator â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
           _MonthSwitcher(
@@ -172,20 +172,6 @@ class GastosTab extends ConsumerWidget {
             ],
           ),
 
-          const SizedBox(height: 10),
-
-          // â”€â”€ General group â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-          _GrupoGastoTile(
-            grupoId: grupoId,
-            grupoGastoId: null,
-            nombre: 'General',
-            cerrado: false,
-            allGastos: allGastos,
-            gc: gc,
-            onTap: () => context.push('/group/$grupoId/gastos/g/general'),
-          ),
-
-          const SizedBox(height: 8),
 
           // â”€â”€ Created expense groups â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
           ...gruposGasto.map((g) => Padding(
@@ -208,7 +194,14 @@ class GastosTab extends ConsumerWidget {
       floatingActionButton: FloatingActionButton(
         backgroundColor: gc,
         foregroundColor: Colors.white,
-        onPressed: () => _onFabPressed(context, gruposGasto, gc),
+        onPressed: () {
+          final active = gruposGasto.where((g) => !g.cerrado).toList();
+          if (active.isEmpty) {
+            _showCrearGrupoSheet(context, ref, grupoId);
+          } else {
+            _onFabPressed(context, active, gc);
+          }
+        },
         child: const Icon(Icons.add_rounded),
       ),
     );
@@ -216,13 +209,7 @@ class GastosTab extends ConsumerWidget {
 
   // â”€â”€ FAB: pick group then navigate to crear â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-  void _onFabPressed(BuildContext context, List<GrupoGastoModel> gruposGasto, Color gc) {
-    final activeGrupos = gruposGasto.where((g) => !g.cerrado).toList();
-    if (activeGrupos.isEmpty) {
-      context.push('/group/$grupoId/gastos/crear');
-      return;
-    }
-
+  void _onFabPressed(BuildContext context, List<GrupoGastoModel> activeGrupos, Color gc) {
     showModalBottomSheet(
       context: context,
       backgroundColor: AppTheme.surf(context),
@@ -243,24 +230,6 @@ class GastosTab extends ConsumerWidget {
                   fontSize: 17,
                 ),
               ),
-            ),
-            ListTile(
-              leading: Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  color: AppTheme.surfaceAlt,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: const Icon(Icons.folder_outlined,
-                    size: 18, color: AppTheme.textMuted),
-              ),
-              title: const Text('General',
-                  style: TextStyle(fontWeight: FontWeight.w600)),
-              onTap: () {
-                Navigator.pop(context);
-                context.push('/group/$grupoId/gastos/crear');
-              },
             ),
             ...activeGrupos.map((g) => ListTile(
                   leading: Container(

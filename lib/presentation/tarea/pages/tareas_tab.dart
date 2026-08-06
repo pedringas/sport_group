@@ -135,9 +135,14 @@ class _TareasTabState extends ConsumerState<TareasTab> {
             child: tareasAsync.isLoading && !tareasAsync.hasValue
                 ? const Center(child: CircularProgressIndicator())
                 : filtered.isEmpty
-                    ? _EmptyTareas(filtro: _filtro)
+                    ? _EmptyTareas(
+                        filtro: _filtro,
+                        onClear: _filtro != null
+                            ? () => setState(() => _filtro = null)
+                            : null,
+                      )
                     : ListView.separated(
-                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
+                        padding: const EdgeInsets.fromLTRB(16, 8, 16, AppTheme.kBottomNavPadding),
                         itemCount: filtered.length,
                         separatorBuilder: (_, __) =>
                             const SizedBox(height: 8),
@@ -163,7 +168,7 @@ class _TareasTabState extends ConsumerState<TareasTab> {
               icon: const Icon(Icons.add_task_rounded),
               label: const Text('Nueva tarea'),
               backgroundColor: gc,
-              foregroundColor: Colors.white,
+              foregroundColor: gc.computeLuminance() > 0.3 ? Colors.black87 : Colors.white,
             )
           : null,
     );
@@ -256,7 +261,8 @@ class _TabChip extends StatelessWidget {
 
 class _EmptyTareas extends StatelessWidget {
   final TareaEstado? filtro;
-  const _EmptyTareas({this.filtro});
+  final VoidCallback? onClear;
+  const _EmptyTareas({this.filtro, this.onClear});
 
   @override
   Widget build(BuildContext context) {
@@ -282,6 +288,14 @@ class _EmptyTareas extends StatelessWidget {
             style:
                 const TextStyle(fontSize: 15, color: AppTheme.textMuted),
           ),
+          if (filtro != null && onClear != null) ...[
+            const SizedBox(height: 12),
+            TextButton.icon(
+              onPressed: onClear,
+              icon: const Icon(Icons.close_rounded, size: 14),
+              label: const Text('Limpiar filtro'),
+            ),
+          ],
         ],
       ),
     );

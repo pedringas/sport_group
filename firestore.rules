@@ -77,7 +77,10 @@ service cloud.firestore {
 
       match /miembros/{uid} {
         allow read: if isAuth();
-        allow create: if isAdmin(grupoId) || isSelf(uid); // self-join or admin-add
+        // SEC-01: enforce rol == 'miembro' and estado == 'activo' on self-join to block privilege escalation
+        allow create: if (isAdmin(grupoId) || isSelf(uid))
+                      && request.resource.data.rol == 'miembro'
+                      && request.resource.data.estado == 'activo';
         allow update: if isAdmin(grupoId) || isSelf(uid);
         allow delete: if isAdmin(grupoId) || isSelf(uid);
       }
@@ -118,7 +121,7 @@ service cloud.firestore {
         allow read: if isActiveMember(grupoId);
         allow create: if hasRol(grupoId, 'tesorero') || isAdmin(grupoId);
         allow update: if hasRol(grupoId, 'tesorero') || isAdmin(grupoId);
-        allow delete: if isAdmin(grupoId);
+        allow delete: if hasRol(grupoId, 'tesorero') || isAdmin(grupoId);
       }
 
       match /campanas/{campanaId} {
@@ -129,8 +132,10 @@ service cloud.firestore {
 
         match /aportes/{aporteId} {
           allow read: if isActiveMember(grupoId);
+          // SEC-10: only allow aportes on active campaigns
           allow create: if isActiveMember(grupoId)
-                        && request.resource.data.usuarioUid == request.auth.uid;
+                        && request.resource.data.usuarioUid == request.auth.uid
+                        && get(/databases/$(database)/documents/grupos/$(grupoId)/campanas/$(campanaId)).data.estado == 'activa';
           allow update: if hasRol(grupoId, 'tesorero') || isAdmin(grupoId);
           allow delete: if hasRol(grupoId, 'tesorero') || isAdmin(grupoId);
         }
@@ -139,7 +144,10 @@ service cloud.firestore {
       match /solicitudes/{solicitudId} {
         allow read: if isAdminOrMod(grupoId) || isSelf(solicitudId);
         allow create: if isAuth();
-        allow update: if isAdminOrMod(grupoId);
+        // SEC-08: prevent double-processing — only allow state transition from pendiente
+        allow update: if isAdminOrMod(grupoId)
+                      && resource.data.estado == 'pendiente'
+                      && request.resource.data.estado in ['aprobado', 'rechazado'];
         allow delete: if isAdminOrMod(grupoId) || isSelf(solicitudId);
       }
 
@@ -154,7 +162,11 @@ service cloud.firestore {
         allow read: if isActiveMember(grupoId);
         allow create: if isActiveMember(grupoId)
                       && request.resource.data.pagadorUid == request.auth.uid;
-        allow update: if resource.data.pagadorUid == request.auth.uid || isAdmin(grupoId);
+        // SEC-05: pagador can edit non-financial fields only; admin can edit anything
+        allow update: if isAdmin(grupoId)
+                      || (resource.data.pagadorUid == request.auth.uid
+                          && !request.resource.data.diff(resource.data).affectedKeys()
+                             .hasAny(['monto', 'participantes', 'pagadorUid']));
         allow delete: if resource.data.pagadorUid == request.auth.uid || isAdmin(grupoId);
       }
 
@@ -174,8 +186,11 @@ service cloud.firestore {
 
       match /tareas/{tareaId} {
         allow read: if isActiveMember(grupoId);
-        allow create: if isActiveMember(grupoId);
-        allow update: if isActiveMember(grupoId);
+        // SEC-06: restrict task creation/editing to privileged roles
+        allow create: if isAdminOrMod(grupoId) || hasRol(grupoId, 'delegado');
+        allow update: if isAdminOrMod(grupoId) || hasRol(grupoId, 'delegado')
+                      || (isActiveMember(grupoId)
+                          && resource.data.creadoPorUid == request.auth.uid);
         allow delete: if resource.data.creadoPorUid == request.auth.uid
                       || isAdminOrMod(grupoId)
                       || hasRol(grupoId, 'delegado');

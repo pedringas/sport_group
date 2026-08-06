@@ -6,7 +6,6 @@ import '../../core/theme/app_theme.dart';
 import '../../core/theme/sg_widgets.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/grupo_provider.dart';
-import '../../data/models/grupo_model.dart';
 
 // â”€â”€ Breakpoint â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
@@ -35,7 +34,6 @@ class _DesktopShell extends ConsumerWidget {
     final routerState = GoRouterState.of(context);
     final location = routerState.matchedLocation;
     final queryParams = routerState.uri.queryParameters;
-    final grupos = ref.watch(userGruposProvider).valueOrNull ?? [];
     final user = ref.watch(currentUserProvider).valueOrNull;
 
     return Scaffold(
@@ -43,7 +41,7 @@ class _DesktopShell extends ConsumerWidget {
       body: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _DeskSidebar(location: location, queryParams: queryParams, grupos: grupos, userName: user?.nombreCompleto ?? ''),
+          _DeskSidebar(location: location, queryParams: queryParams, userName: user?.nombreCompleto ?? ''),
           Container(width: 1, color: AppTheme.border),
           Expanded(
             child: Column(
@@ -70,32 +68,33 @@ class _DesktopShell extends ConsumerWidget {
 class _DeskSidebar extends StatelessWidget {
   final String location;
   final Map<String, String> queryParams;
-  final List<GrupoModel> grupos;
   final String userName;
 
   const _DeskSidebar({
     required this.location,
     required this.queryParams,
-    required this.grupos,
     required this.userName,
   });
 
   static const _navItems = [
     (id: 'inicio', icon: Icons.home_rounded, label: 'Inicio', path: '/home'),
-    (id: 'search', icon: Icons.search_rounded, label: 'Buscar grupos', path: '/search'),
+    (id: 'novedades', icon: Icons.newspaper_rounded, label: 'Novedades', path: '/home?tab=1'),
     (id: 'agenda', icon: Icons.calendar_month_rounded, label: 'Agenda', path: '/home?tab=2'),
-    (id: 'notifs', icon: Icons.notifications_rounded, label: 'Novedades', path: '/notificaciones'),
+    (id: 'caja', icon: Icons.account_balance_wallet_outlined, label: 'Caja', path: '/home?tab=3'),
+    (id: 'perfil', icon: Icons.person_rounded, label: 'Mi perfil', path: '/home?tab=4'),
   ];
 
   bool _isActive(String navId) {
     if (navId == 'inicio') return location == '/home' && !queryParams.containsKey('tab');
-    if (navId == 'search') return location.startsWith('/search');
+    if (navId == 'novedades') return location == '/home' && queryParams['tab'] == '1';
     if (navId == 'agenda') return location == '/home' && queryParams['tab'] == '2';
-    if (navId == 'notifs') return location.startsWith('/notificaciones');
+    if (navId == 'caja') return location == '/home' && queryParams['tab'] == '3';
+    if (navId == 'perfil') {
+      return (location == '/home' && queryParams['tab'] == '4') ||
+          location.startsWith('/profile');
+    }
     return false;
   }
-
-  bool _isGroupActive(String grupoId) => location.contains('/group/$grupoId');
 
   @override
   Widget build(BuildContext context) {
@@ -119,17 +118,17 @@ class _DeskSidebar extends StatelessWidget {
                     ),
                     alignment: Alignment.center,
                     child: Text(
-                      'SG',
+                      'T',
                       style: GoogleFonts.bricolageGrotesque(
                         fontWeight: FontWeight.w800,
-                        fontSize: 14,
+                        fontSize: 16,
                         color: Colors.white,
                       ),
                     ),
                   ),
                   const SizedBox(width: 10),
                   Text(
-                    'SportGroups',
+                    'Tacheros',
                     style: GoogleFonts.bricolageGrotesque(
                       fontWeight: FontWeight.w700,
                       fontSize: 16,
@@ -157,44 +156,7 @@ class _DeskSidebar extends StatelessWidget {
               ),
             ),
 
-            const SizedBox(height: 16),
-
-            // â”€â”€ Groups header
-            const Padding(
-              padding: EdgeInsets.fromLTRB(18, 0, 16, 6),
-              child: Text(
-                'MIS GRUPOS',
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 1.2,
-                  color: AppTheme.textMuted,
-                ),
-              ),
-            ),
-
-            // â”€â”€ Groups list
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 8),
-                child: Column(
-                  children: [
-                    ...grupos.map((g) => _SideGroupRow(
-                      grupo: g,
-                      selected: _isGroupActive(g.id),
-                      onTap: () => context.go('/group/${g.id}'),
-                    )),
-                    _SideNavRow(
-                      icon: Icons.add_circle_outline_rounded,
-                      label: 'Crear o sumarte',
-                      selected: false,
-                      muted: true,
-                      onTap: () => context.push('/create-group'),
-                    ),
-                  ],
-                ),
-              ),
-            ),
+            const Spacer(),
 
             // â”€â”€ User card
             Container(
@@ -248,112 +210,57 @@ class _SideNavRow extends StatelessWidget {
   final IconData icon;
   final String label;
   final bool selected;
-  final bool muted;
   final VoidCallback onTap;
   const _SideNavRow({
     required this.icon,
     required this.label,
     required this.selected,
     required this.onTap,
-    this.muted = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 2),
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
-        decoration: BoxDecoration(
-          color: selected ? AppTheme.primarySoft : Colors.transparent,
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Row(
-          children: [
-            Icon(
-              icon,
-              size: 18,
-              color: selected
-                  ? AppTheme.primaryInk
-                  : (muted ? AppTheme.textMuted : AppTheme.text),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                label,
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                  color: selected
-                      ? AppTheme.primaryInk
-                      : (muted ? AppTheme.textMuted : AppTheme.text),
-                ),
+    const radius = BorderRadius.all(Radius.circular(10));
+    return Semantics(
+      button: true,
+      label: label,
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: radius,
+        child: Ink(
+          decoration: BoxDecoration(
+            color: selected ? AppTheme.primarySoft : Colors.transparent,
+            borderRadius: radius,
+          ),
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: radius,
+            child: Container(
+              margin: const EdgeInsets.only(bottom: 2),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
+              child: Row(
+                children: [
+                  Icon(
+                    icon,
+                    size: 18,
+                    color: selected ? AppTheme.primaryInk : AppTheme.text,
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      label,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                        color:
+                            selected ? AppTheme.primaryInk : AppTheme.text,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _SideGroupRow extends StatelessWidget {
-  final GrupoModel grupo;
-  final bool selected;
-  final VoidCallback onTap;
-  const _SideGroupRow({
-    required this.grupo,
-    required this.selected,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 2),
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-        decoration: BoxDecoration(
-          color: selected ? AppTheme.surface : Colors.transparent,
-          borderRadius: BorderRadius.circular(10),
-          border: selected
-              ? Border.all(color: AppTheme.border)
-              : Border.all(color: Colors.transparent),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 22, height: 22,
-              decoration: BoxDecoration(
-                color: AppTheme.primary,
-                borderRadius: BorderRadius.circular(7),
-              ),
-              alignment: Alignment.center,
-              child: Text(
-                grupo.nombre.characters.first.toUpperCase(),
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                grupo.nombre,
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                  color: AppTheme.text,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );
@@ -371,6 +278,7 @@ class _DeskTopBar extends ConsumerWidget {
   String _title(WidgetRef r) {
     if (location == '/home') {
       return switch (queryParams['tab']) {
+        '1' => 'Novedades',
         '2' => 'Agenda',
         '3' => 'Caja',
         '4' => 'Mi perfil',

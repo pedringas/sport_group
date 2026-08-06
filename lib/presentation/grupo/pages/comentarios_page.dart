@@ -93,7 +93,7 @@ class _ComentariosPageState extends ConsumerState<ComentariosPage> {
     final currentUserName =
         ref.watch(currentUserProvider).valueOrNull?.nombreCompleto ?? '';
 
-    final isDesktop = MediaQuery.sizeOf(context).width >= 900;
+    final isDesktop = MediaQuery.sizeOf(context).width >= AppTheme.kResponsiveBreakpoint;
     return Scaffold(
       backgroundColor: AppTheme.bg(context),
       appBar: isDesktop ? null : AppBar(

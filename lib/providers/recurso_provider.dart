@@ -25,7 +25,7 @@ class CrearRecursoNotifier extends AsyncNotifier<void> {
     state = const AsyncLoading();
     try {
       final user = ref.read(authStateProvider).valueOrNull!;
-      final userData = await ref.read(authRepositoryProvider).getUser(user.uid);
+      final userData = await ref.read(currentUserProvider.future);
       await ref.read(recursoRepositoryProvider).createRecurso(
             grupoId: grupoId,
             autorUid: user.uid,
@@ -52,7 +52,7 @@ class CrearRecursoNotifier extends AsyncNotifier<void> {
     state = const AsyncLoading();
     try {
       final user = ref.read(authStateProvider).valueOrNull!;
-      final userData = await ref.read(authRepositoryProvider).getUser(user.uid);
+      final userData = await ref.read(currentUserProvider.future);
       final repo = ref.read(recursoRepositoryProvider);
       final url = await repo.uploadArchivo(grupoId, nombreArchivo, bytes);
       await repo.createRecurso(

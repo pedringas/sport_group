@@ -3,10 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../data/models/enums.dart';
-import '../../../data/models/recurso_model.dart';
 import '../../../providers/grupo_provider.dart';
 import '../../../providers/noticia_provider.dart';
-import '../../../providers/recurso_provider.dart';
 
 // ── Filter categories ─────────────────────────────────────────────────────────
 
@@ -138,26 +136,7 @@ class _BusquedaGlobalPageState extends ConsumerState<BusquedaGlobalPage> {
         ));
       }
 
-      // ── Archivos (recursos)
-      final recursos =
-          ref.watch(recursosProvider(grupo.id)).valueOrNull ?? [];
-      for (final r in recursos) {
-        final matches = r.titulo.toLowerCase().contains(q) ||
-            (r.descripcion?.toLowerCase().contains(q) ?? false);
-        if (!matches) continue;
-        final icon = r.tipo == TipoRecurso.link
-            ? Icons.link_rounded
-            : r.titulo.toLowerCase().endsWith('.pdf')
-                ? Icons.picture_as_pdf_rounded
-                : Icons.description_rounded;
-        results.add(_SearchResult(
-          tipo: _Filtro.archivos,
-          titulo: r.titulo,
-          subtitulo: gNombre,
-          icono: icon,
-          grupoId: grupo.id,
-        ));
-      }
+      // ── Archivos (recursos) — módulo en pausa, excluido de la búsqueda.
     }
 
     // Deduplicate personas by nombre+grupo (might appear in multiple role streams)
@@ -174,9 +153,6 @@ class _BusquedaGlobalPageState extends ConsumerState<BusquedaGlobalPage> {
     return all.where((r) => r.tipo == _filtro).toList();
   }
 
-  List<_SearchResult> _byType(_Filtro tipo) =>
-      _buildResults().where((r) => r.tipo == tipo).toList();
-
   // ── Build ─────────────────────────────────────────────────────────────────
 
   @override
@@ -185,7 +161,7 @@ class _BusquedaGlobalPageState extends ConsumerState<BusquedaGlobalPage> {
     final results = _filtered;
     final allResults = _buildResults();
 
-    final isDesktop = MediaQuery.sizeOf(context).width >= 900;
+    final isDesktop = MediaQuery.sizeOf(context).width >= AppTheme.kResponsiveBreakpoint;
     return Scaffold(
       backgroundColor: AppTheme.bg(context),
       body: SafeArea(
@@ -278,7 +254,10 @@ class _BusquedaGlobalPageState extends ConsumerState<BusquedaGlobalPage> {
                 padding: const EdgeInsets.symmetric(
                     horizontal: 16, vertical: 4),
                 child: Row(
-                  children: _Filtro.values.map((f) {
+                  // "Archivos" (recursos) en pausa — se excluye del filtro.
+                  children: _Filtro.values
+                      .where((f) => f != _Filtro.archivos)
+                      .map((f) {
                     final labels = {
                       _Filtro.todo: 'Todo',
                       _Filtro.eventos: 'Eventos',

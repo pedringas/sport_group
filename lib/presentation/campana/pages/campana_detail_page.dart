@@ -5,12 +5,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/theme/sg_widgets.dart';
 import '../../../data/models/campana_model.dart';
 import '../../../data/models/enums.dart';
 import '../../../providers/campana_provider.dart';
 import '../../../providers/grupo_provider.dart';
 import '../../../providers/auth_provider.dart';
-import '../../../core/theme/sg_widgets.dart';
 import 'aporte_comprobante_page.dart';
 
 class CampanaDetailPage extends ConsumerWidget {
@@ -34,10 +34,10 @@ class CampanaDetailPage extends ConsumerWidget {
       backgroundColor: AppTheme.bg(context),
       body: campanaAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Error: $e')),
+        error: (e, _) => const SGErrorState(message: 'Error al cargar la campaña'),
         data: (campana) {
           if (campana == null) {
-            return const Center(child: Text('Campaña no encontrada'));
+            return const SGErrorState(message: 'Campaña no encontrada');
           }
           final activa = campana.estado == EstadoCampana.activa;
 
@@ -246,8 +246,8 @@ class CampanaDetailPage extends ConsumerWidget {
                   aportesAsync.when(
                     loading: () => const SliverToBoxAdapter(
                         child: Center(child: CircularProgressIndicator())),
-                    error: (e, _) => SliverToBoxAdapter(
-                        child: Center(child: Text('Error: $e'))),
+                    error: (e, _) => const SliverToBoxAdapter(
+                        child: SGErrorState(message: 'Error al cargar los aportes')),
                     data: (aportes) {
                       if (aportes.isEmpty) {
                         return SliverToBoxAdapter(

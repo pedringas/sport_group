@@ -1,36 +1,27 @@
+import 'dart:developer' as dev;
 import 'dart:math';
 import 'dart:typed_data';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_storage/firebase_storage.dart';
+import '../datasources/noticia_datasource.dart';
 import '../models/noticia_model.dart';
 import '../models/enums.dart';
 import '../models/actividad_model.dart';
 import 'notificacion_repository.dart';
 
 class NoticiaRepository {
-  final _db = FirebaseFirestore.instance;
-  final _storage = FirebaseStorage.instance;
-
-  // ── Noticias ───────────────────────────────────────────────────────────────
+  final NoticiaDatasource _ds;
+  NoticiaRepository([NoticiaDatasource? ds])
+      : _ds = ds ?? NoticiaDatasource();
 
   /// Returns noticias sorted: pinned first, then by createdAt descending.
-  Stream<List<NoticiaModel>> getNoticias(String grupoId) {
-    return _db
-        .collection('grupos')
-        .doc(grupoId)
-        .collection('noticias')
-        .orderBy('createdAt', descending: true)
-        .snapshots()
-        .map((s) {
-      final noticias = s.docs.map(NoticiaModel.fromFirestore).toList();
-      noticias.sort((a, b) {
-        if (a.fijada && !b.fijada) return -1;
-        if (!a.fijada && b.fijada) return 1;
-        return b.createdAt.compareTo(a.createdAt);
+  Stream<List<NoticiaModel>> getNoticias(String grupoId) =>
+      _ds.getNoticias(grupoId).map((noticias) {
+        noticias.sort((a, b) {
+          if (a.fijada && !b.fijada) return -1;
+          if (!a.fijada && b.fijada) return 1;
+          return b.createdAt.compareTo(a.createdAt);
+        });
+        return noticias;
       });
-      return noticias;
-    });
-  }
 
   Future<void> createNoticia({
     required String grupoId,
@@ -45,38 +36,20 @@ class NoticiaRepository {
     DateTime? fechaCaducidad,
     DateTime? fechaEvento,
   }) async {
-    final ref =
-        _db.collection('grupos').doc(grupoId).collection('noticias').doc();
-    String? imagenUrl;
-    if (imagenBytes != null) {
-      final storageRef =
-          _storage.ref('grupos/$grupoId/noticias/${ref.id}.jpg');
-      await storageRef.putData(
-          imagenBytes, SettableMetadata(contentType: 'image/jpeg'));
-      imagenUrl = await storageRef.getDownloadURL();
-    }
-    await ref.set({
-      'grupoId': grupoId,
-      'autorUid': autorUid,
-      'autorNombre': autorNombre,
-      'titulo': titulo,
-      'contenido': contenido,
-      'imagenUrl': imagenUrl,
-      'likes': [],
-      'fijada': false,
-      'tieneListado': tieneListado,
-      'categoria': categoria.name,
-      'mencionados': mencionados.map((m) => m.toMap()).toList(),
-      'fechaCaducidad': fechaCaducidad != null
-          ? Timestamp.fromDate(fechaCaducidad)
-          : null,
-      'fechaEvento': fechaEvento != null
-          ? Timestamp.fromDate(fechaEvento)
-          : null,
-      'createdAt': Timestamp.now(),
-    });
+    final id = await _ds.createNoticiaDoc(
+      grupoId: grupoId,
+      autorUid: autorUid,
+      autorNombre: autorNombre,
+      titulo: titulo,
+      contenido: contenido,
+      imagenBytes: imagenBytes,
+      tieneListado: tieneListado,
+      categoria: categoria,
+      mencionados: mencionados,
+      fechaCaducidad: fechaCaducidad,
+      fechaEvento: fechaEvento,
+    );
 
-    // Write group activity (fire-and-forget)
     try {
       final snippet = contenido.substring(0, min(100, contenido.length));
       await NotificacionRepository().writeActividad(
@@ -89,11 +62,13 @@ class NoticiaRepository {
           actorNombre: autorNombre,
           grupoId: grupoId,
           grupoNombre: '',
-          referenciaId: ref.id,
+          referenciaId: id,
           createdAt: DateTime.now(),
         ),
       );
-    } catch (_) {}
+    } catch (e) {
+      dev.log('[Actividad] $e');
+    }
   }
 
   Future<void> updateNoticia({
@@ -108,145 +83,53 @@ class NoticiaRepository {
     List<MencionadoItem> mencionados = const [],
     DateTime? fechaCaducidad,
     DateTime? fechaEvento,
-  }) async {
-    String? imagenUrl = existingImagenUrl;
-    if (imagenBytes != null) {
-      final storageRef =
-          _storage.ref('grupos/$grupoId/noticias/$noticiaId.jpg');
-      await storageRef.putData(
-          imagenBytes, SettableMetadata(contentType: 'image/jpeg'));
-      imagenUrl = await storageRef.getDownloadURL();
-    }
-    await _db
-        .collection('grupos')
-        .doc(grupoId)
-        .collection('noticias')
-        .doc(noticiaId)
-        .update({
-      'titulo': titulo,
-      'contenido': contenido,
-      'imagenUrl': imagenUrl,
-      'tieneListado': tieneListado,
-      'categoria': categoria.name,
-      'mencionados': mencionados.map((m) => m.toMap()).toList(),
-      'fechaCaducidad': fechaCaducidad != null
-          ? Timestamp.fromDate(fechaCaducidad)
-          : null,
-      'fechaEvento': fechaEvento != null
-          ? Timestamp.fromDate(fechaEvento)
-          : null,
-    });
-  }
+  }) =>
+      _ds.updateNoticiaDoc(
+        grupoId: grupoId,
+        noticiaId: noticiaId,
+        titulo: titulo,
+        contenido: contenido,
+        imagenBytes: imagenBytes,
+        existingImagenUrl: existingImagenUrl,
+        tieneListado: tieneListado,
+        categoria: categoria,
+        mencionados: mencionados,
+        fechaCaducidad: fechaCaducidad,
+        fechaEvento: fechaEvento,
+      );
 
-  Future<void> toggleLike(
-      String grupoId, String noticiaId, String uid) async {
-    final ref = _db
-        .collection('grupos')
-        .doc(grupoId)
-        .collection('noticias')
-        .doc(noticiaId);
-    final doc = await ref.get();
-    final likes = List<String>.from(doc.data()?['likes'] ?? []);
-    if (likes.contains(uid)) {
-      likes.remove(uid);
-    } else {
-      likes.add(uid);
-    }
-    await ref.update({'likes': likes});
-  }
+  Future<void> toggleLike(String grupoId, String noticiaId, String uid) =>
+      _ds.toggleLike(grupoId, noticiaId, uid);
 
-  Future<void> toggleFijada(
-      String grupoId, String noticiaId, bool fijada) async {
-    await _db
-        .collection('grupos')
-        .doc(grupoId)
-        .collection('noticias')
-        .doc(noticiaId)
-        .update({'fijada': fijada});
-  }
+  Future<void> toggleFijada(String grupoId, String noticiaId, bool fijada) =>
+      _ds.toggleFijada(grupoId, noticiaId, fijada);
 
   Future<void> updateCategoria(String grupoId, String noticiaId,
-      NoticiaCategoria categoria) async {
-    await _db
-        .collection('grupos')
-        .doc(grupoId)
-        .collection('noticias')
-        .doc(noticiaId)
-        .update({'categoria': categoria.name});
-  }
+          NoticiaCategoria categoria) =>
+      _ds.updateCategoria(grupoId, noticiaId, categoria);
 
-  Future<void> deleteNoticia(String grupoId, String noticiaId) async {
-    await _db
-        .collection('grupos')
-        .doc(grupoId)
-        .collection('noticias')
-        .doc(noticiaId)
-        .delete();
-  }
+  Future<void> deleteNoticia(String grupoId, String noticiaId) =>
+      _ds.deleteNoticia(grupoId, noticiaId);
 
-  // ── Lecturas (read tracking) ───────────────────────────────────────────────
-
-  /// Mark a noticia as read by the current user (idempotent).
   Future<void> markAsRead({
     required String grupoId,
     required String noticiaId,
     required String uid,
     required String nombre,
-  }) async {
-    await _db
-        .collection('grupos')
-        .doc(grupoId)
-        .collection('noticias')
-        .doc(noticiaId)
-        .collection('lecturas')
-        .doc(uid)
-        .set({
-      'nombre': nombre,
-      'timestamp': FieldValue.serverTimestamp(),
-    }, SetOptions(merge: true));
-  }
+  }) =>
+      _ds.markAsRead(
+          grupoId: grupoId, noticiaId: noticiaId, uid: uid, nombre: nombre);
 
-  /// Stream of who has read the noticia (admin view).
-  Stream<List<LecturaItem>> getLecturas(String grupoId, String noticiaId) {
-    return _db
-        .collection('grupos')
-        .doc(grupoId)
-        .collection('noticias')
-        .doc(noticiaId)
-        .collection('lecturas')
-        .orderBy('timestamp')
-        .snapshots()
-        .map((s) => s.docs.map(LecturaItem.fromFirestore).toList());
-  }
+  Stream<List<LecturaItem>> getLecturas(String grupoId, String noticiaId) =>
+      _ds.getLecturas(grupoId, noticiaId);
 
-  // ── Asistencia (attendance) ────────────────────────────────────────────────
-
-  /// Stream of the current user's RSVP for a single event (efficient single-doc read).
   Stream<AsistenciaItem?> getMiAsistencia(
-      String grupoId, String noticiaId, String uid) {
-    return _db
-        .collection('grupos')
-        .doc(grupoId)
-        .collection('noticias')
-        .doc(noticiaId)
-        .collection('asistencia')
-        .doc(uid)
-        .snapshots()
-        .map((doc) => doc.exists ? AsistenciaItem.fromFirestore(doc) : null);
-  }
+          String grupoId, String noticiaId, String uid) =>
+      _ds.getMiAsistencia(grupoId, noticiaId, uid);
 
   Stream<List<AsistenciaItem>> getAsistencia(
-      String grupoId, String noticiaId) {
-    return _db
-        .collection('grupos')
-        .doc(grupoId)
-        .collection('noticias')
-        .doc(noticiaId)
-        .collection('asistencia')
-        .orderBy('timestamp')
-        .snapshots()
-        .map((s) => s.docs.map(AsistenciaItem.fromFirestore).toList());
-  }
+          String grupoId, String noticiaId) =>
+      _ds.getAsistencia(grupoId, noticiaId);
 
   Future<void> setAsistencia({
     required String grupoId,
@@ -254,49 +137,24 @@ class NoticiaRepository {
     required String uid,
     required String nombre,
     String? avatarUrl,
-    required String estado, // 'va' | 'no_va'
-  }) async {
-    await _db
-        .collection('grupos')
-        .doc(grupoId)
-        .collection('noticias')
-        .doc(noticiaId)
-        .collection('asistencia')
-        .doc(uid)
-        .set({
-      'nombre': nombre,
-      'avatarUrl': avatarUrl,
-      'estado': estado,
-      'timestamp': FieldValue.serverTimestamp(),
-    }, SetOptions(merge: false));
-  }
+    required String estado,
+  }) =>
+      _ds.setAsistencia(
+        grupoId: grupoId,
+        noticiaId: noticiaId,
+        uid: uid,
+        nombre: nombre,
+        avatarUrl: avatarUrl,
+        estado: estado,
+      );
 
   Future<void> removeAsistencia(
-      String grupoId, String noticiaId, String uid) async {
-    await _db
-        .collection('grupos')
-        .doc(grupoId)
-        .collection('noticias')
-        .doc(noticiaId)
-        .collection('asistencia')
-        .doc(uid)
-        .delete();
-  }
-
-  // ── Comentarios ────────────────────────────────────────────────────────────
+          String grupoId, String noticiaId, String uid) =>
+      _ds.removeAsistencia(grupoId, noticiaId, uid);
 
   Stream<List<ComentarioModel>> getComentarios(
-      String grupoId, String noticiaId) {
-    return _db
-        .collection('grupos')
-        .doc(grupoId)
-        .collection('noticias')
-        .doc(noticiaId)
-        .collection('comentarios')
-        .orderBy('createdAt')
-        .snapshots()
-        .map((s) => s.docs.map(ComentarioModel.fromFirestore).toList());
-  }
+          String grupoId, String noticiaId) =>
+      _ds.getComentarios(grupoId, noticiaId);
 
   Future<void> addComentario({
     required String grupoId,
@@ -305,31 +163,17 @@ class NoticiaRepository {
     required String nombre,
     String? avatarUrl,
     required String texto,
-  }) async {
-    await _db
-        .collection('grupos')
-        .doc(grupoId)
-        .collection('noticias')
-        .doc(noticiaId)
-        .collection('comentarios')
-        .add({
-      'uid': uid,
-      'nombre': nombre,
-      'avatarUrl': avatarUrl,
-      'texto': texto,
-      'createdAt': FieldValue.serverTimestamp(),
-    });
-  }
+  }) =>
+      _ds.addComentario(
+        grupoId: grupoId,
+        noticiaId: noticiaId,
+        uid: uid,
+        nombre: nombre,
+        avatarUrl: avatarUrl,
+        texto: texto,
+      );
 
   Future<void> deleteComentario(
-      String grupoId, String noticiaId, String comentarioId) async {
-    await _db
-        .collection('grupos')
-        .doc(grupoId)
-        .collection('noticias')
-        .doc(noticiaId)
-        .collection('comentarios')
-        .doc(comentarioId)
-        .delete();
-  }
+          String grupoId, String noticiaId, String comentarioId) =>
+      _ds.deleteComentario(grupoId, noticiaId, comentarioId);
 }

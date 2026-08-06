@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -33,6 +34,29 @@ class CrearGastoPage extends ConsumerStatefulWidget {
 
   @override
   ConsumerState<CrearGastoPage> createState() => _CrearGastoPageState();
+
+  @visibleForTesting
+  static List<ParticipanteGasto> splitParticipants({
+    required List<MiembroModel> allMiembros,
+    required Set<String>? selectedUids,
+    required String pagadorUid,
+    required double monto,
+  }) {
+    final efectivos = selectedUids == null
+        ? List<MiembroModel>.from(allMiembros)
+        : allMiembros.where((m) => selectedUids.contains(m.uid)).toList();
+
+    if (!efectivos.any((m) => m.uid == pagadorUid)) {
+      final payer = allMiembros.where((m) => m.uid == pagadorUid).firstOrNull;
+      if (payer != null) efectivos.add(payer);
+    }
+
+    final sharePerPerson = efectivos.isEmpty ? monto : monto / efectivos.length;
+
+    return efectivos
+        .map((m) => ParticipanteGasto(uid: m.uid, nombre: m.nombreCompleto, monto: sharePerPerson))
+        .toList();
+  }
 }
 
 class _CrearGastoPageState extends ConsumerState<CrearGastoPage> {
@@ -163,28 +187,12 @@ class _CrearGastoPageState extends ConsumerState<CrearGastoPage> {
       return;
     }
 
-    // Compute participants
-    final efectivos = _selectedUids == null
-        ? List<MiembroModel>.from(allMiembros)
-        : allMiembros.where((m) => _selectedUids!.contains(m.uid)).toList();
-
-    // Payer must always be a participant
-    if (!efectivos.any((m) => m.uid == _pagadorUid)) {
-      final payer =
-          allMiembros.where((m) => m.uid == _pagadorUid).firstOrNull;
-      if (payer != null) efectivos.add(payer);
-    }
-
-    final sharePerPerson =
-        efectivos.isEmpty ? monto : monto / efectivos.length;
-
-    final participantes = efectivos
-        .map((m) => ParticipanteGasto(
-              uid: m.uid,
-              nombre: m.nombreCompleto,
-              monto: sharePerPerson,
-            ))
-        .toList();
+    final participantes = CrearGastoPage.splitParticipants(
+      allMiembros: allMiembros,
+      selectedUids: _selectedUids,
+      pagadorUid: _pagadorUid!,
+      monto: monto,
+    );
 
     try {
       if (widget.gastoExistente != null) {
@@ -293,7 +301,7 @@ class _CrearGastoPageState extends ConsumerState<CrearGastoPage> {
 
             Expanded(
               child: ListView(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, AppTheme.kBottomNavPadding),
                 children: [
                   // â”€â”€ Amount â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                   Container(

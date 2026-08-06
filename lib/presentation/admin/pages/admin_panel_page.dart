@@ -1,4 +1,3 @@
-import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -11,7 +10,7 @@ import '../../../data/models/solicitud_union_model.dart';
 import '../../../data/models/enums.dart';
 import '../../../providers/grupo_provider.dart';
 import '../../../providers/cuota_provider.dart';
-import '../../../providers/gasto_provider.dart';
+import '../../../providers/noticia_provider.dart';
 
 class AdminPanelPage extends ConsumerWidget {
   final String grupoId;
@@ -20,28 +19,59 @@ class AdminPanelPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final gc = ref.watch(grupoColorProvider(grupoId));
+    final grupo = ref.watch(grupoProvider(grupoId)).valueOrNull;
     final miembros = ref.watch(miembrosProvider(grupoId)).valueOrNull ?? [];
     final solicitudes =
         ref.watch(solicitudesPendientesProvider(grupoId)).valueOrNull ?? [];
     final cuotas = ref.watch(cuotasProvider(grupoId)).valueOrNull ?? [];
     final pagos = ref.watch(pagosGrupoProvider(grupoId)).valueOrNull ?? [];
-    final gastos = ref.watch(todosGastosProvider(grupoId)).valueOrNull ?? [];
+    final noticias = ref.watch(noticiasProvider(grupoId)).valueOrNull ?? [];
 
     final aprobados =
         pagos.where((p) => p.estado == EstadoPago.aprobado).length;
-    final pendientesCount = pagos
-        .where((p) =>
-            p.estado == EstadoPago.pendiente ||
-            p.estado == EstadoPago.validando)
-        .length;
-    final totalPosibles =
-        (miembros.isNotEmpty && cuotas.isNotEmpty) ? miembros.length * cuotas.length : 1;
-    final pagoPct = (aprobados / totalPosibles * 100).clamp(0.0, 100.0);
-    final totalRecaudado = pagos
-        .where((p) => p.estado == EstadoPago.aprobado)
-        .fold(0.0, (s, p) => s + p.montoEsperado);
-    final totalGastos = gastos.fold(0.0, (s, g) => s + g.monto);
-    final healthScore = _health(miembros.length, solicitudes.length, pagoPct);
+    final totalMiembros = miembros.isNotEmpty ? miembros.length : 1;
+    final cuotasAlDiaPct = cuotas.isEmpty
+        ? 0.0
+        : (aprobados / (cuotas.length * totalMiembros) * 100)
+            .clamp(0.0, 100.0);
+
+    final eventNoticias = noticias.where((n) => n.tieneListado).toList();
+    final asistenciaPct = eventNoticias.isEmpty
+        ? 0.0
+        : (eventNoticias.where((n) => n.mencionados.isNotEmpty).length /
+                eventNoticias.length *
+                100)
+            .clamp(0.0, 100.0);
+
+    final engagementPct = noticias.isEmpty
+        ? 0.0
+        : (noticias.where((n) => n.likesCount > 0).length /
+                noticias.length *
+                100)
+            .clamp(0.0, 100.0);
+
+    final hace30Dias = DateTime.now().subtract(const Duration(days: 30));
+    final uidsActivos = pagos
+        .where((p) => p.createdAt.isAfter(hace30Dias))
+        .map((p) => p.usuarioUid)
+        .toSet();
+    final actividadRecientePct = miembros.isEmpty
+        ? 0.0
+        : (uidsActivos.length / miembros.length * 100).clamp(0.0, 100.0);
+
+    final healthScore = _healthScore(
+        cuotasAlDiaPct, actividadRecientePct, asistenciaPct, engagementPct);
+
+    final oldestDias = solicitudes.isEmpty
+        ? 0
+        : DateTime.now()
+            .difference(solicitudes
+                .map((s) => s.createdAt)
+                .reduce((a, b) => a.isBefore(b) ? a : b))
+            .inDays;
+
+    final staffMembers =
+        miembros.where((m) => m.rol != RolMiembro.miembro).toList();
 
     return Scaffold(
       backgroundColor: AppTheme.bg(context),
@@ -49,7 +79,7 @@ class AdminPanelPage extends ConsumerWidget {
         bottom: false,
         child: CustomScrollView(
           slivers: [
-            // â”€â”€ Header
+            // Header
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(4, 4, 8, 0),
@@ -81,82 +111,146 @@ class AdminPanelPage extends ConsumerWidget {
               ),
             ),
 
-            // â”€â”€ Health score card
+            // Admin badge
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                child: _HealthCard(score: healthScore),
-              ),
-            ),
-
-            // â”€â”€ Quick stats
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: _MiniStat(
-                        label: 'Miembros',
-                        value: '${miembros.length}',
-                        icon: Icons.people_outline_rounded,
-                        color: gc,
+                padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 12, vertical: 7),
+                  decoration: BoxDecoration(
+                    color: AppTheme.danger.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                        color: AppTheme.danger.withValues(alpha: 0.2)),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.shield_rounded,
+                          size: 14, color: AppTheme.danger),
+                      const SizedBox(width: 6),
+                      Text(
+                        'Sos Admin · ${grupo?.nombre ?? ''}',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: AppTheme.danger,
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: _MiniStat(
-                        label: 'Recaudado',
-                        value: '\$${_compact(totalRecaudado)}',
-                        icon: Icons.savings_outlined,
-                        color: AppTheme.good,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: _MiniStat(
-                        label: 'Gastos',
-                        value: '\$${_compact(totalGastos)}',
-                        icon: Icons.receipt_long_outlined,
-                        color: AppTheme.accent,
-                      ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),
 
-            // â”€â”€ Solicitudes alert
+            // Health + metrics card
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                child: _HealthCard(
+                  score: healthScore,
+                  cuotasAlDia: cuotasAlDiaPct,
+                  asistenciaEventos: asistenciaPct,
+                  actividadReciente: actividadRecientePct,
+                  engagementNoticias: engagementPct,
+                  tieneCuotas: cuotas.isNotEmpty,
+                  tieneEventos: eventNoticias.isNotEmpty,
+                  tieneNoticias: noticias.isNotEmpty,
+                ),
+              ),
+            ),
+
+            // Solicitudes alert card
             if (solicitudes.isNotEmpty)
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-                  child: _AlertBanner(
-                    icon: Icons.person_add_outlined,
-                    color: AppTheme.warning,
-                    label: '${solicitudes.length} solicitud${solicitudes.length != 1 ? 'es' : ''} de ingreso pendiente${solicitudes.length != 1 ? 's' : ''}',
-                    onTap: () => _showSolicitudesSheet(context, ref, solicitudes),
-                  ),
-                ),
-              ),
-
-            // â”€â”€ Pagos pendientes alert
-            if (pendientesCount > 0)
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                  child: _AlertBanner(
-                    icon: Icons.hourglass_top_rounded,
-                    color: AppTheme.accent,
-                    label:
-                        '$pendientesCount comprobante${pendientesCount != 1 ? 's' : ''} por validar',
+                  child: GestureDetector(
                     onTap: () =>
-                        context.push('/group/$grupoId/tesorero'),
+                        _showSolicitudesSheet(context, ref, solicitudes),
+                    child: Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: AppTheme.warning.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                            color:
+                                AppTheme.warning.withValues(alpha: 0.25)),
+                      ),
+                      child: Row(
+                        children: [
+                          Stack(
+                            clipBehavior: Clip.none,
+                            children: [
+                              Container(
+                                width: 44,
+                                height: 44,
+                                decoration: BoxDecoration(
+                                  color: AppTheme.warning
+                                      .withValues(alpha: 0.12),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: const Icon(
+                                    Icons.person_add_outlined,
+                                    size: 22,
+                                    color: AppTheme.warning),
+                              ),
+                              Positioned(
+                                top: -4,
+                                right: -4,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 5, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: AppTheme.warning,
+                                    borderRadius:
+                                        BorderRadius.circular(8),
+                                  ),
+                                  child: Text(
+                                    '${solicitudes.length}',
+                                    style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w700),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  '${solicitudes.length} pedido${solicitudes.length != 1 ? 's' : ''} de ingreso esperan tu aprobación',
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppTheme.text,
+                                  ),
+                                ),
+                                if (oldestDias > 0)
+                                  Text(
+                                    'El más antiguo lleva $oldestDias día${oldestDias != 1 ? 's' : ''}',
+                                    style: const TextStyle(
+                                        fontSize: 12,
+                                        color: AppTheme.textMuted),
+                                  ),
+                              ],
+                            ),
+                          ),
+                          const Icon(Icons.chevron_right_rounded,
+                              color: AppTheme.warning),
+                        ],
+                      ),
+                    ),
                   ),
                 ),
               ),
 
-            // â”€â”€ Quick actions
+            // Quick actions (3x2 grid)
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
@@ -164,14 +258,13 @@ class AdminPanelPage extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const SGEyebrow('Acciones rápidas'),
-                    const SizedBox(height: 8),
-                    // Row 1
+                    const SizedBox(height: 10),
                     Row(
                       children: [
                         Expanded(
                           child: _ActionTile(
                             icon: Icons.person_add_outlined,
-                            label: 'Solicitudes',
+                            label: 'Aprobar\ningresos',
                             badge: solicitudes.isNotEmpty
                                 ? '${solicitudes.length}'
                                 : null,
@@ -184,7 +277,7 @@ class AdminPanelPage extends ConsumerWidget {
                         Expanded(
                           child: _ActionTile(
                             icon: Icons.manage_accounts_rounded,
-                            label: 'Roles',
+                            label: 'Gestionar\nroles',
                             color: gc,
                             onTap: () =>
                                 context.push('/group/$grupoId/miembros'),
@@ -194,45 +287,44 @@ class AdminPanelPage extends ConsumerWidget {
                         Expanded(
                           child: _ActionTile(
                             icon: Icons.payments_outlined,
-                            label: 'Suscripciones',
+                            label: 'Configurar\ncuota',
                             color: AppTheme.good,
                             onTap: () =>
-                                context.push('/group/$grupoId/cuotas'),
+                                context.push('/group/$grupoId/suscripciones'),
                           ),
                         ),
                       ],
                     ),
                     const SizedBox(height: 10),
-                    // Row 2
                     Row(
                       children: [
                         Expanded(
                           child: _ActionTile(
-                            icon: Icons.receipt_long_outlined,
-                            label: 'Gastos',
+                            icon: Icons.event_rounded,
+                            label: 'Crear\nevento',
                             color: AppTheme.accent,
-                            onTap: () =>
-                                context.push('/group/$grupoId/gastos'),
+                            onTap: () => context
+                                .push('/group/$grupoId/evento/crear'),
                           ),
                         ),
                         const SizedBox(width: 10),
                         Expanded(
                           child: _ActionTile(
-                            icon: Icons.task_alt_rounded,
-                            label: 'Tareas',
-                            color: AppTheme.good,
-                            onTap: () =>
-                                context.push('/group/$grupoId/tareas'),
+                            icon: Icons.campaign_outlined,
+                            label: 'Comunicado',
+                            color: AppTheme.primary,
+                            onTap: () => context
+                                .push('/group/$grupoId/noticias'),
                           ),
                         ),
                         const SizedBox(width: 10),
                         Expanded(
                           child: _ActionTile(
-                            icon: Icons.settings_rounded,
-                            label: 'Configuración',
+                            icon: Icons.archive_outlined,
+                            label: 'Archivar\ngrupo',
                             color: AppTheme.textMuted,
-                            onTap: () =>
-                                context.push('/group/$grupoId/settings'),
+                            onTap: () => context
+                                .push('/group/$grupoId/settings'),
                           ),
                         ),
                       ],
@@ -242,39 +334,37 @@ class AdminPanelPage extends ConsumerWidget {
               ),
             ),
 
-            // â”€â”€ Roles section
+            // Staff activity
             const SliverToBoxAdapter(
               child: Padding(
-                padding: EdgeInsets.fromLTRB(16, 24, 16, 8),
-                child: SGEyebrow('Roles del grupo'),
+                padding: EdgeInsets.fromLTRB(16, 28, 16, 8),
+                child: SGEyebrow('Actividad del staff'),
               ),
             ),
 
             SliverPadding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              sliver: miembros.isEmpty
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
+              sliver: staffMembers.isEmpty
                   ? const SliverToBoxAdapter(
-                      child: Center(
-                        child: Padding(
-                          padding: EdgeInsets.symmetric(vertical: 24),
-                          child: Text('Sin miembros',
-                              style:
-                                  TextStyle(color: AppTheme.textMuted)),
-                        ),
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(vertical: 16),
+                        child: Text('Sin staff asignado',
+                            style:
+                                TextStyle(color: AppTheme.textMuted)),
                       ),
                     )
                   : SliverList.separated(
-                      itemCount: miembros.length,
+                      itemCount: staffMembers.length,
                       separatorBuilder: (_, __) =>
                           const SizedBox(height: 6),
                       itemBuilder: (_, i) => _MiembroRolTile(
-                        miembro: miembros[i],
+                        miembro: staffMembers[i],
                         grupoId: grupoId,
                       ),
                     ),
             ),
 
-            // â”€â”€ Danger zone
+            // Danger zone
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(16, 28, 16, 8),
@@ -300,40 +390,74 @@ class AdminPanelPage extends ConsumerWidget {
     );
   }
 
-  double _health(int members, int pending, double pagoPct) {
-    double score = 55.0;
-    if (members >= 5) score += 10;
-    if (members >= 15) score += 5;
-    if (pending == 0) score += 10;
-    score += pagoPct * 0.20;
-    return score.clamp(0.0, 100.0);
-  }
-
-  static String _compact(double v) {
-    if (v >= 1000000) return '${(v / 1000000).toStringAsFixed(1)}M';
-    if (v >= 1000) return '${(v / 1000).toStringAsFixed(0)}K';
-    return v.toStringAsFixed(0);
+  static double _healthScore(
+      double cuotas, double actividad, double asistencia, double engagement) {
+    return (cuotas * 0.35 + actividad * 0.30 + asistencia * 0.20 + engagement * 0.15)
+        .clamp(0.0, 100.0);
   }
 }
 
-// â”€â”€ Health Card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Health Card with 4 real metrics + suggestions
 
 class _HealthCard extends StatelessWidget {
   final double score;
-  const _HealthCard({required this.score});
+  final double cuotasAlDia;
+  final double asistenciaEventos;
+  final double actividadReciente;
+  final double engagementNoticias;
+  final bool tieneCuotas;
+  final bool tieneEventos;
+  final bool tieneNoticias;
+
+  const _HealthCard({
+    required this.score,
+    required this.cuotasAlDia,
+    required this.asistenciaEventos,
+    required this.actividadReciente,
+    required this.engagementNoticias,
+    required this.tieneCuotas,
+    required this.tieneEventos,
+    required this.tieneNoticias,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final color = score >= 80
+    final color = score >= 75
         ? AppTheme.good
-        : score >= 60
+        : score >= 45
             ? AppTheme.warning
             : AppTheme.danger;
-    final label = score >= 80
+    final label = score >= 75
         ? 'Excelente'
-        : score >= 60
+        : score >= 45
             ? 'Bueno'
             : 'Necesita atención';
+
+    String? sugerenciaCuotas;
+    if (!tieneCuotas) {
+      sugerenciaCuotas = 'Creá la primera cuota para empezar a cobrar';
+    } else if (cuotasAlDia < 60) {
+      sugerenciaCuotas = 'Enviá recordatorios a los miembros con pagos vencidos';
+    }
+
+    String? sugerenciaActividad;
+    if (actividadReciente < 30) {
+      sugerenciaActividad = 'Publicá novedades para re-enganchar a miembros inactivos';
+    }
+
+    String? sugerenciaAsistencia;
+    if (!tieneEventos) {
+      sugerenciaAsistencia = 'Creá un evento con lista de asistencia para hacer seguimiento';
+    } else if (asistenciaEventos < 50) {
+      sugerenciaAsistencia = 'Activá el listado de asistencia en tus próximos eventos';
+    }
+
+    String? sugerenciaEngagement;
+    if (!tieneNoticias) {
+      sugerenciaEngagement = 'Publicá tu primera novedad para informar al grupo';
+    } else if (engagementNoticias < 30) {
+      sugerenciaEngagement = 'Publicá noticias con preguntas o encuestas para generar participación';
+    }
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -342,80 +466,106 @@ class _HealthCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: AppTheme.border),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Circular score
-          SizedBox(
-            width: 80,
-            height: 80,
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                CustomPaint(
-                  size: const Size(80, 80),
-                  painter: _ArcPainter(
-                    progress: score / 100,
+          Row(
+            children: [
+              Text(
+                'Salud del grupo',
+                style: GoogleFonts.dmSans(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: AppTheme.textMuted,
+                  letterSpacing: 0.5,
+                ),
+              ),
+              const Spacer(),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
                     color: color,
-                    trackColor: AppTheme.border,
                   ),
                 ),
-                Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      score.toStringAsFixed(0),
-                      style: GoogleFonts.bricolageGrotesque(
-                        fontWeight: FontWeight.w800,
-                        fontSize: 22,
-                        color: color,
-                        letterSpacing: -0.5,
-                      ),
-                    ),
-                    const Text(
-                      '/100',
-                      style: TextStyle(
-                          fontSize: 10, color: AppTheme.textMuted),
-                    ),
-                  ],
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
-          const SizedBox(width: 20),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Salud del grupo',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
+          const SizedBox(height: 8),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                score.toStringAsFixed(0),
+                style: GoogleFonts.bricolageGrotesque(
+                  fontSize: 44,
+                  fontWeight: FontWeight.w800,
+                  color: AppTheme.text,
+                  letterSpacing: -1,
+                  height: 1,
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.only(bottom: 6, left: 4),
+                child: Text(
+                  '/ 100',
+                  style: GoogleFonts.dmSans(
+                    fontSize: 16,
                     color: AppTheme.textMuted,
                   ),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  label,
-                  style: GoogleFonts.bricolageGrotesque(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 20,
-                    color: color,
-                    letterSpacing: -0.3,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(4),
-                  child: LinearProgressIndicator(
-                    value: score / 100,
-                    minHeight: 6,
-                    backgroundColor: AppTheme.border,
-                    valueColor: AlwaysStoppedAnimation(color),
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Basado en pagos, actividad, eventos y noticias del grupo',
+            style: const TextStyle(fontSize: 11, color: AppTheme.textMuted),
+          ),
+          const SizedBox(height: 16),
+          _MetricBar(
+            label: 'Cuotas al día',
+            pct: cuotasAlDia,
+            color: cuotasAlDia >= 70 ? AppTheme.good : AppTheme.warning,
+            origen: tieneCuotas
+                ? 'Pagos aprobados / total esperado'
+                : 'Sin cuotas creadas aún',
+            sugerencia: sugerenciaCuotas,
+          ),
+          const SizedBox(height: 12),
+          _MetricBar(
+            label: 'Actividad reciente',
+            pct: actividadReciente,
+            color: actividadReciente >= 50 ? AppTheme.good : AppTheme.warning,
+            origen: 'Miembros con pagos en los últimos 30 días',
+            sugerencia: sugerenciaActividad,
+          ),
+          const SizedBox(height: 12),
+          _MetricBar(
+            label: 'Asistencia a eventos',
+            pct: asistenciaEventos,
+            color: asistenciaEventos >= 50 ? AppTheme.good : AppTheme.accent,
+            origen: tieneEventos
+                ? 'Eventos con al menos 1 confirmación'
+                : 'Sin eventos con lista de asistencia',
+            sugerencia: sugerenciaAsistencia,
+          ),
+          const SizedBox(height: 12),
+          _MetricBar(
+            label: 'Engagement noticias',
+            pct: engagementNoticias,
+            color: engagementNoticias >= 40 ? AppTheme.good : AppTheme.accent,
+            origen: tieneNoticias
+                ? 'Noticias con al menos 1 like'
+                : 'Sin noticias publicadas aún',
+            sugerencia: sugerenciaEngagement,
           ),
         ],
       ),
@@ -423,144 +573,87 @@ class _HealthCard extends StatelessWidget {
   }
 }
 
-class _ArcPainter extends CustomPainter {
-  final double progress;
-  final Color color;
-  final Color trackColor;
-
-  const _ArcPainter(
-      {required this.progress,
-      required this.color,
-      required this.trackColor});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final center = Offset(size.width / 2, size.height / 2);
-    final radius = (size.width / 2) - 6;
-
-    final trackPaint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 7
-      ..color = trackColor;
-    canvas.drawCircle(center, radius, trackPaint);
-
-    final paint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 7
-      ..strokeCap = StrokeCap.round
-      ..color = color;
-
-    canvas.drawArc(
-      Rect.fromCircle(center: center, radius: radius),
-      -math.pi / 2,
-      2 * math.pi * progress,
-      false,
-      paint,
-    );
-  }
-
-  @override
-  bool shouldRepaint(_ArcPainter old) =>
-      old.progress != progress || old.color != color;
-}
-
-// â”€â”€ Mini Stat â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-
-class _MiniStat extends StatelessWidget {
+class _MetricBar extends StatelessWidget {
   final String label;
-  final String value;
-  final IconData icon;
+  final double pct;
   final Color color;
+  final String origen;
+  final String? sugerencia;
 
-  const _MiniStat({
+  const _MetricBar({
     required this.label,
-    required this.value,
-    required this.icon,
+    required this.pct,
     required this.color,
+    required this.origen,
+    this.sugerencia,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: AppTheme.surface,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppTheme.border),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 16, color: color),
-          const SizedBox(height: 6),
-          Text(
-            value,
-            style: GoogleFonts.bricolageGrotesque(
-              fontWeight: FontWeight.w800,
-              fontSize: 15,
-              color: AppTheme.text,
-            ),
-          ),
-          Text(
-            label,
-            style: const TextStyle(fontSize: 10, color: AppTheme.textMuted),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// â”€â”€ Alert Banner â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-
-class _AlertBanner extends StatelessWidget {
-  final IconData icon;
-  final Color color;
-  final String label;
-  final VoidCallback? onTap;
-
-  const _AlertBanner(
-      {required this.icon,
-      required this.color,
-      required this.label,
-      this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.08),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: color.withValues(alpha: 0.25)),
-        ),
-        child: Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
           children: [
-            Icon(icon, size: 16, color: color),
-            const SizedBox(width: 10),
             Expanded(
               child: Text(
                 label,
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: color,
-                ),
+                style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: AppTheme.text),
               ),
             ),
-            if (onTap != null)
-              Icon(Icons.arrow_forward_ios_rounded, size: 12, color: color),
+            Text(
+              '${pct.toStringAsFixed(0)}%',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                color: color,
+              ),
+            ),
           ],
         ),
-      ),
+        const SizedBox(height: 5),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(3),
+          child: LinearProgressIndicator(
+            value: pct / 100,
+            minHeight: 6,
+            backgroundColor: AppTheme.border,
+            valueColor: AlwaysStoppedAnimation(color),
+          ),
+        ),
+        const SizedBox(height: 3),
+        Text(
+          origen,
+          style: const TextStyle(fontSize: 10, color: AppTheme.textMuted),
+        ),
+        if (sugerencia != null) ...[
+          const SizedBox(height: 5),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('→ ', style: TextStyle(fontSize: 11, color: AppTheme.primary, fontWeight: FontWeight.w700)),
+              Expanded(
+                child: Text(
+                  sugerencia!,
+                  style: const TextStyle(
+                    fontSize: 11,
+                    color: AppTheme.primary,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ],
     );
   }
 }
 
-// â”€â”€ Action Tile â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Action Tile
 
 class _ActionTile extends StatelessWidget {
   final IconData icon;
@@ -632,7 +725,7 @@ class _ActionTile extends StatelessWidget {
                 fontWeight: FontWeight.w600,
                 color: AppTheme.text,
               ),
-              maxLines: 1,
+              maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
           ],
@@ -642,7 +735,7 @@ class _ActionTile extends StatelessWidget {
   }
 }
 
-// â”€â”€ Solicitudes Sheet â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Solicitudes Sheet
 
 class _SolicitudesSheet extends ConsumerWidget {
   final List<SolicitudUnionModel> solicitudes;
@@ -660,7 +753,6 @@ class _SolicitudesSheet extends ConsumerWidget {
       expand: false,
       builder: (_, ctrl) => Column(
         children: [
-          // Handle
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 12),
             child: Container(
@@ -736,14 +828,14 @@ class _SolicitudesSheet extends ConsumerWidget {
                           ],
                         ),
                       ),
-                      // Reject
                       GestureDetector(
                         onTap: () => _responder(context, ref, s, false),
                         child: Container(
                           width: 36,
                           height: 36,
                           decoration: BoxDecoration(
-                            color: AppTheme.danger.withValues(alpha: 0.1),
+                            color:
+                                AppTheme.danger.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: const Icon(Icons.close_rounded,
@@ -751,14 +843,14 @@ class _SolicitudesSheet extends ConsumerWidget {
                         ),
                       ),
                       const SizedBox(width: 8),
-                      // Approve
                       GestureDetector(
                         onTap: () => _responder(context, ref, s, true),
                         child: Container(
                           width: 36,
                           height: 36,
                           decoration: BoxDecoration(
-                            color: AppTheme.good.withValues(alpha: 0.1),
+                            color:
+                                AppTheme.good.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: const Icon(Icons.check_rounded,
@@ -791,7 +883,8 @@ class _SolicitudesSheet extends ConsumerWidget {
                 child: const Text('Cancelar')),
             TextButton(
               onPressed: () => Navigator.pop(ctx, true),
-              style: TextButton.styleFrom(foregroundColor: AppTheme.danger),
+              style:
+                  TextButton.styleFrom(foregroundColor: AppTheme.danger),
               child: const Text('Rechazar'),
             ),
           ],
@@ -803,14 +896,15 @@ class _SolicitudesSheet extends ConsumerWidget {
         grupoId, s.usuarioUid, aprobar, s.usuarioNombre, s.usuarioAvatar);
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(aprobar ? 'Solicitud aprobada ✓' : 'Solicitud rechazada'),
+        content:
+            Text(aprobar ? 'Solicitud aprobada ✓' : 'Solicitud rechazada'),
         backgroundColor: aprobar ? AppTheme.good : AppTheme.danger,
       ));
     }
   }
 }
 
-// â”€â”€ Miembro Rol Tile â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Miembro Rol Tile
 
 class _MiembroRolTile extends ConsumerWidget {
   final MiembroModel miembro;
@@ -844,22 +938,23 @@ class _MiembroRolTile extends ConsumerWidget {
                         fontWeight: FontWeight.w600, fontSize: 14)),
                 Text(
                   'Desde ${DateFormat('dd/MM/yy').format(miembro.joinedAt)}',
-                  style:
-                      const TextStyle(fontSize: 11, color: AppTheme.textMuted),
+                  style: const TextStyle(
+                      fontSize: 11, color: AppTheme.textMuted),
                 ),
               ],
             ),
           ),
-          // Role pill
           GestureDetector(
-            onTap: () => _showRolPicker(context, ref, grupoNombre, gc),
+            onTap: () =>
+                _showRolPicker(context, ref, grupoNombre, gc),
             child: Container(
               padding:
                   const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
               decoration: BoxDecoration(
                 color: color.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: color.withValues(alpha: 0.3)),
+                border:
+                    Border.all(color: color.withValues(alpha: 0.3)),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -908,8 +1003,8 @@ class _MiembroRolTile extends ConsumerWidget {
               onPressed: () => Navigator.pop(context),
               child: const Text('Cancelar')),
           FilledButton(
-            style:
-                FilledButton.styleFrom(backgroundColor: AppTheme.danger),
+            style: FilledButton.styleFrom(
+                backgroundColor: AppTheme.danger),
             onPressed: () async {
               Navigator.pop(context);
               try {
@@ -925,8 +1020,8 @@ class _MiembroRolTile extends ConsumerWidget {
                 }
               } catch (e) {
                 if (context.mounted) {
-                  ScaffoldMessenger.of(context)
-                      .showSnackBar(SnackBar(content: Text('Error: $e')));
+                  ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Error: $e')));
                 }
               }
             },
@@ -937,7 +1032,8 @@ class _MiembroRolTile extends ConsumerWidget {
     );
   }
 
-  void _showRolPicker(BuildContext context, WidgetRef ref, String grupoNombre, Color gc) {
+  void _showRolPicker(BuildContext context, WidgetRef ref,
+      String grupoNombre, Color gc) {
     showModalBottomSheet(
       context: context,
       builder: (_) => Padding(
@@ -962,7 +1058,7 @@ class _MiembroRolTile extends ConsumerWidget {
               ),
             ),
             const SizedBox(height: 12),
-            ...RolMiembro.values.map((rol) {
+            ...rolesAsignables.map((rol) {
               final selected = rol == miembro.rol;
               final color = _rolColor(rol, gc);
               return ListTile(
@@ -1010,7 +1106,7 @@ class _MiembroRolTile extends ConsumerWidget {
   }
 }
 
-// â”€â”€ Danger Zone â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Danger Zone
 
 class _DangerZone extends ConsumerWidget {
   final String grupoId;
@@ -1023,8 +1119,7 @@ class _DangerZone extends ConsumerWidget {
       decoration: BoxDecoration(
         color: AppTheme.danger.withValues(alpha: 0.04),
         borderRadius: BorderRadius.circular(16),
-        border:
-            Border.all(color: AppTheme.danger.withValues(alpha: 0.2)),
+        border: Border.all(color: AppTheme.danger.withValues(alpha: 0.2)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1132,7 +1227,7 @@ class _DangerZone extends ConsumerWidget {
   }
 }
 
-// â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// Helpers
 
 String _rolLabel(RolMiembro rol) => switch (rol) {
       RolMiembro.administrador => 'Admin',

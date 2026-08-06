@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../../core/config/app_config.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/sg_widgets.dart';
 import '../../../data/models/enums.dart';
@@ -21,9 +22,8 @@ class PerfilPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final userAsync = ref.watch(currentUserProvider);
-    final gruposAsync = ref.watch(userGruposProvider);
     final uid = ref.watch(authStateProvider).valueOrNull?.uid ?? '';
-    final isDesktop = MediaQuery.sizeOf(context).width >= 900;
+    final isDesktop = MediaQuery.sizeOf(context).width >= AppTheme.kResponsiveBreakpoint;
     return Scaffold(
       appBar: isDesktop ? null : AppBar(
         leading: showBackButton
@@ -45,7 +45,7 @@ class PerfilPage extends ConsumerWidget {
       body: userAsync.when(
         loading: () =>
             const Center(child: CircularProgressIndicator(color: AppTheme.primary)),
-        error: (e, _) => Center(child: Text('Error: $e')),
+        error: (e, _) => const SGErrorState(message: 'Error al cargar el perfil'),
         data: (user) {
           if (user == null) {
             return const Center(child: Text('No autenticado'));
@@ -108,71 +108,10 @@ class PerfilPage extends ConsumerWidget {
 
               const SizedBox(height: 20),
 
-              // ── Mis grupos ─────────────────────────────────────────────────
-              const SGEyebrow('Mis roles en grupos'),
+              // ── Tacheros (grupo único) ─────────────────────────────────────
+              const SGEyebrow('Tacheros'),
               const SizedBox(height: 8),
-              gruposAsync.maybeWhen(
-                data: (grupos) {
-                  if (grupos.isEmpty) {
-                    return Container(
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        color: AppTheme.surface,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: AppTheme.border),
-                      ),
-                      child: Center(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Text(
-                              'No pertenecés a ningún grupo todavía',
-                              style: TextStyle(
-                                  fontSize: 13, color: AppTheme.textMuted),
-                            ),
-                            const SizedBox(height: 12),
-                            TextButton.icon(
-                              onPressed: () => context.push('/search'),
-                              icon: const Icon(Icons.search_rounded, size: 16),
-                              label: const Text('Buscar grupos'),
-                              style: TextButton.styleFrom(
-                                  foregroundColor: AppTheme.primary),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  }
-                  return Container(
-                    decoration: BoxDecoration(
-                      color: AppTheme.surface,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: AppTheme.border),
-                    ),
-                    child: Column(
-                      children: [
-                        for (var i = 0; i < grupos.length; i++) ...[
-                          _MyGroupTile(
-                            grupoId: grupos[i].id,
-                            nombre: grupos[i].nombre,
-                            onTap: () =>
-                                context.push('/group/${grupos[i].id}'),
-                          ),
-                          if (i < grupos.length - 1)
-                            const Divider(
-                                height: 1, indent: 56, endIndent: 12),
-                        ],
-                      ],
-                    ),
-                  );
-                },
-                orElse: () => const SizedBox(
-                  height: 64,
-                  child: Center(
-                      child: CircularProgressIndicator(
-                          color: AppTheme.primary)),
-                ),
-              ),
+              const _TacherosSection(),
 
               const SizedBox(height: 20),
 
@@ -275,48 +214,67 @@ class PerfilPage extends ConsumerWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// My group tile — shows real role
+// Sección Tacheros — rol del usuario + accesos (miembros y, si es admin,
+// panel de administración y ajustes del grupo).
 // ─────────────────────────────────────────────────────────────────────────────
 
-class _MyGroupTile extends ConsumerWidget {
-  final String grupoId;
-  final String nombre;
-  final VoidCallback onTap;
-  const _MyGroupTile({
-    required this.grupoId,
-    required this.nombre,
-    required this.onTap,
-  });
+class _TacherosSection extends ConsumerWidget {
+  const _TacherosSection();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final miembroAsync = ref.watch(miembroActualProvider(grupoId));
-    final rol = miembroAsync.valueOrNull?.rol ?? RolMiembro.miembro;
+    final rol = ref.watch(miembroActualProvider(kGrupoId)).valueOrNull?.rol ??
+        RolMiembro.miembro;
+    final esAdmin = rol.esAdmin;
 
     final (icon, tone, label) = switch (rol) {
       RolMiembro.administrador =>
         (Icons.shield_outlined, SGChipTone.primary, 'Admin'),
-      RolMiembro.moderador =>
-        (Icons.shield_outlined, SGChipTone.neutral, 'Moderador'),
-      RolMiembro.tesorero =>
-        (Icons.account_balance_outlined, SGChipTone.good, 'Tesorero'),
-      RolMiembro.delegado =>
-        (Icons.assignment_outlined, SGChipTone.accent, 'Delegado'),
       RolMiembro.miembro =>
         (Icons.person_outline_rounded, SGChipTone.neutral, 'Miembro'),
+      _ => (Icons.person_outline_rounded, SGChipTone.neutral, 'Miembro'),
     };
 
-    return ListTile(
-      onTap: onTap,
-      leading: SGAvatar(name: nombre, size: 36),
-      title: Text(nombre,
-          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
-      subtitle: Padding(
-        padding: const EdgeInsets.only(top: 4),
-        child: SGChip(icon: icon, label: label, tone: tone),
+    return Container(
+      decoration: BoxDecoration(
+        color: AppTheme.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppTheme.border),
       ),
-      trailing: const Icon(Icons.chevron_right_rounded,
-          color: AppTheme.textMuted),
+      child: Column(
+        children: [
+          ListTile(
+            leading: const SGAvatar(name: kGrupoNombre, size: 36),
+            title: const Text(kGrupoNombre,
+                style:
+                    TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+            subtitle: Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: SGChip(icon: icon, label: label, tone: tone),
+            ),
+          ),
+          const Divider(height: 1, indent: 56, endIndent: 12),
+          _SettingRow(
+            icon: Icons.group_outlined,
+            label: 'Miembros',
+            onTap: () => context.push('/group/$kGrupoId/miembros'),
+          ),
+          if (esAdmin) ...[
+            const Divider(height: 1, indent: 56, endIndent: 12),
+            _SettingRow(
+              icon: Icons.admin_panel_settings_outlined,
+              label: 'Panel de administración',
+              onTap: () => context.push('/group/$kGrupoId/admin'),
+            ),
+            const Divider(height: 1, indent: 56, endIndent: 12),
+            _SettingRow(
+              icon: Icons.settings_outlined,
+              label: 'Ajustes del grupo',
+              onTap: () => context.push('/group/$kGrupoId/settings'),
+            ),
+          ],
+        ],
+      ),
     );
   }
 }

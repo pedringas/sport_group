@@ -12,9 +12,6 @@ import '../../../data/models/grupo_model.dart';
 import '../../../providers/grupo_provider.dart';
 import '../../../providers/noticia_provider.dart';
 import '../../../providers/cuota_provider.dart';
-import '../../../providers/tarea_provider.dart';
-import '../../../providers/recurso_provider.dart';
-import '../../../providers/auth_provider.dart';
 
 /// Group hub with design-handoff curtain transition.
 /// Entry: slides up from bottom (handled in router).
@@ -126,12 +123,12 @@ class _GrupoPageState extends ConsumerState<GrupoPage>
             child: grupoAsync.when(
               loading: () =>
                   const Center(child: CircularProgressIndicator()),
-              error: (e, _) => Center(child: Text('Error: $e')),
+              error: (e, _) => const SGErrorState(message: 'Error al cargar el grupo'),
               data: (grupo) {
                 if (grupo == null) {
                   return const Center(child: Text('Grupo no encontrado'));
                 }
-                final isDesktop = MediaQuery.sizeOf(context).width >= 900;
+                final isDesktop = MediaQuery.sizeOf(context).width >= AppTheme.kResponsiveBreakpoint;
                 return Center(
                   child: ConstrainedBox(
                     constraints: BoxConstraints(
@@ -207,7 +204,7 @@ class _GrupoPageState extends ConsumerState<GrupoPage>
 
   Widget _buildTabBar(BuildContext context, Color gc) {
     // Hide bottom nav on desktop — sidebar already provides navigation
-    if (MediaQuery.sizeOf(context).width >= 900) return const SizedBox.shrink();
+    if (MediaQuery.sizeOf(context).width >= AppTheme.kResponsiveBreakpoint) return const SizedBox.shrink();
     final tabs = [
       (label: 'Resumen', icon: Icons.home_outlined, filled: Icons.home_rounded),
       (label: 'Novedades', icon: Icons.newspaper_outlined, filled: Icons.newspaper_rounded),
@@ -314,8 +311,6 @@ class _GrupoPageState extends ConsumerState<GrupoPage>
       (Icons.payments_outlined, AppTheme.dangerSoft,
           AppTheme.dangerInk, 'Emitir suscripción',
           '/group/$id/cuotas/crear'),
-      (Icons.campaign_outlined, AppTheme.accentSoft, AppTheme.accentInk,
-          'Campañas', '/group/$id/campanas'),
       (Icons.newspaper_outlined, AppTheme.goodSoft,
           AppTheme.goodInk, 'Noticias', '/group/$id/noticias'),
     ];
@@ -754,21 +749,7 @@ class _CoverMenu extends StatelessWidget {
             child: ListTile(dense: true, contentPadding: EdgeInsets.zero,
               leading: Icon(Icons.admin_panel_settings_outlined),
               title: Text('Panel Admin'))),
-        if (isAdmin || esModerador)
-          const PopupMenuItem(value: 'moderador',
-            child: ListTile(dense: true, contentPadding: EdgeInsets.zero,
-              leading: Icon(Icons.shield_outlined),
-              title: Text('Panel Moderador'))),
-        if (isAdmin || esTesorero)
-          const PopupMenuItem(value: 'tesorero',
-            child: ListTile(dense: true, contentPadding: EdgeInsets.zero,
-              leading: Icon(Icons.account_balance_outlined),
-              title: Text('Panel Tesorero'))),
-        if (isAdmin || esDelegado)
-          const PopupMenuItem(value: 'delegado',
-            child: ListTile(dense: true, contentPadding: EdgeInsets.zero,
-              leading: Icon(Icons.assignment_outlined),
-              title: Text('Panel Delegado'))),
+        // Paneles Moderador / Tesorero / Delegado en pausa (roles ocultos).
         if (isAdmin) ...[
           const PopupMenuItem(value: 'settings',
             child: ListTile(dense: true, contentPadding: EdgeInsets.zero,
@@ -809,15 +790,11 @@ class _GrupoMoreSheet extends StatelessWidget {
               'Registro de gastos', '/gastos'),
           (Icons.payments_outlined, 'Mi cuota',
               'Estado de tus pagos', '/cuotas'),
-          (Icons.task_alt_outlined, 'Tareas',
-              'Pendientes del grupo', '/tareas'),
         ],
       ),
       (
         title: 'DEL GRUPO',
         items: [
-          (Icons.folder_open_outlined, 'Recursos',
-              'Archivos compartidos', '/recursos'),
           (Icons.bar_chart_rounded, 'Estadísticas',
               'Actividad del grupo', '/admin'),
           (Icons.person_add_outlined, 'Invitar',
@@ -1212,10 +1189,7 @@ class _BentoGrid extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final uid = ref.watch(authStateProvider).valueOrNull?.uid ?? '';
     final cuotas = ref.watch(cuotasProvider(grupoId)).valueOrNull ?? [];
-    final tareas = ref.watch(tareasProvider(grupoId)).valueOrNull ?? [];
-    final recursos = ref.watch(recursosProvider(grupoId)).valueOrNull ?? [];
 
     // Next active unpaid cuota
     final now = DateTime.now();
@@ -1232,63 +1206,29 @@ class _BentoGrid extends ConsumerWidget {
       cuotaSub = proxCuota.titulo;
     }
 
-    // Tasks assigned to me
-    final misTareas = tareas.where((t) =>
-        t.asignadoA(uid) &&
-        t.estado != TareaEstado.completada &&
-        t.estado != TareaEstado.cancelada).length;
-
-    return Column(
+    // Módulos "Tareas" y "Recursos" en pausa — sólo se muestran Gastos y Cuota.
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: _BentoTile(
-                icon: Icons.account_balance_wallet_outlined,
-                iconBg: AppTheme.goodSoft, iconColor: AppTheme.goodInk,
-                label: 'Gastos',
-                big: 'Ver gastos',
-                onTap: () => context.push('/group/$grupoId/gastos'),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _BentoTile(
-                icon: Icons.payments_outlined,
-                iconBg: AppTheme.dangerSoft, iconColor: AppTheme.dangerInk,
-                label: 'Tu cuota',
-                big: cuotaBig,
-                sub: cuotaSub.isNotEmpty ? cuotaSub : null,
-                onTap: () => context.push('/group/$grupoId/cuotas'),
-              ),
-            ),
-          ],
+        Expanded(
+          child: _BentoTile(
+            icon: Icons.account_balance_wallet_outlined,
+            iconBg: AppTheme.goodSoft, iconColor: AppTheme.goodInk,
+            label: 'Gastos',
+            big: 'Ver gastos',
+            onTap: () => context.push('/group/$grupoId/gastos'),
+          ),
         ),
-        const SizedBox(height: 12),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: _BentoTile(
-                icon: Icons.task_alt_outlined,
-                iconBg: AppTheme.accentSoft, iconColor: AppTheme.accentInk,
-                label: 'Mis tareas',
-                big: misTareas == 0 ? 'Sin tareas' : '$misTareas pendiente${misTareas == 1 ? '' : 's'}',
-                onTap: () => context.push('/group/$grupoId/tareas'),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _BentoTile(
-                icon: Icons.folder_open_outlined,
-                iconBg: gc.withValues(alpha: 0.12), iconColor: gc,
-                label: 'Recursos',
-                big: recursos.isEmpty ? 'Sin archivos' : '${recursos.length} archivo${recursos.length == 1 ? '' : 's'}',
-                onTap: () => context.push('/group/$grupoId/recursos'),
-              ),
-            ),
-          ],
+        const SizedBox(width: 12),
+        Expanded(
+          child: _BentoTile(
+            icon: Icons.payments_outlined,
+            iconBg: AppTheme.dangerSoft, iconColor: AppTheme.dangerInk,
+            label: 'Tu cuota',
+            big: cuotaBig,
+            sub: cuotaSub.isNotEmpty ? cuotaSub : null,
+            onTap: () => context.push('/group/$grupoId/cuotas'),
+          ),
         ),
       ],
     );

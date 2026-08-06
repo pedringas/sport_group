@@ -145,7 +145,7 @@ class _CrearTareaPageState extends ConsumerState<CrearTareaPage> {
 
             Expanded(
               child: ListView(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, AppTheme.kBottomNavPadding),
                 children: [
                   // â”€â”€ Title
                   TextField(

@@ -25,7 +25,7 @@ class _MiembrosPageState extends ConsumerState<MiembrosPage> {
     final gc = ref.watch(grupoColorProvider(widget.grupoId));
     final miembrosAsync = ref.watch(miembrosProvider(widget.grupoId));
 
-    final isDesktop = MediaQuery.sizeOf(context).width >= 900;
+    final isDesktop = MediaQuery.sizeOf(context).width >= AppTheme.kResponsiveBreakpoint;
     return Scaffold(
       backgroundColor: AppTheme.bg(context),
       appBar: isDesktop ? null : AppBar(
@@ -51,17 +51,11 @@ class _MiembrosPageState extends ConsumerState<MiembrosPage> {
       ),
       body: miembrosAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Error: $e')),
+        error: (e, _) => const SGErrorState(message: 'Error al cargar los miembros'),
         data: (todos) {
           // Counts per rol
           final countAdmin =
               todos.where((m) => m.rol.esAdmin).length;
-          final countMod =
-              todos.where((m) => m.rol == RolMiembro.moderador).length;
-          final countTes =
-              todos.where((m) => m.rol == RolMiembro.tesorero).length;
-          final countDel =
-              todos.where((m) => m.rol == RolMiembro.delegado).length;
           final countMiembro =
               todos.where((m) => m.rol == RolMiembro.miembro).length;
 
@@ -134,39 +128,8 @@ class _MiembrosPageState extends ConsumerState<MiembrosPage> {
                               onTap: () => setState(
                                   () => _filtro = RolMiembro.administrador),
                             ),
-                          if (countDel > 0)
-                            _FilterChip(
-                              icon: Icons.assignment_rounded,
-                              label: 'Delegado · $countDel',
-                              tone: SGChipTone.accent,
-                              selected:
-                                  _filtro == RolMiembro.delegado,
-                              gc: gc,
-                              onTap: () => setState(
-                                  () => _filtro = RolMiembro.delegado),
-                            ),
-                          if (countTes > 0)
-                            _FilterChip(
-                              icon: Icons.account_balance_rounded,
-                              label: 'Tesorero · $countTes',
-                              tone: SGChipTone.good,
-                              selected:
-                                  _filtro == RolMiembro.tesorero,
-                              gc: gc,
-                              onTap: () => setState(
-                                  () => _filtro = RolMiembro.tesorero),
-                            ),
-                          if (countMod > 0)
-                            _FilterChip(
-                              icon: Icons.shield_outlined,
-                              label: 'Moderador · $countMod',
-                              tone: SGChipTone.neutral,
-                              selected:
-                                  _filtro == RolMiembro.moderador,
-                              gc: gc,
-                              onTap: () => setState(
-                                  () => _filtro = RolMiembro.moderador),
-                            ),
+                          // Roles Delegado / Tesorero / Moderador en pausa —
+                          // se ocultan sus chips de filtro.
                           if (countMiembro > 0)
                             _FilterChip(
                               icon: Icons.person_outline_rounded,
@@ -222,11 +185,38 @@ class _MiembrosPageState extends ConsumerState<MiembrosPage> {
               ],
 
               if (miembros.isEmpty)
-                const SliverFillRemaining(
+                SliverFillRemaining(
                   child: Center(
-                    child: Text(
-                      'Sin miembros en este filtro',
-                      style: TextStyle(color: AppTheme.textMuted),
+                    child: Padding(
+                      padding: const EdgeInsets.all(32),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.person_search_rounded,
+                              size: 48, color: AppTheme.textMuted),
+                          const SizedBox(height: 12),
+                          Text(
+                            _filtro != null
+                                ? 'Sin miembros con rol '
+                                    '${_filtro!.name[0].toUpperCase()}'
+                                    '${_filtro!.name.substring(1)}'
+                                : 'Sin miembros en este filtro',
+                            style: const TextStyle(
+                                color: AppTheme.textMuted, fontSize: 14),
+                            textAlign: TextAlign.center,
+                          ),
+                          if (_filtro != null) ...[
+                            const SizedBox(height: 16),
+                            TextButton.icon(
+                              onPressed: () =>
+                                  setState(() => _filtro = null),
+                              icon: const Icon(Icons.close_rounded,
+                                  size: 14),
+                              label: const Text('Ver todos'),
+                            ),
+                          ],
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -448,7 +438,7 @@ class _MemberRow extends ConsumerWidget {
                 const Divider(height: 1),
                 const SizedBox(height: 8),
                 // Role options
-                ...RolMiembro.values
+                ...rolesAsignables
                     .where((r) => r != miembro.rol)
                     .map((r) => ListTile(
                           contentPadding: EdgeInsets.zero,

@@ -45,10 +45,10 @@ class CuotaDetailPage extends ConsumerWidget {
       body: cuotaAsync.when(
         loading: () =>
             const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Error: $e')),
+        error: (e, _) => SGErrorState(message: 'Error al cargar la suscripción'),
         data: (cuota) {
           if (cuota == null) {
-            return const Center(child: Text('Suscripción no encontrada'));
+            return const SGErrorState(message: 'Suscripción no encontrada');
           }
           // Derive miPago from the user's group-wide pagos list
           final miPago = misPagosAsync.valueOrNull
@@ -73,6 +73,12 @@ class CuotaDetailPage extends ConsumerWidget {
                   esperandoTesorero: esperandoTesorero,
                   vencida: vencida && !yaPago,
                   onBack: () => context.pop(),
+                  onEdit: puedeConfirmar
+                      ? () => context.push(
+                            '/group/$grupoId/cuota/$cuotaId/edit',
+                            extra: cuota,
+                          )
+                      : null,
                   onDelete: puedeEliminar
                       ? () => _confirmDelete(context, ref)
                       : null,
@@ -104,15 +110,18 @@ class CuotaDetailPage extends ConsumerWidget {
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-                  child: _PaymentSection(
-                    miPago: miPago,
-                    yaPago: yaPago,
-                    enValidacion: enValidacion,
-                    esperandoTesorero: esperandoTesorero,
-                    grupoId: grupoId,
-                    cuotaId: cuotaId,
-                    cuota: cuota,
-                  ),
+                  child: uid.isNotEmpty && misPagosAsync.isLoading
+                      ? const Center(
+                          child: CircularProgressIndicator(strokeWidth: 2))
+                      : _PaymentSection(
+                          miPago: miPago,
+                          yaPago: yaPago,
+                          enValidacion: enValidacion,
+                          esperandoTesorero: esperandoTesorero,
+                          grupoId: grupoId,
+                          cuotaId: cuotaId,
+                          cuota: cuota,
+                        ),
                 ),
               ),
 
@@ -173,6 +182,7 @@ class _StatusBanner extends StatelessWidget {
   final bool esperandoTesorero;
   final bool vencida;
   final VoidCallback onBack;
+  final VoidCallback? onEdit;
   final VoidCallback? onDelete;
 
   const _StatusBanner({
@@ -181,6 +191,7 @@ class _StatusBanner extends StatelessWidget {
     required this.esperandoTesorero,
     required this.vencida,
     required this.onBack,
+    this.onEdit,
     this.onDelete,
   });
 
@@ -197,7 +208,7 @@ class _StatusBanner extends StatelessWidget {
     } else if (esperandoTesorero) {
       bannerColor = AppTheme.warning;
       bannerIcon = Icons.hourglass_top_rounded;
-      bannerLabel = 'Esperando confirmación del tesorero';
+      bannerLabel = 'Esperando confirmación del administrador';
     } else if (enValidacion) {
       bannerColor = AppTheme.info;
       bannerIcon = Icons.hourglass_top_rounded;
@@ -238,6 +249,22 @@ class _StatusBanner extends StatelessWidget {
               ),
             ),
           ),
+          if (onEdit != null)
+            GestureDetector(
+              onTap: onEdit,
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: AppTheme.info.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(Icons.edit_outlined,
+                    size: 16, color: AppTheme.info),
+              ),
+            ),
+          if (onEdit != null && onDelete != null)
+            const SizedBox(width: 6),
           if (onDelete != null)
             GestureDetector(
               onTap: onDelete,
@@ -629,7 +656,7 @@ class _RegistrarEfectivoSheetState
           ),
           const SizedBox(height: 4),
           const Text(
-            'El tesorero o administrador confirmará el pago.',
+            'El administrador confirmará el pago.',
             style: TextStyle(fontSize: 13, color: AppTheme.textMuted),
           ),
           const SizedBox(height: 20),
@@ -732,7 +759,7 @@ class _EsperaAprobacionCard extends ConsumerWidget {
           ),
           const SizedBox(height: 4),
           const Text(
-            'El tesorero o administrador lo\nconfirmará a la brevedad.',
+            'El administrador lo\nconfirmará a la brevedad.',
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 13, color: AppTheme.textMuted),
           ),
@@ -830,6 +857,10 @@ class _PagosPendientesPanel extends ConsumerWidget {
     final cuotaAsync =
         ref.watch(cuotaProvider((grupoId: grupoId, cuotaId: cuotaId)));
     final gc = ref.watch(grupoColorProvider(grupoId));
+
+    if (pagosAsync.isLoading || miembrosAsync.isLoading) {
+      return const Center(child: CircularProgressIndicator(strokeWidth: 2));
+    }
 
     final pagos = pagosAsync.valueOrNull ?? [];
     final miembros = miembrosAsync.valueOrNull ?? [];
@@ -1422,7 +1453,7 @@ class _ValidationCard extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             isRevision
-                ? 'El tesorero revisará tu comprobante pronto'
+                ? 'El administrador revisará tu comprobante pronto'
                 : 'Verificando tu transferencia automáticamente',
             textAlign: TextAlign.center,
             style: const TextStyle(fontSize: 13, color: AppTheme.textMuted),

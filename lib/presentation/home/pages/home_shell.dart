@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/config/app_config.dart';
+import '../../../providers/grupo_provider.dart';
+import '../../grupo/widgets/noticias_tab.dart';
 import 'home_feed_page.dart';
-import 'grupos_list_page.dart';
 import 'agenda_page.dart';
 import 'caja_page.dart';
 import '../../perfil/pages/perfil_page.dart';
@@ -17,7 +19,7 @@ class HomeShell extends ConsumerWidget {
 
   static Widget _buildPage(int index) {
     switch (index) {
-      case 1: return const GruposListPage();
+      case 1: return const NoticiasTab(grupoId: kGrupoId);
       case 2: return const AgendaPage();
       case 3: return const CajaPage();
       case 4: return const PerfilPage(showBackButton: false);
@@ -27,6 +29,9 @@ class HomeShell extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // App de grupo único: garantiza pertenencia a Tacheros (auto-ingreso).
+    ref.watch(ensureTacherosMembershipProvider);
+
     final tab = int.tryParse(
           GoRouterState.of(context).uri.queryParameters['tab'] ?? '') ??
         0;
@@ -58,7 +63,7 @@ class _BottomNav extends StatelessWidget {
 
   static const _items = [
     _NavItem(icon: Icons.home_rounded, label: 'Inicio'),
-    _NavItem(icon: Icons.groups_rounded, label: 'Grupos'),
+    _NavItem(icon: Icons.newspaper_rounded, label: 'Novedades'),
     _NavItem(icon: Icons.calendar_month_rounded, label: 'Agenda'),
     _NavItem(icon: Icons.account_balance_wallet_outlined, label: 'Caja'),
     _NavItem(icon: Icons.person_rounded, label: 'Yo'),

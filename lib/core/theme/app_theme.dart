@@ -81,6 +81,10 @@ class AppTheme {
   static const Color darkGoodSoft    = Color(0xFF0F2E21); // dark green bg
   static const Color darkDangerSoft  = Color(0xFF2E1210); // dark red bg
 
+  // ── Layout constants ──────────────────────────────────────────────────────
+  static const double kResponsiveBreakpoint = 900;
+  static const double kBottomNavPadding     = 100;
+
   // ── Context-aware colour helpers ───────────────────────────────────────────
   // Use these in widgets to support both light and dark mode automatically.
   static bool isDark(BuildContext ctx) =>

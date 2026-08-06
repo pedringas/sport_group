@@ -13,6 +13,14 @@
       "queryScope": "COLLECTION",
       "fields": [
         { "fieldPath": "grupoId", "order": "ASCENDING" },
+        { "fieldPath": "cuotaId", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "pagos",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "grupoId", "order": "ASCENDING" },
         { "fieldPath": "cuotaId", "order": "ASCENDING" },
         { "fieldPath": "usuarioUid", "order": "ASCENDING" }
       ]

@@ -93,30 +93,10 @@ class _FaqPageState extends State<FaqPage> {
               SizedBox(width: 10),
               _QuickLink(
                 icon: Icons.account_balance_rounded,
-                label: 'Soy tesorero',
+                label: 'Cobrar cuotas',
                 bg: AppTheme.goodSoft,
                 fg: AppTheme.goodInk,
                 route: '/home',
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          const Row(
-            children: [
-              _QuickLink(
-                icon: Icons.assignment_rounded,
-                label: 'Soy delegado',
-                bg: AppTheme.accentSoft,
-                fg: AppTheme.accentInk,
-                route: '/home',
-              ),
-              SizedBox(width: 10),
-              _QuickLink(
-                icon: Icons.group_add_rounded,
-                label: 'Crear / sumarme a grupo',
-                bg: AppTheme.surfaceAlt,
-                fg: AppTheme.text,
-                route: '/search',
               ),
             ],
           ),
@@ -336,15 +316,15 @@ class _FaqPageState extends State<FaqPage> {
   String _answerFor(String question) {
     const answers = {
       '¿Cómo subo el comprobante de transferencia?':
-          'En la sección "Cuotas" del grupo, seleccioná la cuota pendiente. Tocá "Pagar con comprobante", elegí tu imagen de la galería o sacá una foto, y enviala. El tesorero la revisará en breve.',
+          'En la sección "Cuotas" del grupo, seleccioná la cuota pendiente. Tocá "Pagar con comprobante", elegí tu imagen de la galería o sacá una foto, y enviala. El administrador la revisará en breve.',
       '¿Qué pasa si pago una cuota y no me la confirman?':
-          'El tesorero tiene que revisar y aprobar tu comprobante. Si pasaron más de 48 hs podés consultar en el grupo. Mientras tanto, tu pago aparece como "En revisión".',
+          'El administrador tiene que revisar y aprobar tu comprobante. Si pasaron más de 48 hs podés consultar en el grupo. Mientras tanto, tu pago aparece como "En revisión".',
       '¿Cómo cambio mi rol en el grupo?':
           'Solo el administrador puede cambiar roles. Podés pedirle al admin que te asigne el rol correspondiente desde la sección de Miembros.',
       '¿Puedo estar en más de un grupo?':
           'Sí, podés ser miembro de múltiples grupos simultáneamente. Cada grupo es independiente y tenés tu propio rol en cada uno.',
       'Me equivoqué al subir un comprobante':
-          'Contactá al tesorero de tu grupo para que rechace el comprobante. Una vez rechazado, vas a poder subir el correcto desde la cuota correspondiente.',
+          'Contactá al administrador de tu grupo para que rechace el comprobante. Una vez rechazado, vas a poder subir el correcto desde la cuota correspondiente.',
     };
     return answers[question] ??
         'Más información disponible pronto. Contactanos si tenés dudas urgentes.';

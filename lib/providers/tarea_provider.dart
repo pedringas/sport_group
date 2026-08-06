@@ -26,7 +26,7 @@ class TareaNotifier extends AsyncNotifier<void> {
     state = const AsyncLoading();
     try {
       final user = ref.read(authStateProvider).valueOrNull!;
-      final userData = await ref.read(authRepositoryProvider).getUser(user.uid);
+      final userData = await ref.read(currentUserProvider.future);
       final id = await ref.read(tareaRepositoryProvider).createTarea(
             grupoId: grupoId,
             titulo: titulo,
@@ -47,16 +47,26 @@ class TareaNotifier extends AsyncNotifier<void> {
 
   Future<void> updateEstado(
       String grupoId, String tareaId, TareaEstado estado) async {
-    await ref
-        .read(tareaRepositoryProvider)
-        .updateEstado(grupoId, tareaId, estado);
+    try {
+      await ref
+          .read(tareaRepositoryProvider)
+          .updateEstado(grupoId, tareaId, estado);
+    } catch (e, st) {
+      state = AsyncError(e, st);
+      rethrow;
+    }
   }
 
   Future<void> updateAsignados(String grupoId, String tareaId,
       List<AsignadoTarea> asignadosA) async {
-    await ref
-        .read(tareaRepositoryProvider)
-        .updateAsignados(grupoId, tareaId, asignadosA);
+    try {
+      await ref
+          .read(tareaRepositoryProvider)
+          .updateAsignados(grupoId, tareaId, asignadosA);
+    } catch (e, st) {
+      state = AsyncError(e, st);
+      rethrow;
+    }
   }
 
   Future<void> updateTarea({
@@ -87,7 +97,14 @@ class TareaNotifier extends AsyncNotifier<void> {
   }
 
   Future<void> eliminar(String grupoId, String tareaId) async {
-    await ref.read(tareaRepositoryProvider).deleteTarea(grupoId, tareaId);
+    state = const AsyncLoading();
+    try {
+      await ref.read(tareaRepositoryProvider).deleteTarea(grupoId, tareaId);
+      state = const AsyncData(null);
+    } catch (e, st) {
+      state = AsyncError(e, st);
+      rethrow;
+    }
   }
 }
 

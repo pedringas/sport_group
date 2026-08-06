@@ -2,6 +2,15 @@ enum TipoGrupo { publico, privado }
 
 enum RolMiembro { administrador, moderador, tesorero, delegado, miembro }
 
+/// Roles habilitados en la versión "básica" actual de la app.
+/// Los roles en pausa (moderador, tesorero, delegado) siguen existiendo en el
+/// modelo pero se ocultan de los selectores de rol. Para reactivarlos, volver a
+/// usar `RolMiembro.values` en los pickers o agregarlos a esta lista.
+const List<RolMiembro> rolesAsignables = [
+  RolMiembro.administrador,
+  RolMiembro.miembro,
+];
+
 extension RolMiembroX on RolMiembro {
   bool get puedeGestionarMiembros =>
       this == RolMiembro.administrador || this == RolMiembro.moderador;
@@ -16,7 +25,6 @@ extension RolMiembroX on RolMiembro {
 enum EstadoMiembro { activo, pendiente, bloqueado }
 
 enum EstadoPago { pendiente, validando, aprobado, revision }
-
 enum MetodoPago { transferencia, efectivo }
 
 enum EstadoSolicitud { pendiente, aprobado, rechazado }

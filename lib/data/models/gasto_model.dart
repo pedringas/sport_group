@@ -103,7 +103,9 @@ class GastoModel {
     this.tipo = TipoMovimiento.gasto,
     required this.createdAt,
     DateTime? fecha,
-  }) : fecha = fecha ?? createdAt;
+  })  : fecha = fecha ?? createdAt,
+        assert(monto > 0, 'GastoModel.monto debe ser mayor a 0'),
+        assert(titulo.length > 0, 'GastoModel.titulo no puede estar vacío');
 
   bool get esIngreso => tipo == TipoMovimiento.ingreso;
 

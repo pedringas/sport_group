@@ -176,8 +176,7 @@ class GrupoGastoNotifier extends AsyncNotifier<void> {
     state = const AsyncLoading();
     try {
       final user = ref.read(authStateProvider).valueOrNull!;
-      final userData =
-          await ref.read(authRepositoryProvider).getUser(user.uid);
+      final userData = await ref.read(currentUserProvider.future);
       final id = await ref.read(gastoRepositoryProvider).createGrupoGasto(
             grupoId: grupoId,
             nombre: nombre,
