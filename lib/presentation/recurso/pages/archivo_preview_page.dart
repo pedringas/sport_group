@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
+import '../../../core/router/nav_ext.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/theme/app_theme.dart';
@@ -28,7 +28,7 @@ class ArchivoPreviewPage extends ConsumerWidget {
         appBar: AppBar(
           leading: IconButton(
             icon: const Icon(Icons.arrow_back_ios_new_rounded),
-            onPressed: () => context.pop(),
+            onPressed: () => context.popOr(),
           ),
         ),
         body: const Center(child: CircularProgressIndicator()),
@@ -37,7 +37,7 @@ class ArchivoPreviewPage extends ConsumerWidget {
         appBar: AppBar(
           leading: IconButton(
             icon: const Icon(Icons.arrow_back_ios_new_rounded),
-            onPressed: () => context.pop(),
+            onPressed: () => context.popOr(),
           ),
         ),
         body: const SGErrorState(message: 'Error al cargar el archivo'),
@@ -53,7 +53,7 @@ class ArchivoPreviewPage extends ConsumerWidget {
             appBar: AppBar(
               leading: IconButton(
                 icon: const Icon(Icons.arrow_back_ios_new_rounded),
-                onPressed: () => context.pop(),
+                onPressed: () => context.popOr(),
               ),
             ),
             body: const Center(child: Text('Archivo no encontrado')),
@@ -149,7 +149,7 @@ class _RecursoView extends StatelessWidget {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded),
-          onPressed: () => context.pop(),
+          onPressed: () => context.popOr(),
         ),
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,

@@ -2,6 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/router/nav_ext.dart';
 import '../../../data/models/enums.dart';
 import '../../../providers/grupo_provider.dart';
 import '../../../providers/auth_provider.dart';
@@ -43,7 +44,7 @@ class JoinGroupPage extends ConsumerWidget {
                 leading: IconButton(
                   icon: const Icon(Icons.close),
                   onPressed: () =>
-                      context.canPop() ? context.pop() : context.go('/home'),
+                      context.popOr('/home'),
                 ),
                 flexibleSpace: grupo.portadaUrl != null
                     ? FlexibleSpaceBar(

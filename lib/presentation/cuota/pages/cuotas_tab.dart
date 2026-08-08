@@ -424,14 +424,19 @@ class _CuotasTabState extends ConsumerState<CuotasTab> {
     );
   }
 
+  // `rol` debe estar tipado: `puedeGestionarCuotas` es un getter de extensión y
+  // las extensiones se resuelven estáticamente. Sobre un receptor `dynamic` no
+  // existen, así que en runtime tiraba NoSuchMethodError y la pantalla quedaba
+  // en gris — sólo cuando había cuotas en el mes, de ahí lo intermitente.
   List<Widget> _buildAdminCuotaRows(
     BuildContext context,
     List<CuotaModel> cuotas,
     List<PagoModel> pagos,
     List<MiembroModel> miembros,
     String grupoId,
-    dynamic rol,
+    RolMiembro? rol,
   ) {
+    final puedeGestionar = rol?.puedeGestionarCuotas ?? false;
     return cuotas.map((c) => Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: _AdminCuotaRow(
@@ -439,10 +444,10 @@ class _CuotasTabState extends ConsumerState<CuotasTab> {
         pagosDeCuota: pagos.where((p) => p.cuotaId == c.id).toList(),
         miembros: miembros,
         onTap: () => context.push('/cuota/${c.id}'),
-        onEdit: rol?.puedeGestionarCuotas == true
+        onEdit: puedeGestionar
             ? () => context.push('/cuota/${c.id}/edit', extra: c)
             : null,
-        onDelete: rol?.puedeGestionarCuotas == true
+        onDelete: puedeGestionar
             ? () => _confirmDeleteCuota(context, grupoId, c.id, c.titulo)
             : null,
       ),

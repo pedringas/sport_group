@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
+import '../../../core/router/nav_ext.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/sg_widgets.dart';
@@ -73,7 +73,7 @@ class _CrearTareaPageState extends ConsumerState<CrearTareaPage> {
             asignadosA: asignadosA,
             fechaVencimiento: _fechaVencimiento,
           );
-      if (mounted) context.pop();
+      if (mounted) context.popOr();
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -122,7 +122,7 @@ class _CrearTareaPageState extends ConsumerState<CrearTareaPage> {
                 children: [
                   IconButton(
                     icon: const Icon(Icons.close_rounded),
-                    onPressed: () => context.pop(),
+                    onPressed: () => context.popOr(),
                   ),
                   Expanded(
                     child: Text(

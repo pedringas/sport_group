@@ -64,7 +64,7 @@ class _BottomNav extends StatelessWidget {
   static const _items = [
     _NavItem(icon: Icons.home_rounded, label: 'Inicio'),
     _NavItem(icon: Icons.calendar_month_rounded, label: 'Agenda'),
-    _NavItem(icon: Icons.account_balance_wallet_outlined, label: 'Caja'),
+    _NavItem(icon: Icons.payments_outlined, label: 'Cuotas'),
     _NavItem(icon: Icons.groups_rounded, label: 'Miembros'),
     _NavItem(icon: Icons.person_rounded, label: 'Yo'),
   ];

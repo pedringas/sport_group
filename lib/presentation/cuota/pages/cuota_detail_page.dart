@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/router/nav_ext.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -72,7 +73,7 @@ class CuotaDetailPage extends ConsumerWidget {
                   enValidacion: enValidacion,
                   esperandoTesorero: esperandoTesorero,
                   vencida: vencida && !yaPago,
-                  onBack: () => context.pop(),
+                  onBack: () => context.popOr(),
                   onEdit: puedeConfirmar
                       ? () => context.push(
                             '/cuota/$cuotaId/edit',
@@ -164,7 +165,7 @@ class CuotaDetailPage extends ConsumerWidget {
               await ref
                   .read(cuotaRepositoryProvider)
                   .deleteCuota(grupoId, cuotaId);
-              if (context.mounted) context.pop();
+              if (context.mounted) context.popOr();
             },
             child: const Text('Eliminar'),
           ),

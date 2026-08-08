@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/router/nav_ext.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../providers/auth_provider.dart';
 
@@ -345,7 +346,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage>
                 const SizedBox(height: 20),
                 Center(
                   child: TextButton(
-                    onPressed: () => context.pop(),
+                    onPressed: () => context.popOr(),
                     child: const Text('¿Ya tenés cuenta? Iniciá sesión'),
                   ),
                 ),

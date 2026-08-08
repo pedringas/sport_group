@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/router/nav_ext.dart';
 import '../../../data/models/usuario_model.dart';
 import '../../../providers/auth_provider.dart';
 
@@ -116,7 +117,7 @@ class _OtpPageState extends ConsumerState<OtpPage> {
               const SizedBox(height: 12),
               Center(
                 child: TextButton(
-                  onPressed: () => context.pop(),
+                  onPressed: () => context.popOr(),
                   child: const Text('Reenviar código'),
                 ),
               ),

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/router/nav_ext.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../../../core/theme/app_theme.dart';
@@ -108,7 +109,7 @@ class _GrupoPageState extends ConsumerState<GrupoPage>
               escudoOpacity: _escudoOpacity,
               isCollapsed: _activeTab != 0,
               onBack: () =>
-                  context.canPop() ? context.pop() : context.go('/home'),
+                  context.popOr('/home'),
               onShare: () => _shareLink(context),
               onMenu: (v) => _onMenuAction(context, ref, v),
               isAdmin: isAdmin,

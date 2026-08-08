@@ -1,7 +1,7 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
+import '../../../core/router/nav_ext.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../core/theme/app_theme.dart';
@@ -127,7 +127,7 @@ class _EditarPerfilPageState extends ConsumerState<EditarPerfilPage> {
       });
       // Invalidate cached user so UI reflects the update immediately
       ref.invalidate(currentUserProvider);
-      if (mounted) context.pop();
+      if (mounted) context.popOr();
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -159,7 +159,7 @@ class _EditarPerfilPageState extends ConsumerState<EditarPerfilPage> {
                 children: [
                   IconButton(
                     icon: const Icon(Icons.close_rounded),
-                    onPressed: () => context.pop(),
+                    onPressed: () => context.popOr(),
                   ),
                   Expanded(
                     child: Text(

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
+import '../../../core/router/nav_ext.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/sg_widgets.dart';
@@ -91,7 +91,7 @@ class _FormState extends StatelessWidget {
         children: [
           // Back button
           GestureDetector(
-            onTap: () => context.canPop() ? context.pop() : context.go('/login'),
+            onTap: () => context.popOr('/login'),
             child: Container(
               width: 40, height: 40,
               decoration: BoxDecoration(
@@ -160,7 +160,7 @@ class _FormState extends StatelessWidget {
           Center(
             child: TextButton(
               onPressed: () =>
-                  context.canPop() ? context.pop() : context.go('/login'),
+                  context.popOr('/login'),
               child: const Text('Volver al login',
                   style: TextStyle(fontSize: 14)),
             ),
@@ -225,7 +225,7 @@ class _SuccessState extends StatelessWidget {
           child: SGPillButton(
             label: 'Volver al login',
             onPressed: () =>
-                context.canPop() ? context.pop() : context.go('/login'),
+                context.popOr('/login'),
           ),
         ),
       ],

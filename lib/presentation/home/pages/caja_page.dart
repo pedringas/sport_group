@@ -5,16 +5,32 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../../../core/config/app_config.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../../data/models/campana_model.dart';
-import '../../../data/models/gasto_model.dart';
+import '../../../core/theme/sg_widgets.dart';
+import '../../../data/models/cuota_model.dart';
+import '../../../data/models/enums.dart';
 import '../../../data/models/pago_model.dart';
 import '../../../providers/auth_provider.dart';
-import '../../../providers/campana_provider.dart';
 import '../../../providers/cuota_provider.dart';
-import '../../../providers/gasto_provider.dart';
-import '../../../data/repositories/gasto_repository.dart';
+import '../../../providers/grupo_provider.dart';
 
-// ── Caja page ─────────────────────────────────────────────────────────────────
+// ── Caja ──────────────────────────────────────────────────────────────────────
+//
+// Panel personal del miembro: sólo sus cuotas del grupo, separadas entre
+// pendientes de abonar y ya pagadas. La información de caja del grupo
+// (ingresos, gastos, balances entre miembros) es de administración y vive en
+// el panel de admin, no acá.
+
+/// ¿Esta cuota me corresponde a mí?
+///
+/// `miembrosUids` acota el cobro a una lista; `excluidosUids` exceptúa. Si no
+/// hay ninguno de los dos, la cuota es para todo el grupo.
+bool _meCorresponde(CuotaModel c, String uid) {
+  final incluidos = c.miembrosUids;
+  if (incluidos != null && incluidos.isNotEmpty) return incluidos.contains(uid);
+  final excluidos = c.excluidosUids;
+  if (excluidos != null && excluidos.contains(uid)) return false;
+  return true;
+}
 
 class CajaPage extends ConsumerStatefulWidget {
   const CajaPage({super.key});
@@ -24,352 +40,383 @@ class CajaPage extends ConsumerStatefulWidget {
 }
 
 class _CajaPageState extends ConsumerState<CajaPage> {
-  int _tab = 0; // 0 = Egresos, 1 = Ingresos, 2 = Balance
+  int _tab = 0; // 0 = Pendientes, 1 = Pagadas
 
   @override
   Widget build(BuildContext context) {
     final uid = ref.watch(authStateProvider).valueOrNull?.uid ?? '';
-
-    // ── Movimientos del grupo ────────────────────────────────────────────────
-    // Suscripciones pagadas (PagoModel aprobados)
-    final suscs = ref
-            .watch(misPagosAprobadosProvider((grupoId: kGrupoId, uid: uid)))
+    final cuotasAsync = ref.watch(cuotasProvider(kGrupoId));
+    final misPagos = ref
+            .watch(misPagosGrupoProvider((grupoId: kGrupoId, uid: uid)))
             .valueOrNull ??
         <PagoModel>[];
-
-    // Aportes de campañas (módulo en pausa: se calcula pero no se muestra)
-    final aportes = ref
-            .watch(misAportesGrupoProvider((grupoId: kGrupoId, uid: uid)))
-            .valueOrNull ??
-        <AporteModel>[];
-
-    // Liquidaciones: como deudor (pagué) y como acreedor (me pagaron)
-    final liqs = ref.watch(liquidacionesProvider(kGrupoId)).valueOrNull ?? [];
-    final liquidEgreso =
-        liqs.where((l) => l.deudorUid == uid).toList();
-    final liquidIngreso =
-        liqs.where((l) => l.acreedorUid == uid).toList();
-
-    // Balance de gastos
-    final balances = ref.watch(balancesProvider(kGrupoId));
-    final totalDebenA = GastoRepository.totalDebenA(balances);
-    final totalDeboA = GastoRepository.totalDebeA(balances);
-    final debenAMi = balances.where((b) => b.monto > 0.5).toList();
-    final deboA = balances.where((b) => b.monto < -0.5).toList();
-
-    // Totals
-    final totalSuscs  = suscs.fold<double>(0, (s, e) => s + e.montoEsperado);
-    final totalAportes = aportes.fold<double>(0, (s, e) => s + e.monto);
-    final totalLiqEgreso = liquidEgreso.fold<double>(0, (s, e) => s + e.monto);
-    final totalLiqIngreso = liquidIngreso.fold<double>(0, (s, e) => s + e.monto);
-    final totalEgresos = totalSuscs + totalAportes + totalLiqEgreso;
-    final totalIngresos = totalLiqIngreso;
-    final netBalance = totalDebenA - totalDeboA;
+    final esAdmin = ref.watch(miRolProvider)?.esAdmin ?? false;
 
     return Scaffold(
-      backgroundColor: AppTheme.background,
+      backgroundColor: AppTheme.bg(context),
       body: SafeArea(
         bottom: false,
-        child: CustomScrollView(
-          slivers: [
-            // ── Header ─────────────────────────────────────────────────────
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-                child: Text(
-                  'Caja',
-                  style: GoogleFonts.bricolageGrotesque(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 28,
-                    letterSpacing: -0.6,
-                    color: AppTheme.text,
+        child: cuotasAsync.when(
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (e, _) =>
+              const SGErrorState(message: 'Error al cargar tus cuotas'),
+          data: (todas) {
+            final mias = todas.where((c) => _meCorresponde(c, uid)).toList()
+              ..sort((a, b) => b.vencimiento.compareTo(a.vencimiento));
+
+            // Estado de pago propio por cuota.
+            EstadoPago? estadoDe(CuotaModel c) {
+              final pagos = misPagos.where((p) => p.cuotaId == c.id).toList();
+              if (pagos.isEmpty) return null;
+              if (pagos.any((p) => p.estado == EstadoPago.aprobado)) {
+                return EstadoPago.aprobado;
+              }
+              return pagos.last.estado;
+            }
+
+            final pagadas = mias
+                .where((c) => estadoDe(c) == EstadoPago.aprobado)
+                .toList();
+            final pendientes = mias
+                .where((c) =>
+                    c.activa && estadoDe(c) != EstadoPago.aprobado)
+                .toList();
+
+            final totalPendiente =
+                pendientes.fold<double>(0, (s, c) => s + c.monto);
+            final totalPagado =
+                pagadas.fold<double>(0, (s, c) => s + c.monto);
+            final vencidas = pendientes
+                .where((c) => c.vencimiento.isBefore(DateTime.now()))
+                .length;
+
+            final lista = _tab == 0 ? pendientes : pagadas;
+
+            return CustomScrollView(
+              slivers: [
+                // ── Encabezado
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Mis cuotas',
+                          style: GoogleFonts.bricolageGrotesque(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 28,
+                            letterSpacing: -0.6,
+                            color: AppTheme.text,
+                          ),
+                        ),
+                        const Text(
+                          'Lo que te toca pagar en Tacheros',
+                          style: TextStyle(
+                              fontSize: 13, color: AppTheme.textMuted),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            ),
-            const SliverToBoxAdapter(
-              child: Padding(
-                padding: EdgeInsets.fromLTRB(16, 2, 16, 0),
-                child: Text(
-                  'Movimientos y cobros de Tacheros',
-                  style: TextStyle(fontSize: 13, color: AppTheme.textMuted),
+
+                // ── Resumen personal
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                    child: _ResumenCard(
+                      totalPendiente: totalPendiente,
+                      totalPagado: totalPagado,
+                      vencidas: vencidas,
+                      cantPendientes: pendientes.length,
+                    ),
+                  ),
                 ),
-              ),
-            ),
 
-            // ── Accesos: Cuotas / Gastos ─────────────────────────────────────
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
-                child: Row(children: [
-                  Expanded(
-                    child: _AccesoBtn(
-                      icon: Icons.payments_outlined,
-                      label: 'Cuotas',
-                      color: AppTheme.danger,
-                      onTap: () =>
-                          context.push('/cuotas'),
+                // ── Pestañas
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                    child: Row(children: [
+                      _TabBtn(
+                        label: 'Pendientes · ${pendientes.length}',
+                        selected: _tab == 0,
+                        onTap: () => setState(() => _tab = 0),
+                      ),
+                      const SizedBox(width: 8),
+                      _TabBtn(
+                        label: 'Pagadas · ${pagadas.length}',
+                        selected: _tab == 1,
+                        onTap: () => setState(() => _tab = 1),
+                      ),
+                    ]),
+                  ),
+                ),
+
+                const SliverToBoxAdapter(child: SizedBox(height: 12)),
+
+                // ── Lista
+                if (lista.isEmpty)
+                  SliverToBoxAdapter(
+                    child: _Vacio(
+                      pendientes: _tab == 0,
+                      sinCuotas: mias.isEmpty,
+                    ),
+                  )
+                else
+                  SliverPadding(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                    sliver: SliverList.separated(
+                      itemCount: lista.length,
+                      separatorBuilder: (_, __) => const SizedBox(height: 8),
+                      itemBuilder: (_, i) {
+                        final c = lista[i];
+                        return _CuotaRow(cuota: c, estado: estadoDe(c));
+                      },
                     ),
                   ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: _AccesoBtn(
-                      icon: Icons.receipt_long_outlined,
-                      label: 'Gastos',
-                      color: AppTheme.good,
-                      onTap: () =>
-                          context.push('/gastos'),
+
+                // ── Acceso de administración (sólo admin)
+                if (esAdmin)
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                      child: _AdminLink(),
                     ),
                   ),
-                ]),
-              ),
-            ),
 
-            // ── Summary bar ─────────────────────────────────────────────────
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-                child: Row(children: [
-                  Expanded(
-                    child: _SummaryCard(
-                      label: 'Egresos',
-                      amount: totalEgresos,
-                      color: AppTheme.danger,
-                      icon: Icons.arrow_upward_rounded,
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: _SummaryCard(
-                      label: 'Ingresos',
-                      amount: totalIngresos,
-                      color: AppTheme.good,
-                      icon: Icons.arrow_downward_rounded,
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: _SummaryCard(
-                      label: 'Balance gastos',
-                      amount: netBalance.abs(),
-                      color: netBalance >= 0 ? AppTheme.good : AppTheme.danger,
-                      icon: netBalance >= 0
-                          ? Icons.trending_up_rounded
-                          : Icons.trending_down_rounded,
-                      prefix: netBalance >= 0 ? '+' : '-',
-                    ),
-                  ),
-                ]),
-              ),
-            ),
-
-            // ── Tabs ────────────────────────────────────────────────────────
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-                child: Row(children: [
-                  _TabBtn(label: 'Egresos', selected: _tab == 0, onTap: () => setState(() => _tab = 0)),
-                  const SizedBox(width: 8),
-                  _TabBtn(label: 'Ingresos', selected: _tab == 1, onTap: () => setState(() => _tab = 1)),
-                  const SizedBox(width: 8),
-                  _TabBtn(label: 'Balance', selected: _tab == 2, onTap: () => setState(() => _tab = 2)),
-                ]),
-              ),
-            ),
-
-            const SliverToBoxAdapter(child: SizedBox(height: 12)),
-
-            // ── Tab content ──────────────────────────────────────────────────
-            if (_tab == 0) ..._buildEgresos(context, suscs, liquidEgreso),
-            if (_tab == 1) ..._buildIngresos(context, liquidIngreso),
-            if (_tab == 2) ..._buildBalance(context, debenAMi, deboA),
-
-            const SliverToBoxAdapter(child: SizedBox(height: 100)),
-          ],
+                const SliverToBoxAdapter(
+                  child: SizedBox(height: AppTheme.kBottomNavPadding),
+                ),
+              ],
+            );
+          },
         ),
       ),
     );
   }
+}
 
-  // ── EGRESOS ──────────────────────────────────────────────────────────────────
+// ── Resumen ───────────────────────────────────────────────────────────────────
 
-  List<Widget> _buildEgresos(
-    BuildContext context,
-    List<PagoModel> suscs,
-    List<LiquidacionModel> liquidEgreso,
-  ) {
-    final sections = <Widget>[];
+class _ResumenCard extends StatelessWidget {
+  final double totalPendiente;
+  final double totalPagado;
+  final int vencidas;
+  final int cantPendientes;
 
-    // Suscripciones
-    sections.add(SliverToBoxAdapter(
-      child: _Section(
-        title: 'Suscripciones',
-        icon: Icons.receipt_long_rounded,
-        total: suscs.fold(0, (s, e) => s + e.montoEsperado),
-        color: AppTheme.accent,
-        emptyText: 'Ningún pago de cuota aprobado aún',
-        items: suscs.map((p) => _TxRow(
-          title: p.cuotaId.isNotEmpty ? 'Pago de cuota' : 'Pago',
-          subtitle: p.metodo.name,
-          amount: p.montoEsperado,
-          date: p.createdAt,
-          color: AppTheme.accent,
-          onTap: () => context.push('/cuotas'),
-        )).toList(),
-      ),
-    ));
+  const _ResumenCard({
+    required this.totalPendiente,
+    required this.totalPagado,
+    required this.vencidas,
+    required this.cantPendientes,
+  });
 
-    // Campañas — módulo en pausa (sección oculta).
-
-    // Gastos de grupo (liquidaciones como deudor)
-    sections.add(SliverToBoxAdapter(
-      child: _Section(
-        title: 'Gastos de grupo',
-        icon: Icons.group_rounded,
-        total: liquidEgreso.fold(0, (s, e) => s + e.monto),
-        color: AppTheme.danger,
-        emptyText: 'Ninguna liquidación de gasto registrada',
-        items: liquidEgreso.map((l) => _TxRow(
-          title: 'Le pagué a ${l.acreedorNombre}',
-          subtitle: 'Liquidación',
-          amount: l.monto,
-          date: l.createdAt,
-          color: AppTheme.danger,
-          onTap: () => context.push('/gastos'),
-        )).toList(),
-      ),
-    ));
-
-    return sections;
-  }
-
-  // ── INGRESOS ─────────────────────────────────────────────────────────────────
-
-  List<Widget> _buildIngresos(
-    BuildContext context,
-    List<LiquidacionModel> liquidIngreso,
-  ) {
-    return [
-      SliverToBoxAdapter(
-        child: _Section(
-          title: 'Gastos de grupo',
-          icon: Icons.group_rounded,
-          total: liquidIngreso.fold(0, (s, e) => s + e.monto),
-          color: AppTheme.good,
-          emptyText: 'Ningún ingreso por gastos registrado',
-          items: liquidIngreso.map((l) => _TxRow(
-            title: '${l.deudorNombre} me pagó',
-            subtitle: 'Liquidación',
-            amount: l.monto,
-            date: l.createdAt,
-            color: AppTheme.good,
-            onTap: () => context.push('/gastos'),
-          )).toList(),
+  @override
+  Widget build(BuildContext context) {
+    final alDia = cantPendientes == 0;
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: alDia ? AppTheme.goodSoft : AppTheme.surface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: alDia
+              ? AppTheme.good.withValues(alpha: 0.3)
+              : AppTheme.border,
         ),
       ),
-    ];
-  }
-
-  // ── BALANCE ──────────────────────────────────────────────────────────────────
-
-  List<Widget> _buildBalance(
-    BuildContext context,
-    List<BalanceConMiembro> debenAMi,
-    List<BalanceConMiembro> deboA,
-  ) {
-    final totalDebenA = debenAMi.fold<double>(0, (s, e) => s + e.monto.abs());
-    final totalDeboA  = deboA.fold<double>(0, (s, e) => s + e.monto.abs());
-
-    return [
-      SliverToBoxAdapter(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
-          child: Row(children: [
-            Expanded(child: _SummaryCard(
-              label: 'Te deben',
-              amount: totalDebenA,
-              color: AppTheme.good,
-              icon: Icons.arrow_downward_rounded,
-            )),
-            const SizedBox(width: 10),
-            Expanded(child: _SummaryCard(
-              label: 'Debés',
-              amount: totalDeboA,
-              color: AppTheme.danger,
-              icon: Icons.arrow_upward_rounded,
-            )),
-          ]),
-        ),
-      ),
-      const SliverToBoxAdapter(child: SizedBox(height: 12)),
-      if (debenAMi.isNotEmpty) SliverToBoxAdapter(
-        child: _Section(
-          title: 'Quién te debe',
-          icon: Icons.arrow_downward_rounded,
-          total: totalDebenA,
-          color: AppTheme.good,
-          emptyText: '',
-          items: debenAMi.map((b) => _TxRow(
-            title: b.nombre,
-            subtitle: 'Te debe',
-            amount: b.monto.abs(),
-            date: null,
-            color: AppTheme.good,
-          )).toList(),
-        ),
-      ),
-      if (deboA.isNotEmpty) SliverToBoxAdapter(
-        child: _Section(
-          title: 'A quién le debés',
-          icon: Icons.arrow_upward_rounded,
-          total: totalDeboA,
-          color: AppTheme.danger,
-          emptyText: '',
-          items: deboA.map((b) => _TxRow(
-            title: b.nombre,
-            subtitle: 'Le debés',
-            amount: b.monto.abs(),
-            date: null,
-            color: AppTheme.danger,
-          )).toList(),
-        ),
-      ),
-      if (debenAMi.isEmpty && deboA.isEmpty) SliverToBoxAdapter(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
-          child: Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: AppTheme.goodSoft,
-              borderRadius: BorderRadius.circular(14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            alDia ? 'ESTÁS AL DÍA' : 'TENÉS QUE ABONAR',
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 1.2,
+              color: alDia ? AppTheme.goodInk : AppTheme.textMuted,
             ),
-            child: const Row(children: [
-              Icon(Icons.check_circle_rounded, color: AppTheme.good, size: 20),
-              SizedBox(width: 10),
-              Text('¡Todo saldado! No hay deudas pendientes.',
-                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
-            ]),
           ),
-        ),
+          const SizedBox(height: 6),
+          Text(
+            alDia ? '¡Todo pago!' : _money(totalPendiente),
+            style: GoogleFonts.bricolageGrotesque(
+              fontWeight: FontWeight.w800,
+              fontSize: 32,
+              letterSpacing: -1,
+              color: alDia ? AppTheme.goodInk : AppTheme.text,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Row(children: [
+            if (vencidas > 0) ...[
+              SGChip(
+                icon: Icons.error_outline_rounded,
+                label: '$vencidas vencida${vencidas != 1 ? 's' : ''}',
+                tone: SGChipTone.danger,
+                filled: true,
+              ),
+              const SizedBox(width: 8),
+            ],
+            Text(
+              'Pagaste ${_money(totalPagado)} hasta ahora',
+              style: const TextStyle(
+                  fontSize: 12, color: AppTheme.textMuted),
+            ),
+          ]),
+        ],
       ),
-    ];
+    );
   }
 }
 
-// ── _AccesoBtn (acceso a Cuotas / Gastos) ─────────────────────────────────────
+String _money(double v) =>
+    '\$ ${NumberFormat('#,##0', 'es_AR').format(v.round())}';
 
-class _AccesoBtn extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final Color color;
-  final VoidCallback onTap;
-  const _AccesoBtn({
-    required this.icon,
-    required this.label,
-    required this.color,
-    required this.onTap,
-  });
+// ── Fila de cuota ─────────────────────────────────────────────────────────────
 
+class _CuotaRow extends StatelessWidget {
+  final CuotaModel cuota;
+  final EstadoPago? estado;
+
+  const _CuotaRow({required this.cuota, required this.estado});
+
+  (String, SGChipTone, IconData) _badge() {
+    switch (estado) {
+      case EstadoPago.aprobado:
+        return ('Pagada', SGChipTone.good, Icons.check_circle_rounded);
+      case EstadoPago.validando:
+      case EstadoPago.pendiente:
+        return ('En revisión', SGChipTone.accent, Icons.schedule_rounded);
+      case EstadoPago.revision:
+        return ('Rechazada', SGChipTone.danger, Icons.error_outline_rounded);
+      case null:
+        final vencida = cuota.vencimiento.isBefore(DateTime.now());
+        return vencida
+            ? ('Vencida', SGChipTone.danger, Icons.error_outline_rounded)
+            : ('A pagar', SGChipTone.neutral, Icons.payments_outlined);
+    }
+  }
+
+  String _vence() {
+    final dias = cuota.vencimiento.difference(DateTime.now()).inDays;
+    if (estado == EstadoPago.aprobado) {
+      return DateFormat('d MMM yyyy', 'es_AR').format(cuota.vencimiento);
+    }
+    if (dias < 0) return 'Venció hace ${-dias} día${dias != -1 ? 's' : ''}';
+    if (dias == 0) return 'Vence hoy';
+    if (dias == 1) return 'Vence mañana';
+    return 'Vence en $dias días';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final (label, tone, icon) = _badge();
+
+    return SGCard(
+      padding: const EdgeInsets.all(14),
+      onTap: () => context.push('/cuota/${cuota.id}'),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  cuota.titulo,
+                  style: const TextStyle(
+                      fontWeight: FontWeight.w600, fontSize: 14),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 4),
+                Row(children: [
+                  SGChip(label: label, icon: icon, tone: tone),
+                  const SizedBox(width: 8),
+                  Flexible(
+                    child: Text(
+                      _vence(),
+                      style: const TextStyle(
+                          fontSize: 11, color: AppTheme.textMuted),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ]),
+              ],
+            ),
+          ),
+          const SizedBox(width: 10),
+          Text(
+            _money(cuota.monto),
+            style: GoogleFonts.bricolageGrotesque(
+              fontWeight: FontWeight.w700,
+              fontSize: 16,
+              color: AppTheme.text,
+            ),
+          ),
+          const Icon(Icons.chevron_right_rounded,
+              size: 18, color: AppTheme.textMuted),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Estado vacío ──────────────────────────────────────────────────────────────
+
+class _Vacio extends StatelessWidget {
+  final bool pendientes;
+  final bool sinCuotas;
+  const _Vacio({required this.pendientes, required this.sinCuotas});
+
+  @override
+  Widget build(BuildContext context) {
+    final (icon, titulo, sub) = sinCuotas
+        ? (
+            Icons.receipt_long_outlined,
+            'Todavía no hay cuotas',
+            'Cuando el administrador emita una, la vas a ver acá.'
+          )
+        : pendientes
+            ? (
+                Icons.check_circle_outline_rounded,
+                'No debés nada',
+                'Todas tus cuotas están pagas.'
+              )
+            : (
+                Icons.history_rounded,
+                'Sin pagos todavía',
+                'Acá van a aparecer las cuotas que ya abonaste.'
+              );
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(24, 32, 24, 24),
+      child: Column(
+        children: [
+          Icon(icon, size: 48, color: AppTheme.border),
+          const SizedBox(height: 12),
+          Text(
+            titulo,
+            style: const TextStyle(
+                fontWeight: FontWeight.w600, color: AppTheme.text),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            sub,
+            style: const TextStyle(fontSize: 13, color: AppTheme.textMuted),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Acceso de administración ──────────────────────────────────────────────────
+
+class _AdminLink extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
@@ -377,7 +424,7 @@ class _AccesoBtn extends StatelessWidget {
       borderRadius: BorderRadius.circular(14),
       child: InkWell(
         borderRadius: BorderRadius.circular(14),
-        onTap: onTap,
+        onTap: () => context.push('/cuotas'),
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
           decoration: BoxDecoration(
@@ -389,17 +436,26 @@ class _AccesoBtn extends StatelessWidget {
               width: 34,
               height: 34,
               decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.12),
+                color: AppTheme.primary.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(10),
               ),
               alignment: Alignment.center,
-              child: Icon(icon, size: 18, color: color),
+              child: const Icon(Icons.admin_panel_settings_outlined,
+                  size: 18, color: AppTheme.primary),
             ),
             const SizedBox(width: 10),
-            Expanded(
-              child: Text(label,
-                  style: const TextStyle(
-                      fontWeight: FontWeight.w700, fontSize: 14)),
+            const Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Gestionar cuotas del grupo',
+                      style: TextStyle(
+                          fontWeight: FontWeight.w700, fontSize: 14)),
+                  Text('Emitir, cobrar y validar pagos',
+                      style: TextStyle(
+                          fontSize: 11, color: AppTheme.textMuted)),
+                ],
+              ),
             ),
             const Icon(Icons.chevron_right_rounded,
                 size: 18, color: AppTheme.textMuted),
@@ -410,63 +466,14 @@ class _AccesoBtn extends StatelessWidget {
   }
 }
 
-// ── _SummaryCard ──────────────────────────────────────────────────────────────
-
-class _SummaryCard extends StatelessWidget {
-  final String label;
-  final double amount;
-  final Color color;
-  final IconData icon;
-  final String prefix;
-
-  const _SummaryCard({
-    required this.label,
-    required this.amount,
-    required this.color,
-    required this.icon,
-    this.prefix = '',
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: color.withValues(alpha: 0.22)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(children: [
-            Icon(icon, size: 12, color: color),
-            const SizedBox(width: 4),
-            Flexible(child: Text(label,
-                style: TextStyle(fontSize: 10, color: color, fontWeight: FontWeight.w600),
-                maxLines: 1, overflow: TextOverflow.ellipsis)),
-          ]),
-          const SizedBox(height: 4),
-          Text(
-            '$prefix\$${_fmt(amount)}',
-            style: GoogleFonts.bricolageGrotesque(
-              fontSize: 15, fontWeight: FontWeight.w800, color: color),
-          ),
-        ],
-      ),
-    );
-  }
-
-  String _fmt(double v) => NumberFormat('#,##0', 'es_AR').format(v.round());
-}
-
 // ── _TabBtn ───────────────────────────────────────────────────────────────────
 
 class _TabBtn extends StatelessWidget {
   final String label;
   final bool selected;
   final VoidCallback onTap;
-  const _TabBtn({required this.label, required this.selected, required this.onTap});
+  const _TabBtn(
+      {required this.label, required this.selected, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -478,7 +485,8 @@ class _TabBtn extends StatelessWidget {
         decoration: BoxDecoration(
           color: selected ? AppTheme.text : AppTheme.surface,
           borderRadius: BorderRadius.circular(99),
-          border: Border.all(color: selected ? AppTheme.text : AppTheme.border),
+          border:
+              Border.all(color: selected ? AppTheme.text : AppTheme.border),
         ),
         child: Text(
           label,
@@ -488,173 +496,6 @@ class _TabBtn extends StatelessWidget {
             color: selected ? Colors.white : AppTheme.textMuted,
           ),
         ),
-      ),
-    );
-  }
-}
-
-// ── _Section (collapsible) ────────────────────────────────────────────────────
-
-class _Section extends StatefulWidget {
-  final String title;
-  final IconData icon;
-  final double total;
-  final Color color;
-  final String emptyText;
-  final List<Widget> items;
-
-  const _Section({
-    required this.title,
-    required this.icon,
-    required this.total,
-    required this.color,
-    required this.emptyText,
-    required this.items,
-  });
-
-  @override
-  State<_Section> createState() => _SectionState();
-}
-
-class _SectionState extends State<_Section> {
-  bool _expanded = true;
-
-  @override
-  Widget build(BuildContext context) {
-    final fmt = '\$${NumberFormat('#,##0', 'es_AR').format(widget.total.round())}';
-    final isEmpty = widget.items.isEmpty;
-
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-      child: Container(
-        decoration: BoxDecoration(
-          color: AppTheme.surface,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppTheme.border),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header
-            InkWell(
-              onTap: isEmpty ? null : () => setState(() => _expanded = !_expanded),
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
-                child: Row(children: [
-                  Container(
-                    width: 32, height: 32,
-                    decoration: BoxDecoration(
-                      color: widget.color.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    alignment: Alignment.center,
-                    child: Icon(widget.icon, size: 16, color: widget.color),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(child: Text(widget.title,
-                      style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14))),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                    decoration: BoxDecoration(
-                      color: widget.color.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(fmt,
-                        style: TextStyle(
-                            fontSize: 12, fontWeight: FontWeight.w700, color: widget.color)),
-                  ),
-                  if (!isEmpty) ...[
-                    const SizedBox(width: 6),
-                    Icon(
-                      _expanded ? Icons.expand_less_rounded : Icons.expand_more_rounded,
-                      size: 18, color: AppTheme.textMuted,
-                    ),
-                  ],
-                ]),
-              ),
-            ),
-
-            // Items
-            if (!isEmpty && _expanded) ...[
-              const Divider(height: 1, color: AppTheme.border),
-              ...widget.items,
-            ],
-
-            if (isEmpty) ...[
-              const Divider(height: 1, color: AppTheme.border),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
-                child: Text(widget.emptyText,
-                    style: const TextStyle(fontSize: 13, color: AppTheme.textMuted)),
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// ── _TxRow ────────────────────────────────────────────────────────────────────
-
-class _TxRow extends StatelessWidget {
-  final String title;
-  final String subtitle;
-  final double amount;
-  final DateTime? date;
-  final Color color;
-  final VoidCallback? onTap;
-
-  const _TxRow({
-    required this.title,
-    required this.subtitle,
-    required this.amount,
-    required this.date,
-    required this.color,
-    this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final dateStr = date != null
-        ? DateFormat('d MMM yyyy', 'es_AR').format(date!)
-        : null;
-
-    return InkWell(
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
-        child: Row(children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title,
-                    style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
-                    maxLines: 1, overflow: TextOverflow.ellipsis),
-                Row(children: [
-                  Text(subtitle,
-                      style: const TextStyle(fontSize: 11, color: AppTheme.textMuted)),
-                  if (dateStr != null) ...[
-                    const Text(' · ', style: TextStyle(fontSize: 11, color: AppTheme.textMuted)),
-                    Text(dateStr,
-                        style: const TextStyle(fontSize: 11, color: AppTheme.textMuted)),
-                  ],
-                ]),
-              ],
-            ),
-          ),
-          Text(
-            '\$${NumberFormat('#,##0', 'es_AR').format(amount.round())}',
-            style: TextStyle(
-                fontWeight: FontWeight.w700, fontSize: 14, color: color),
-          ),
-          if (onTap != null) ...[
-            const SizedBox(width: 4),
-            const Icon(Icons.chevron_right_rounded, size: 14, color: AppTheme.textMuted),
-          ],
-        ]),
       ),
     );
   }

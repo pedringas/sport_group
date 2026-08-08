@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
+import '../../../core/router/nav_ext.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/sg_widgets.dart';
@@ -75,7 +75,7 @@ class _CrearCuotaGrupoPageState extends ConsumerState<CrearCuotaGrupoPage> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded),
-          onPressed: () => context.pop(),
+          onPressed: () => context.popOr(),
         ),
         title: Text(
           widget.para == null
@@ -359,16 +359,23 @@ class _CrearCuotaGrupoPageState extends ConsumerState<CrearCuotaGrupoPage> {
       } else {
         await repo.updateCuotaGrupo(widget.grupoId, model);
       }
-      if (mounted) context.pop();
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error: $e'), backgroundColor: AppTheme.danger),
         );
       }
-    } finally {
       if (mounted) setState(() => _loading = false);
+      return;
     }
+    // Fuera del try: un fallo al navegar no debe reportarse como fallo al guardar.
+    if (!mounted) return;
+    setState(() => _loading = false);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(
+          widget.para == null ? 'Grupo creado ✓' : 'Grupo actualizado ✓')),
+    );
+    context.popOr('/cuotas');
   }
 }
 

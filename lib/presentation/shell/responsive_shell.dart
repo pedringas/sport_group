@@ -80,7 +80,7 @@ class _DeskSidebar extends StatelessWidget {
   static const _navItems = [
     (id: 'inicio', icon: Icons.home_rounded, label: 'Inicio', path: '/home'),
     (id: 'agenda', icon: Icons.calendar_month_rounded, label: 'Agenda', path: '/home?tab=1'),
-    (id: 'caja', icon: Icons.account_balance_wallet_outlined, label: 'Caja', path: '/home?tab=2'),
+    (id: 'caja', icon: Icons.payments_outlined, label: 'Cuotas', path: '/home?tab=2'),
     (id: 'miembros', icon: Icons.groups_rounded, label: 'Miembros', path: '/home?tab=3'),
     (id: 'perfil', icon: Icons.person_rounded, label: 'Mi perfil', path: '/home?tab=4'),
   ];
@@ -316,7 +316,7 @@ class _DeskTopBar extends ConsumerWidget {
     if (location == '/home') {
       return switch (queryParams['tab']) {
         '1' => 'Agenda',
-        '2' => 'Caja',
+        '2' => 'Mis cuotas',
         '3' => 'Miembros',
         '4' => 'Mi perfil',
         _ => 'Inicio',

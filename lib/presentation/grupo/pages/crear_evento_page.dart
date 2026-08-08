@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
+import '../../../core/router/nav_ext.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/sg_widgets.dart';
@@ -118,7 +118,7 @@ class _CrearEventoPageState extends ConsumerState<CrearEventoPage> {
             backgroundColor: AppTheme.good,
           ),
         );
-        context.pop();
+        context.popOr();
       }
     } catch (e) {
       if (mounted) {
@@ -143,7 +143,7 @@ class _CrearEventoPageState extends ConsumerState<CrearEventoPage> {
       appBar: isDesktop ? null : AppBar(
         leading: IconButton(
           icon: const Icon(Icons.close_rounded, size: 22),
-          onPressed: () => context.pop(),
+          onPressed: () => context.popOr(),
         ),
         title: const Text('Nuevo evento'),
         actions: [

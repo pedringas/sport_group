@@ -2,6 +2,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/router/nav_ext.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../core/theme/app_theme.dart';
@@ -108,7 +109,7 @@ class _CrearGrupoPageState extends ConsumerState<CrearGrupoPage> {
             // â”€â”€ Top bar + progress
             _TopBar(
               step: _step,
-              onBack: _step == 1 ? () => context.pop() : () => setState(() => _step--),
+              onBack: _step == 1 ? () => context.popOr() : () => setState(() => _step--),
             ),
 
             // â”€â”€ Content (scrollable)

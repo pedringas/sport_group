@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
+import '../../../core/router/nav_ext.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/sg_widgets.dart';
@@ -76,21 +76,21 @@ class _CrearCuotaPageState extends ConsumerState<CrearCuotaPage> {
         monto: monto,
         vencimiento: _vencimiento,
       );
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Suscripción actualizada ✓')),
-        );
-        context.pop();
-      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error: $e')),
         );
+        setState(() => _saving = false);
       }
-    } finally {
-      if (mounted) setState(() => _saving = false);
+      return;
     }
+    if (!mounted) return;
+    setState(() => _saving = false);
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Cuota actualizada ✓')),
+    );
+    context.popOr('/cuotas');
   }
 
   Future<void> _emitir() async {
@@ -144,19 +144,20 @@ class _CrearCuotaPageState extends ConsumerState<CrearCuotaPage> {
         );
       }
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Suscripción emitida ✓')),
-        );
-        context.pop();
-      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error: $e')),
         );
       }
+      return;
     }
+    // Fuera del try: un fallo al navegar no debe reportarse como fallo al emitir.
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Cuota emitida ✓')),
+    );
+    context.popOr('/cuotas');
   }
 
   @override
@@ -179,7 +180,7 @@ class _CrearCuotaPageState extends ConsumerState<CrearCuotaPage> {
       appBar: isDesktop ? null : AppBar(
         leading: IconButton(
           icon: const Icon(Icons.close_rounded, size: 22),
-          onPressed: () => context.pop(),
+          onPressed: () => context.popOr(),
         ),
         title: Text(_editMode ? 'Editar suscripción' : 'Nueva suscripción'),
         actions: [
