@@ -3,10 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import '../../../core/config/app_config.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../../data/models/noticia_model.dart';
-import '../../../data/models/grupo_model.dart';
 import '../../../data/models/enums.dart';
+import '../../../data/models/noticia_model.dart';
 import '../../../providers/grupo_provider.dart';
 import '../../../providers/noticia_provider.dart';
 import '../../../providers/auth_provider.dart';
@@ -15,9 +15,8 @@ import '../../../providers/auth_provider.dart';
 
 class _AgendaItem {
   final NoticiaModel noticia;
-  final GrupoModel grupo;
   final DateTime eventDate;
-  _AgendaItem(this.noticia, this.grupo, this.eventDate);
+  _AgendaItem(this.noticia, this.eventDate);
 }
 
 // ── Page ──────────────────────────────────────────────────────────────────────
@@ -39,23 +38,14 @@ class _AgendaPageState extends ConsumerState<AgendaPage> {
 
   @override
   Widget build(BuildContext context) {
-    final grupos = ref.watch(userGruposProvider).valueOrNull ?? [];
-    final favoritosIds = ref.watch(gruposFavoritosProvider).valueOrNull ?? {};
-
-    final targetGrupos = grupos
-        .where((g) =>
-            g.tipo == TipoGrupo.privado || favoritosIds.contains(g.id))
-        .toList();
+    final noticias = ref.watch(noticiasProvider(kGrupoId)).valueOrNull ?? [];
+    final gc = ref.watch(colorGrupoProvider);
 
     final allEvents = <_AgendaItem>[];
-    for (final grupo in targetGrupos) {
-      final noticias =
-          ref.watch(noticiasProvider(grupo.id)).valueOrNull ?? [];
-      for (final n in noticias.where((n) => n.tieneListado)) {
-        final eventDate = n.fechaEvento ?? n.fechaCaducidad;
-        if (eventDate == null) continue;
-        allEvents.add(_AgendaItem(n, grupo, eventDate));
-      }
+    for (final n in noticias.where((n) => n.tieneListado)) {
+      final eventDate = n.fechaEvento ?? n.fechaCaducidad;
+      if (eventDate == null) continue;
+      allEvents.add(_AgendaItem(n, eventDate));
     }
 
     allEvents.sort((a, b) => a.eventDate.compareTo(b.eventDate));
@@ -74,7 +64,7 @@ class _AgendaPageState extends ConsumerState<AgendaPage> {
     final Map<int, List<Color>> dotsByDay = {};
     for (final e in monthEvents) {
       final day = e.eventDate.day;
-      dotsByDay.putIfAbsent(day, () => []).add(e.grupo.primaryColor);
+      dotsByDay.putIfAbsent(day, () => []).add(gc);
     }
 
     final isDesktop =
@@ -104,18 +94,13 @@ class _AgendaPageState extends ConsumerState<AgendaPage> {
                   )
                 else
                   const Spacer(),
-                IconButton(
-                  icon: const Icon(Icons.view_column_outlined, size: 20),
-                  color: AppTheme.textMuted,
-                  tooltip: 'Vista compacta',
-                  onPressed: () {},
-                ),
-                IconButton(
-                  icon: const Icon(Icons.add_rounded, size: 22),
-                  color: AppTheme.text,
-                  tooltip: 'Crear evento',
-                  onPressed: () {},
-                ),
+                if (ref.watch(miRolProvider)?.esAdmin ?? false)
+                  IconButton(
+                    icon: const Icon(Icons.add_rounded, size: 22),
+                    color: AppTheme.text,
+                    tooltip: 'Crear evento',
+                    onPressed: () => context.push('/evento/crear'),
+                  ),
               ],
             ),
           ),
@@ -158,8 +143,7 @@ class _AgendaPageState extends ConsumerState<AgendaPage> {
                 if (dayEvents.isNotEmpty) ...[
                   const SizedBox(width: 8),
                   Text(
-                    '${dayEvents.length} evento${dayEvents.length != 1 ? 's' : ''}'
-                    ' en ${_gruposCount(dayEvents)} grupo${_gruposCount(dayEvents) != 1 ? 's' : ''}',
+                    '${dayEvents.length} evento${dayEvents.length != 1 ? 's' : ''}',
                     style: const TextStyle(
                         fontSize: 13, color: AppTheme.textMuted),
                   ),
@@ -213,8 +197,6 @@ class _AgendaPageState extends ConsumerState<AgendaPage> {
     return '${name[0].toUpperCase()}${name.substring(1)} $num';
   }
 
-  int _gruposCount(List<_AgendaItem> events) =>
-      events.map((e) => e.grupo.id).toSet().length;
 }
 
 // ── Calendar widget ───────────────────────────────────────────────────────────
@@ -428,19 +410,18 @@ class _EventCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final n = item.noticia;
-    final g = item.grupo;
     final date = item.eventDate;
-    final groupColor = g.primaryColor;
+    final groupColor = ref.watch(colorGrupoProvider);
 
     final asistenciaAsync = ref.watch(asistenciaProvider(
-        (grupoId: g.id, noticiaId: n.id)));
+        (grupoId: kGrupoId, noticiaId: n.id)));
     final lista = asistenciaAsync.valueOrNull ?? [];
     final confirmados = lista.where((a) => a.va).length;
     final yaVas = lista.any((a) => a.uid == uid && a.va);
 
     return GestureDetector(
       onTap: () => context.push(
-        '/group/${g.id}/noticias/${n.id}/comentarios'
+        '/novedades/${n.id}/comentarios'
         '?titulo=${Uri.encodeComponent(n.titulo)}',
       ),
       child: Container(
@@ -484,7 +465,7 @@ class _EventCard extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Group name
+                  // Autor del evento
                   Row(
                     children: [
                       Container(
@@ -498,7 +479,7 @@ class _EventCard extends ConsumerWidget {
                       const SizedBox(width: 6),
                       Expanded(
                         child: Text(
-                          g.nombre,
+                          n.autorNombre,
                           style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
@@ -557,10 +538,10 @@ class _EventCard extends ConsumerWidget {
     try {
       final repo = ref.read(noticiaRepositoryProvider);
       if (yaVas) {
-        await repo.removeAsistencia(item.grupo.id, item.noticia.id, user.uid);
+        await repo.removeAsistencia(kGrupoId, item.noticia.id, user.uid);
       } else {
         await repo.setAsistencia(
-          grupoId: item.grupo.id,
+          grupoId: kGrupoId,
           noticiaId: item.noticia.id,
           uid: user.uid,
           nombre: user.displayName ?? '',

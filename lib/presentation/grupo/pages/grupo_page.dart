@@ -74,9 +74,9 @@ class _GrupoPageState extends ConsumerState<GrupoPage>
       return;
     }
     setState(() => _activeTab = index);
-    const routes = ['', '/noticias', '/miembros', '/agenda', ''];
+    const routes = ['', '/novedades', '/miembros', '/agenda', ''];
     Future.delayed(const Duration(milliseconds: 120), () {
-      if (mounted) context.push('/group/${widget.grupoId}${routes[index]}');
+      if (mounted) context.push('${routes[index]}');
     });
   }
 
@@ -147,17 +147,17 @@ class _GrupoPageState extends ConsumerState<GrupoPage>
                             _DesktopNavChip(
                               icon: Icons.newspaper_outlined,
                               label: 'Novedades',
-                              onTap: () => context.push('/group/${widget.grupoId}/noticias'),
+                              onTap: () => context.push('/novedades'),
                             ),
                             _DesktopNavChip(
                               icon: Icons.group_outlined,
                               label: 'Miembros',
-                              onTap: () => context.push('/group/${widget.grupoId}/miembros'),
+                              onTap: () => context.push('/miembros'),
                             ),
                             _DesktopNavChip(
                               icon: Icons.calendar_month_outlined,
                               label: 'Agenda',
-                              onTap: () => context.push('/group/${widget.grupoId}/agenda'),
+                              onTap: () => context.push('/agenda'),
                             ),
                           ],
                         ),
@@ -283,7 +283,7 @@ class _GrupoPageState extends ConsumerState<GrupoPage>
     if (rol == RolMiembro.tesorero) {
       return FloatingActionButton.extended(
         onPressed: () =>
-            context.push('/group/${widget.grupoId}/cuotas/crear'),
+            context.push('/cuotas/crear'),
         icon: const Icon(Icons.add_rounded),
         label: const Text('Cobrar cuota'),
       );
@@ -291,13 +291,13 @@ class _GrupoPageState extends ConsumerState<GrupoPage>
     if (rol == RolMiembro.delegado) {
       return FloatingActionButton.extended(
         onPressed: () =>
-            context.push('/group/${widget.grupoId}/evento/crear'),
+            context.push('/evento/crear'),
         icon: const Icon(Icons.event_rounded),
         label: const Text('Crear evento'),
       );
     }
     return FloatingActionButton.extended(
-      onPressed: () => context.push('/group/${widget.grupoId}/noticias'),
+      onPressed: () => context.push('/novedades'),
       icon: const Icon(Icons.newspaper_rounded),
       label: const Text('Ver noticias'),
     );
@@ -307,12 +307,12 @@ class _GrupoPageState extends ConsumerState<GrupoPage>
     final id = widget.grupoId;
     final actions = [
       (Icons.event_rounded, gc.withValues(alpha: 0.12), gc,
-          'Crear evento', '/group/$id/evento/crear'),
+          'Crear evento', '/evento/crear'),
       (Icons.payments_outlined, AppTheme.dangerSoft,
           AppTheme.dangerInk, 'Emitir suscripción',
-          '/group/$id/cuotas/crear'),
+          '/cuotas/crear'),
       (Icons.newspaper_outlined, AppTheme.goodSoft,
-          AppTheme.goodInk, 'Noticias', '/group/$id/noticias'),
+          AppTheme.goodInk, 'Noticias', '/novedades'),
     ];
     showModalBottomSheet(
       context: context,
@@ -388,11 +388,11 @@ class _GrupoPageState extends ConsumerState<GrupoPage>
   void _onMenuAction(BuildContext context, WidgetRef ref, String action) {
     final id = widget.grupoId;
     switch (action) {
-      case 'admin': context.push('/group/$id/admin'); break;
-      case 'settings': context.push('/group/$id/settings'); break;
-      case 'moderador': context.push('/group/$id/moderador'); break;
-      case 'tesorero': context.push('/group/$id/tesorero'); break;
-      case 'delegado': context.push('/group/$id/delegado'); break;
+      case 'admin': context.push('/admin'); break;
+      case 'settings': context.push('/ajustes'); break;
+      case 'moderador': context.push('/moderador'); break;
+      case 'tesorero': context.push('/tesorero'); break;
+      case 'delegado': context.push('/delegado'); break;
       case 'leave': _confirmLeave(context, ref); break;
       case 'delete': _confirmDelete(context, ref); break;
     }
@@ -807,7 +807,7 @@ class _GrupoMoreSheet extends StatelessWidget {
           (Icons.notifications_outlined, 'Notificaciones',
               'Push y alertas del grupo', ''),
           (Icons.settings_outlined, 'Ajustes del grupo',
-              'Configuración y privacidad', '/settings'),
+              'Configuración y privacidad', '/ajustes'),
         ],
       ),
     ];
@@ -881,7 +881,7 @@ class _GrupoMoreSheet extends StatelessWidget {
                           onTap: () {
                             Navigator.pop(context);
                             if (item.$4.isNotEmpty) {
-                              context.push('/group/$grupoId${item.$4}');
+                              context.push('${item.$4}');
                             }
                           },
                         ),
@@ -1036,7 +1036,7 @@ class _ProximoEventoCard extends ConsumerWidget {
       borderRadius: BorderRadius.circular(20),
       child: InkWell(
         borderRadius: BorderRadius.circular(20),
-        onTap: () => context.push('/group/$grupoId/noticias'),
+        onTap: () => context.push('/novedades'),
         child: Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(20),
@@ -1216,7 +1216,7 @@ class _BentoGrid extends ConsumerWidget {
             iconBg: AppTheme.goodSoft, iconColor: AppTheme.goodInk,
             label: 'Gastos',
             big: 'Ver gastos',
-            onTap: () => context.push('/group/$grupoId/gastos'),
+            onTap: () => context.push('/gastos'),
           ),
         ),
         const SizedBox(width: 12),
@@ -1227,7 +1227,7 @@ class _BentoGrid extends ConsumerWidget {
             label: 'Tu cuota',
             big: cuotaBig,
             sub: cuotaSub.isNotEmpty ? cuotaSub : null,
-            onTap: () => context.push('/group/$grupoId/cuotas'),
+            onTap: () => context.push('/cuotas'),
           ),
         ),
       ],
@@ -1268,7 +1268,7 @@ class _UltimasNoticias extends ConsumerWidget {
         ...noticias.map((n) => Padding(
               padding: const EdgeInsets.only(bottom: 8),
               child: GestureDetector(
-                onTap: () => context.push('/group/$grupoId/noticias'),
+                onTap: () => context.push('/novedades'),
                 child: Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
@@ -1313,7 +1313,7 @@ class _UltimasNoticias extends ConsumerWidget {
             )),
         Center(
           child: TextButton(
-            onPressed: () => context.push('/group/$grupoId/noticias'),
+            onPressed: () => context.push('/novedades'),
             child: const Text('Ver todas las noticias →',
                 style: TextStyle(fontWeight: FontWeight.w700)),
           ),

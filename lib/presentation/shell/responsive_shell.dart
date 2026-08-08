@@ -5,7 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/sg_widgets.dart';
 import '../../providers/auth_provider.dart';
-import '../../providers/grupo_provider.dart';
+import '../../core/config/app_config.dart';
 
 // â”€â”€ Breakpoint â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
@@ -76,22 +76,33 @@ class _DeskSidebar extends StatelessWidget {
     required this.userName,
   });
 
+  // Debe mantenerse en el mismo orden que _BottomNav._items en home_shell.dart.
   static const _navItems = [
     (id: 'inicio', icon: Icons.home_rounded, label: 'Inicio', path: '/home'),
-    (id: 'novedades', icon: Icons.newspaper_rounded, label: 'Novedades', path: '/home?tab=1'),
-    (id: 'agenda', icon: Icons.calendar_month_rounded, label: 'Agenda', path: '/home?tab=2'),
-    (id: 'caja', icon: Icons.account_balance_wallet_outlined, label: 'Caja', path: '/home?tab=3'),
+    (id: 'agenda', icon: Icons.calendar_month_rounded, label: 'Agenda', path: '/home?tab=1'),
+    (id: 'caja', icon: Icons.account_balance_wallet_outlined, label: 'Caja', path: '/home?tab=2'),
+    (id: 'miembros', icon: Icons.groups_rounded, label: 'Miembros', path: '/home?tab=3'),
     (id: 'perfil', icon: Icons.person_rounded, label: 'Mi perfil', path: '/home?tab=4'),
   ];
 
   bool _isActive(String navId) {
-    if (navId == 'inicio') return location == '/home' && !queryParams.containsKey('tab');
-    if (navId == 'novedades') return location == '/home' && queryParams['tab'] == '1';
-    if (navId == 'agenda') return location == '/home' && queryParams['tab'] == '2';
-    if (navId == 'caja') return location == '/home' && queryParams['tab'] == '3';
-    if (navId == 'perfil') {
-      return (location == '/home' && queryParams['tab'] == '4') ||
-          location.startsWith('/profile');
+    final onHome = location == '/home';
+    final tab = queryParams['tab'];
+    switch (navId) {
+      case 'inicio':
+        return onHome && (tab == null || tab == '0');
+      case 'agenda':
+        return onHome && tab == '1';
+      case 'caja':
+        // Cuotas y Gastos cuelgan de Caja.
+        return (onHome && tab == '2') ||
+            location.startsWith('/cuota') ||
+            location.startsWith('/gastos') ||
+            location == '/suscripciones';
+      case 'miembros':
+        return (onHome && tab == '3') || location == '/miembros';
+      case 'perfil':
+        return (onHome && tab == '4') || location.startsWith('/profile');
     }
     return false;
   }
@@ -275,50 +286,57 @@ class _DeskTopBar extends ConsumerWidget {
   final WidgetRef ref;
   const _DeskTopBar({required this.location, required this.queryParams, required this.ref});
 
-  String _title(WidgetRef r) {
+  static const _titles = <String, String>{
+    '/profile': 'Mi perfil',
+    '/profile/edit': 'Editar perfil',
+    '/busqueda': 'Buscar',
+    '/notificaciones': 'Notificaciones',
+    '/faq': 'Ayuda y soporte',
+    '/ajustes': 'Ajustes del grupo',
+    '/miembros': 'Miembros',
+    '/novedades': 'Novedades',
+    '/evento/crear': 'Nuevo evento',
+    '/cuotas': 'Cuotas',
+    '/cuotas/crear': 'Nueva cuota',
+    '/cuotas/grupo/crear': 'Nuevo grupo de suscripción',
+    '/suscripciones': 'Suscripciones',
+    '/gastos': 'Gastos',
+    '/gastos/crear': 'Nuevo gasto',
+    '/admin': 'Panel de administración',
+    '/tareas': 'Tareas',
+    '/tareas/crear': 'Nueva tarea',
+    '/recursos': 'Recursos',
+    '/campanas': 'Campañas',
+    '/moderador': 'Panel Moderador',
+    '/tesorero': 'Panel Tesorero',
+    '/delegado': 'Panel Delegado',
+  };
+
+  String _title() {
     if (location == '/home') {
       return switch (queryParams['tab']) {
-        '1' => 'Novedades',
-        '2' => 'Agenda',
-        '3' => 'Caja',
+        '1' => 'Agenda',
+        '2' => 'Caja',
+        '3' => 'Miembros',
         '4' => 'Mi perfil',
         _ => 'Inicio',
       };
     }
-    if (location == '/profile') return 'Mi perfil';
-    if (location == '/search') return 'Buscar grupos';
-    if (location == '/busqueda') return 'Buscar';
-    if (location == '/notificaciones') return 'Notificaciones';
-    if (location == '/profile/edit') return 'Editar perfil';
-    if (location == '/create-group') return 'Crear grupo';
-    if (location == '/faq') return 'Ayuda y soporte';
-    if (location.contains('/noticias')) return 'Novedades';
-    if (location.contains('/cuotas/crear')) return 'Nueva suscripción';
-    if (location.contains('/cuotas')) return 'Suscripciones';
-    if (location.contains('/cuota/')) return 'Detalle de cuota';
-    if (location.contains('/gastos/crear')) return 'Nuevo gasto';
-    if (location.contains('/gastos')) return 'Gastos';
-    if (location.contains('/tareas/crear')) return 'Nueva tarea';
-    if (location.contains('/tareas')) return 'Tareas';
-    if (location.contains('/recursos')) return 'Recursos';
-    if (location.contains('/campanas')) return 'Campañas';
-    if (location.contains('/evento/crear')) return 'Nuevo evento';
-    if (location.contains('/settings')) return 'Configuración';
-    if (location.contains('/admin')) return 'Panel Admin';
-    if (location.contains('/delegado')) return 'Panel Delegado';
-    if (location.contains('/tesorero')) return 'Panel Tesorero';
-    if (location.contains('/moderador')) return 'Panel Moderador';
-    if (location.contains('/comentarios')) return 'Comentarios';
-    if (location.contains('/group/')) {
-      // Extract grupoId and show group name
-      final match = RegExp(r'/group/([^/]+)').firstMatch(location);
-      if (match != null) {
-        final nombre = r.watch(grupoProvider(match.group(1)!)).valueOrNull?.nombre;
-        if (nombre != null) return nombre;
-      }
-      return 'Grupo';
-    }
-    return 'SportGroups';
+    final exact = _titles[location];
+    if (exact != null) return exact;
+
+    // Rutas con parámetros.
+    if (location.endsWith('/comentarios')) return 'Comentarios';
+    if (location.endsWith('/pay/manual')) return 'Subir comprobante';
+    if (location.endsWith('/edit')) return 'Editar cuota';
+    if (location.endsWith('/editar')) return 'Editar grupo de suscripción';
+    if (location.startsWith('/cuotas/grupo/')) return 'Grupo de suscripción';
+    if (location.startsWith('/cuota/')) return 'Detalle de cuota';
+    if (location.startsWith('/gastos/g/')) return 'Detalle de gasto';
+    if (location.startsWith('/recurso/')) return 'Archivo';
+    if (location.startsWith('/campana/')) return 'Campaña';
+
+    return kGrupoNombre;
   }
 
   @override
@@ -335,7 +353,7 @@ class _DeskTopBar extends ConsumerWidget {
           // â”€â”€ Title
           Expanded(
             child: Text(
-              _title(ref),
+              _title(),
               style: GoogleFonts.bricolageGrotesque(
                 fontWeight: FontWeight.w700,
                 fontSize: 22,
@@ -363,7 +381,7 @@ class _DeskTopBar extends ConsumerWidget {
                   const SizedBox(width: 8),
                   const Expanded(
                     child: Text(
-                      'Buscar grupos, miembros, archivos...',
+                      'Buscar novedades, eventos o personas',
                       style: TextStyle(fontSize: 12, color: AppTheme.textMuted),
                     ),
                   ),

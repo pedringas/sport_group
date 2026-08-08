@@ -232,7 +232,7 @@ class ModeradorPanelPage extends ConsumerWidget {
                     const Spacer(),
                     GestureDetector(
                       onTap: () =>
-                          context.push('/group/$grupoId/miembros'),
+                          context.push('/miembros'),
                       child: Text(
                         'Ver todos →',
                         style: TextStyle(
@@ -274,7 +274,7 @@ class ModeradorPanelPage extends ConsumerWidget {
                   padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
                   child: GestureDetector(
                     onTap: () =>
-                        context.push('/group/$grupoId/miembros'),
+                        context.push('/miembros'),
                     child: Container(
                       padding: const EdgeInsets.symmetric(vertical: 10),
                       decoration: BoxDecoration(

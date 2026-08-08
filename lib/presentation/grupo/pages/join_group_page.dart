@@ -181,7 +181,7 @@ class JoinGroupPage extends ConsumerWidget {
                         ),
                         const SizedBox(height: 16),
                         FilledButton.icon(
-                          onPressed: () => context.go('/group/$grupoId'),
+                          onPressed: () => context.go('/home'),
                           icon: const Icon(Icons.arrow_forward),
                           label: const Text('Ir al grupo'),
                           style: FilledButton.styleFrom(
@@ -314,7 +314,7 @@ class _JoinButton extends ConsumerWidget {
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           ),
         );
-        context.go('/group/$grupoId');
+        context.go('/home');
       }
     } catch (e) {
       if (context.mounted) {

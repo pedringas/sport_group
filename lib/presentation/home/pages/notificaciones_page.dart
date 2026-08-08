@@ -313,8 +313,8 @@ class _ActividadTile extends StatelessWidget {
       ),
       onTap: item.referenciaId != null
           ? () => context.push(
-              '/group/${item.grupoId}/noticias/${item.referenciaId}/comentarios')
-          : () => context.push('/group/${item.grupoId}'),
+              '/novedades/${item.referenciaId}/comentarios')
+          : () => context.go('/home'),
     );
   }
 
@@ -485,7 +485,7 @@ class _RolTile extends ConsumerWidget {
               .read(notificacionRepositoryProvider)
               .marcarLeida(uid, notif.id);
         }
-        context.push('/group/${notif.grupoId}');
+        context.go('/home');
       },
     );
   }

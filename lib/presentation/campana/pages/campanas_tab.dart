@@ -147,7 +147,7 @@ class _HeroCampana extends StatelessWidget {
     final fmt = NumberFormat('#,##0', 'es_AR');
 
     return GestureDetector(
-      onTap: () => context.push('/group/$grupoId/campana/${campana.id}'),
+      onTap: () => context.push('/campana/${campana.id}'),
       child: Container(
         decoration: BoxDecoration(
           color: AppTheme.surface,
@@ -358,7 +358,7 @@ class _CampanaRow extends StatelessWidget {
             : gc;
 
     return GestureDetector(
-      onTap: () => context.push('/group/$grupoId/campana/${campana.id}'),
+      onTap: () => context.push('/campana/${campana.id}'),
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(

@@ -18,11 +18,11 @@ Widget _buildUnderTest() => ProviderScope(
 
 void main() {
   group('PagoManualPage — submit button state', () {
-    testWidgets('button label is "Enviar al tesorero" initially', (tester) async {
+    testWidgets('button label is "Enviar comprobante" initially', (tester) async {
       await tester.pumpWidget(_buildUnderTest());
       await tester.pump();
 
-      expect(find.text('Enviar al tesorero'), findsOneWidget);
+      expect(find.text('Enviar comprobante'), findsOneWidget);
     });
 
     testWidgets('submit button is disabled when no comprobante is selected',
@@ -34,7 +34,7 @@ void main() {
       final inkWell = tester.widget<InkWell>(
         find
             .ancestor(
-              of: find.text('Enviar al tesorero'),
+              of: find.text('Enviar comprobante'),
               matching: find.byType(InkWell),
             )
             .last,
@@ -49,7 +49,7 @@ void main() {
 
       // AppBar title and submit button must be present
       expect(find.text('Subir comprobante'), findsOneWidget);
-      expect(find.text('Enviar al tesorero'), findsOneWidget);
+      expect(find.text('Enviar comprobante'), findsOneWidget);
     });
 
     testWidgets('optional form fields render (labels displayed as uppercase)',
@@ -76,7 +76,7 @@ void main() {
       final inkWell = tester.widget<InkWell>(
         find
             .ancestor(
-              of: find.text('Enviar al tesorero'),
+              of: find.text('Enviar comprobante'),
               matching: find.byType(InkWell),
             )
             .last,

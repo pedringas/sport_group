@@ -4,12 +4,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import '../../../core/config/app_config.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/sg_widgets.dart';
 import '../../../data/models/enums.dart';
 import '../../../providers/auth_provider.dart';
 import '../../../providers/dashboard_provider.dart';
 import '../../../providers/feed_provider.dart';
+import '../../../providers/grupo_provider.dart';
 import '../../grupo/widgets/noticias_tab.dart' show showNoticiaDetail;
 import '../../../providers/notificacion_provider.dart';
 
@@ -137,6 +139,17 @@ class HomeFeedPage extends ConsumerWidget {
                 ),
               ),
             ),
+
+            // ── Identidad del grupo (mobile) ──────────────────────────────────
+            // Reemplaza al hub de grupo eliminado: en móvil no hay sidebar que
+            // muestre a qué grupo pertenece lo que estás viendo.
+            if (!isDesktop)
+              const SliverToBoxAdapter(
+                child: Padding(
+                  padding: EdgeInsets.fromLTRB(16, 8, 16, 0),
+                  child: _GrupoStrip(),
+                ),
+              ),
 
             // â”€â”€ “Hoy te toca” hero / carrusel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             if (hasHero) ...[
@@ -274,6 +287,57 @@ class HomeFeedPage extends ConsumerWidget {
               ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+// ── Identidad del grupo ───────────────────────────────────────────────────────
+
+class _GrupoStrip extends ConsumerWidget {
+  const _GrupoStrip();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final grupo = ref.watch(grupoActualProvider).valueOrNull;
+    final rol = ref.watch(miRolProvider);
+    final gc = ref.watch(colorGrupoProvider);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: AppTheme.surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppTheme.border),
+      ),
+      child: Row(
+        children: [
+          SGAvatar(
+            name: grupo?.nombre ?? kGrupoNombre,
+            imageUrl: grupo?.logoUrl,
+            size: 30,
+            background: gc,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              grupo?.nombre ?? kGrupoNombre,
+              style: GoogleFonts.bricolageGrotesque(
+                fontWeight: FontWeight.w700,
+                fontSize: 15,
+                letterSpacing: -0.2,
+                color: AppTheme.text,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          if (rol != null && rol != RolMiembro.miembro)
+            SGChip(
+              label: rol == RolMiembro.administrador ? 'Admin' : rol.name,
+              tone: SGChipTone.primary,
+            ),
+        ],
       ),
     );
   }
@@ -448,7 +512,6 @@ class _EventoConfirmadoCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final noticia = item.noticia;
-    final grupo = item.grupo;
     // Prefer fechaEvento (actual event date); fall back to fechaCaducidad
     final fecha = noticia.fechaEvento ?? noticia.fechaCaducidad;
 
@@ -456,7 +519,7 @@ class _EventoConfirmadoCard extends StatelessWidget {
     const cardColorSoft = Color(0xFFFEF3C7); // amber-50
 
     return GestureDetector(
-      onTap: () => showNoticiaDetail(context, noticia, grupo.id),
+      onTap: () => showNoticiaDetail(context, noticia, kGrupoId),
       child: Container(
         height: 188,
         padding: const EdgeInsets.all(18),
@@ -528,29 +591,16 @@ class _EventoConfirmadoCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Group row
-                  Row(
-                    children: [
-                      SGAvatar(
-                        name: grupo.nombre,
-                        imageUrl: grupo.logoUrl,
-                        size: 18,
-                        background: cardColor,
-                      ),
-                      const SizedBox(width: 5),
-                      Expanded(
-                        child: Text(
-                          grupo.nombre,
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                            color: cardColor.withValues(alpha: 0.8),
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
+                  Text(
+                    noticia.categoria.label.toUpperCase(),
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 1,
+                      color: cardColor.withValues(alpha: 0.8),
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 8),
                   // Title
@@ -653,10 +703,9 @@ class _DestacadaChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final noticia = item.noticia;
-    final grupo = item.grupo;
 
     return GestureDetector(
-      onTap: () => showNoticiaDetail(context, noticia, grupo.id),
+      onTap: () => showNoticiaDetail(context, noticia, kGrupoId),
       child: Container(
         width: 200,
         padding: const EdgeInsets.all(12),
@@ -669,19 +718,12 @@ class _DestacadaChip extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Group row + pin badge
+            // Autor + pin badge
             Row(
               children: [
-                SGAvatar(
-                  name: grupo.nombre,
-                  imageUrl: grupo.logoUrl,
-                  size: 20,
-                  background: AppTheme.primary,
-                ),
-                const SizedBox(width: 6),
                 Expanded(
                   child: Text(
-                    grupo.nombre,
+                    noticia.autorNombre,
                     style: const TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
@@ -723,10 +765,9 @@ class _EventHeroCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final noticia = item.noticia;
-    final grupo = item.grupo;
 
     return GestureDetector(
-      onTap: () => showNoticiaDetail(context, noticia, grupo.id),
+      onTap: () => showNoticiaDetail(context, noticia, kGrupoId),
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
@@ -772,19 +813,12 @@ class _EventHeroCard extends StatelessWidget {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Group row
+                // Autor + categoría
                 Row(
                   children: [
-                    SGAvatar(
-                      name: grupo.nombre,
-                      imageUrl: grupo.logoUrl,
-                      size: 22,
-                      background: Colors.white.withValues(alpha: 0.25),
-                    ),
-                    const SizedBox(width: 6),
                     Expanded(
                       child: Text(
-                        grupo.nombre,
+                        noticia.autorNombre,
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 12,
@@ -848,7 +882,7 @@ class _EventHeroCard extends StatelessWidget {
                         icon: Icons.check_rounded,
                         label: 'Voy',
                         onTap: () =>
-                            showNoticiaDetail(context, noticia, grupo.id),
+                            showNoticiaDetail(context, noticia, kGrupoId),
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -857,7 +891,7 @@ class _EventHeroCard extends StatelessWidget {
                         icon: Icons.help_outline_rounded,
                         label: 'Tal vez',
                         onTap: () =>
-                            showNoticiaDetail(context, noticia, grupo.id),
+                            showNoticiaDetail(context, noticia, kGrupoId),
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -866,7 +900,7 @@ class _EventHeroCard extends StatelessWidget {
                         icon: Icons.close_rounded,
                         label: 'No voy',
                         onTap: () =>
-                            showNoticiaDetail(context, noticia, grupo.id),
+                            showNoticiaDetail(context, noticia, kGrupoId),
                       ),
                     ),
                   ],
@@ -928,7 +962,6 @@ class _TareaHeroCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tarea = item.tarea;
-    final grupo = item.grupo;
 
     String? fechaLabel;
     if (tarea.fechaVencimiento != null) {
@@ -969,17 +1002,10 @@ class _TareaHeroCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              SGAvatar(
-                name: grupo.nombre,
-                imageUrl: grupo.logoUrl,
-                size: 22,
-                background: Colors.white.withValues(alpha: 0.25),
-              ),
-              const SizedBox(width: 6),
-              Expanded(
+              const Expanded(
                 child: Text(
-                  grupo.nombre,
-                  style: const TextStyle(
+                  'Tarea',
+                  style: TextStyle(
                     color: Colors.white,
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
@@ -1050,7 +1076,7 @@ class _TareaHeroCard extends StatelessWidget {
               const Spacer(),
               GestureDetector(
                 onTap: () =>
-                    context.push('/group/${grupo.id}/tareas'),
+                    context.push('/tareas'),
                 child: Container(
                   padding: const EdgeInsets.symmetric(
                       horizontal: 14, vertical: 6),
@@ -1186,11 +1212,11 @@ class _PendingRow extends StatelessWidget {
         const Color(0xFF8B2214),
         Icons.payments_outlined,
         c.cuota.titulo,
-        '${_moneyFmt.format(c.cuota.monto)} · $venceLabel · ${c.grupo.nombre}',
+        '${_moneyFmt.format(c.cuota.monto)} · $venceLabel',
         'Pagar',
         AppTheme.danger,
         Colors.white,
-        () => context.push('/group/${c.grupo.id}/cuotas'),
+        () => context.push('/cuotas'),
       );
     }
 
@@ -1201,11 +1227,11 @@ class _PendingRow extends StatelessWidget {
         AppTheme.accentInk,
         Icons.task_alt_rounded,
         t.tarea.titulo,
-        t.grupo.nombre,
+        'Tarea pendiente',
         'Ver',
         AppTheme.primarySoft,
         AppTheme.primaryInk,
-        () => context.push('/group/${t.grupo.id}/tareas'),
+        () => context.push('/tareas'),
       );
     }
 
@@ -1217,11 +1243,11 @@ class _PendingRow extends StatelessWidget {
       AppTheme.goodInk,
       Icons.savings_outlined,
       c.campana.titulo,
-      '$pct% completado · ${c.grupo.nombre}',
+      '$pct% completado',
       'Aportar',
       AppTheme.goodSoft,
       AppTheme.goodInk,
-      () => context.push('/group/${c.grupo.id}/campanas'),
+      () => context.push('/campanas'),
     );
   }
 }
@@ -1244,7 +1270,7 @@ class _EmptyNoticias extends StatelessWidget {
         ),
         SizedBox(height: 4),
         Text(
-          'Las noticias de tus grupos aparecerán acá',
+          'Las novedades de $kGrupoNombre aparecerán acá',
           style: TextStyle(color: AppTheme.textMuted, fontSize: 13),
           textAlign: TextAlign.center,
         ),
@@ -1271,11 +1297,9 @@ class _NoticiaFeedCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final noticia = item.noticia;
-    final grupo = item.grupo;
-    final esFav = item.esFavoritoGrupo;
 
     return GestureDetector(
-      onTap: () => showNoticiaDetail(context, noticia, grupo.id),
+      onTap: () => showNoticiaDetail(context, noticia, kGrupoId),
       child: Container(
         decoration: BoxDecoration(
           color: AppTheme.surface,
@@ -1305,8 +1329,9 @@ class _NoticiaFeedCard extends ConsumerWidget {
                   Row(
                     children: [
                       SGAvatar(
-                        name: grupo.nombre,
-                        imageUrl: grupo.logoUrl,
+                        name: noticia.autorNombre.isEmpty
+                            ? '?'
+                            : noticia.autorNombre,
                         size: 28,
                         background: AppTheme.primary,
                       ),
@@ -1316,29 +1341,17 @@ class _NoticiaFeedCard extends ConsumerWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Row(
-                              children: [
-                                Flexible(
-                                  child: Text(
-                                    grupo.nombre,
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.w700,
-                                      fontSize: 13,
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                                if (esFav) ...[
-                                  const SizedBox(width: 4),
-                                  const Icon(Icons.star_rounded,
-                                      size: 12,
-                                      color: AppTheme.primary),
-                                ],
-                              ],
+                            Text(
+                              noticia.autorNombre,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w700,
+                                fontSize: 13,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
                             Text(
-                              '${noticia.autorNombre} · ${_timeAgo(noticia.createdAt)}',
+                              _timeAgo(noticia.createdAt),
                               style: const TextStyle(
                                 fontSize: 11,
                                 color: AppTheme.textMuted,

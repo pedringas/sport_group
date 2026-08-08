@@ -232,7 +232,7 @@ class _GrupoCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final isPublic = grupo.tipo == TipoGrupo.publico;
     return SGCard(
-      onTap: () => context.push('/group/${grupo.id}'),
+      onTap: () => context.go('/home'),
       padding: EdgeInsets.zero,
       child: ClipRRect(
         borderRadius: BorderRadius.circular(20),

@@ -138,7 +138,7 @@ class _CuotaGrupoDetailPageState
                   IconButton(
                     icon: const Icon(Icons.edit_outlined, size: 18),
                     onPressed: () => context.push(
-                      '/group/${widget.grupoId}/cuotas/grupo/${widget.cuotaGrupoId}/editar',
+                      '/cuotas/grupo/${widget.cuotaGrupoId}/editar',
                       extra: cuotaGrupo,
                     ),
                   ),
@@ -310,7 +310,7 @@ class _CuotaGrupoDetailPageState
                           status: status,
                           vencida: vencida,
                           onCobrar: () => context.push(
-                            '/group/${widget.grupoId}/cuotas/crear',
+                            '/cuotas/crear',
                           ),
                         );
                       },

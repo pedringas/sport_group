@@ -2,13 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../../core/config/app_config.dart';
 import '../widgets/ob_welcome.dart';
 import '../widgets/ob_carousel.dart';
 import '../widgets/ob_register.dart';
 import '../widgets/ob_profile.dart';
-import '../widgets/ob_join_or_create.dart';
-import '../widgets/ob_join_group.dart';
-import '../widgets/ob_create_group.dart';
 import '../widgets/ob_ready.dart';
 import '../widgets/ob_shared.dart';
 
@@ -22,11 +20,8 @@ class OnboardingPage extends ConsumerStatefulWidget {
 class _OnboardingPageState extends ConsumerState<OnboardingPage> {
   int _step = 0;
   int _prevStep = 0;
-  String _path = 'join'; // 'join' | 'create'
   Set<String> _selectedSports = {};
-  String _grupoId = '';
-  String _grupoNombre = '';
-  Color _grupoColor = kGrupoColores[0];
+  final Color _grupoColor = kGrupoColores[0];
 
   void _goTo(int step) {
     setState(() {
@@ -41,36 +36,15 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
       case 2: _goTo(1);
       case 3: _goTo(1); // can't un-register, go to carousel
       case 4: _goTo(3);
-      case 5: _goTo(4);
       default: {}
     }
-  }
-
-  void _onGroupDone(String grupoId, String nombre, Color color) {
-    setState(() {
-      _grupoId = grupoId;
-      _grupoNombre = nombre;
-      _grupoColor = color;
-    });
-    _goTo(6);
-  }
-
-  Future<void> _skipOnboarding() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('onboarding_seen', true);
-    if (!mounted) return;
-    context.go('/home');
   }
 
   Future<void> _finish({required bool goToGroup}) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('onboarding_seen', true);
     if (!mounted) return;
-    if (goToGroup && _grupoId.isNotEmpty) {
-      context.go('/group/$_grupoId');
-    } else {
-      context.go('/home');
-    }
+    context.go('/home');
   }
 
   @override
@@ -97,6 +71,10 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
     );
   }
 
+  // App de grupo único: el ingreso a Tacheros es automático al autenticarse,
+  // así que el wizard ya no pregunta por unirse ni crear un grupo.
+  // Los widgets ob_join_or_create / ob_join_group / ob_create_group quedan en
+  // el repo sin usar por si se reactiva el modelo multi-grupo.
   Widget _buildStep() {
     return switch (_step) {
       0 => OBWelcome(onStart: () => _goTo(1)),
@@ -110,26 +88,11 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
             _goTo(4);
           },
         ),
-      4 => OBJoinOrCreate(
-          onBack: _goBack,
-          onJoin: () {
-            setState(() => _path = 'join');
-            _goTo(5);
-          },
-          onCreate: () {
-            setState(() => _path = 'create');
-            _goTo(5);
-          },
-          onSkip: _skipOnboarding,
-        ),
-      5 => _path == 'join'
-          ? OBJoinGroup(onBack: _goBack, onJoined: _onGroupDone)
-          : OBCreateGroup(onBack: _goBack, onCreated: _onGroupDone),
       _ => OBReady(
-          grupoId: _grupoId,
-          grupoNombre: _grupoNombre,
+          grupoId: kGrupoId,
+          grupoNombre: kGrupoNombre,
           grupoColor: _grupoColor,
-          isCreated: _path == 'create',
+          isCreated: false,
           onFinish: _finish,
         ),
     };

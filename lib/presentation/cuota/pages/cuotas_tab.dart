@@ -397,7 +397,7 @@ class _CuotasTabState extends ConsumerState<CuotasTab> {
         if (canAdd) {
           return FloatingActionButton.extended(
             onPressed: () =>
-                context.push('/group/${widget.grupoId}/cuotas/crear'),
+                context.push('/cuotas/crear'),
             icon: const Icon(Icons.add_rounded),
             label: const Text('Emitir cuota'),
             backgroundColor: gc,
@@ -414,7 +414,7 @@ class _CuotasTabState extends ConsumerState<CuotasTab> {
         if (primera == null) return const SizedBox.shrink();
         return FloatingActionButton.extended(
           onPressed: () =>
-              context.push('/group/${widget.grupoId}/cuota/${primera.id}'),
+              context.push('/cuota/${primera.id}'),
           icon: const Icon(Icons.payments_outlined),
           label: const Text('Pagar cuota'),
           backgroundColor: gc,
@@ -438,9 +438,9 @@ class _CuotasTabState extends ConsumerState<CuotasTab> {
         cuota: c,
         pagosDeCuota: pagos.where((p) => p.cuotaId == c.id).toList(),
         miembros: miembros,
-        onTap: () => context.push('/group/$grupoId/cuota/${c.id}'),
+        onTap: () => context.push('/cuota/${c.id}'),
         onEdit: rol?.puedeGestionarCuotas == true
-            ? () => context.push('/group/$grupoId/cuota/${c.id}/edit', extra: c)
+            ? () => context.push('/cuota/${c.id}/edit', extra: c)
             : null,
         onDelete: rol?.puedeGestionarCuotas == true
             ? () => _confirmDeleteCuota(context, grupoId, c.id, c.titulo)
@@ -499,9 +499,9 @@ class _CuotasTabState extends ConsumerState<CuotasTab> {
                 .where((p) => p.cuotaId == c.id && p.estado == EstadoPago.pendiente)
                 .length,
             miEstado: miEstado,
-            onTap: () => context.push('/group/$grupoId/cuota/${c.id}'),
+            onTap: () => context.push('/cuota/${c.id}'),
             onEdit: puedeConfirmar
-                ? () => context.push('/group/$grupoId/cuota/${c.id}/edit', extra: c)
+                ? () => context.push('/cuota/${c.id}/edit', extra: c)
                 : null,
             onDelete: puedeConfirmar
                 ? () => _confirmDeleteCuota(context, grupoId, c.id, c.titulo)
@@ -1240,7 +1240,7 @@ class _SerieGroupState extends State<_SerieGroup> {
                       : misP.last.estado;
               return InkWell(
                 onTap: () => GoRouter.of(context).push(
-                    '/group/${widget.grupoId}/cuota/${c.id}'),
+                    '/cuota/${c.id}'),
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
                   child: Row(children: [
@@ -1291,7 +1291,7 @@ class _CuotaGruposSection extends ConsumerWidget {
             const Spacer(),
             GestureDetector(
               onTap: () =>
-                  GoRouter.of(context).push('/group/$grupoId/cuotas/grupo/crear'),
+                  GoRouter.of(context).push('/cuotas/grupo/crear'),
               child: Container(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
@@ -1367,7 +1367,7 @@ class _CuotaGrupoTile extends StatelessWidget {
     return SGCard(
       padding: const EdgeInsets.all(12),
       onTap: () => GoRouter.of(context)
-          .push('/group/$grupoId/cuotas/grupo/$cuotaGrupoId'),
+          .push('/cuotas/grupo/$cuotaGrupoId'),
       child: Row(
         children: [
           Container(

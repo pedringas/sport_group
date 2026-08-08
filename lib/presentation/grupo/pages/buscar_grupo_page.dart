@@ -62,7 +62,7 @@ class _BuscarGrupoPageState extends ConsumerState<BuscarGrupoPage> {
     if (grupo.tipo == TipoGrupo.publico) {
       await repo.joinGrupo(
           grupo.id, user.uid, userData?.nombreCompleto ?? '', userData?.avatarUrl);
-      if (mounted) context.push('/group/${grupo.id}');
+      if (mounted) context.go('/home');
     } else {
       await repo.requestJoinGrupo(
           grupo.id, user.uid, userData?.nombreCompleto ?? '', userData?.avatarUrl);

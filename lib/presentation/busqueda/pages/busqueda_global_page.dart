@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/config/app_config.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../data/models/enums.dart';
 import '../../../providers/grupo_provider.dart';
@@ -28,17 +29,16 @@ class _SearchResult {
   });
 
   void navigate(BuildContext context) {
-    if (grupoId == null) return;
     switch (tipo) {
       case _Filtro.eventos:
       case _Filtro.noticias:
-        context.push('/group/$grupoId/noticias');
+        context.push('/novedades');
       case _Filtro.personas:
-        context.push('/group/$grupoId/miembros');
+        context.push('/miembros');
       case _Filtro.archivos:
-        context.push('/group/$grupoId/recursos');
+        context.push('/recursos');
       case _Filtro.todo:
-        context.push('/group/$grupoId');
+        context.go('/home');
     }
   }
 }
@@ -80,64 +80,49 @@ class _BusquedaGlobalPageState extends ConsumerState<BusquedaGlobalPage> {
     final q = _query.toLowerCase().trim();
     if (q.isEmpty) return [];
 
-    final grupos = ref.watch(userGruposProvider).valueOrNull ?? [];
     final results = <_SearchResult>[];
 
-    for (final grupo in grupos) {
-      final gNombre = grupo.nombre;
+    // ── Noticias & Eventos
+    final noticias = ref.watch(noticiasProvider(kGrupoId)).valueOrNull ?? [];
+    for (final n in noticias) {
+      if (n.caducada) continue;
+      final matches = n.titulo.toLowerCase().contains(q) ||
+          n.contenido.toLowerCase().contains(q) ||
+          n.autorNombre.toLowerCase().contains(q);
+      if (!matches) continue;
 
-      // ── Noticias & Eventos
-      final noticias =
-          ref.watch(noticiasProvider(grupo.id)).valueOrNull ?? [];
-      for (final n in noticias) {
-        if (n.caducada) continue;
-        final matches = n.titulo.toLowerCase().contains(q) ||
-            n.contenido.toLowerCase().contains(q) ||
-            n.autorNombre.toLowerCase().contains(q);
-        if (!matches) continue;
-
-        if (n.tieneListado) {
-          results.add(_SearchResult(
-            tipo: _Filtro.eventos,
-            titulo: n.titulo,
-            subtitulo: '$gNombre · ${n.autorNombre}',
-            icono: Icons.event_rounded,
-            grupoId: grupo.id,
-          ));
-        } else {
-          results.add(_SearchResult(
-            tipo: _Filtro.noticias,
-            titulo: n.titulo,
-            subtitulo: '$gNombre · ${n.autorNombre}',
-            icono: Icons.newspaper_rounded,
-            grupoId: grupo.id,
-          ));
-        }
-      }
-
-      // ── Personas (miembros)
-      final miembros =
-          ref.watch(miembrosProvider(grupo.id)).valueOrNull ?? [];
-      for (final m in miembros) {
-        if (!m.nombreCompleto.toLowerCase().contains(q)) continue;
-        final rolLabel = switch (m.rol) {
-          RolMiembro.administrador => 'Admin',
-          RolMiembro.moderador => 'Moderador',
-          RolMiembro.tesorero => 'Tesorero',
-          RolMiembro.delegado => 'Delegado',
-          RolMiembro.miembro => 'Miembro',
-        };
-        results.add(_SearchResult(
-          tipo: _Filtro.personas,
-          titulo: m.nombreCompleto,
-          subtitulo: '$rolLabel · $gNombre',
-          icono: Icons.person_rounded,
-          grupoId: grupo.id,
-        ));
-      }
-
-      // ── Archivos (recursos) — módulo en pausa, excluido de la búsqueda.
+      results.add(_SearchResult(
+        tipo: n.tieneListado ? _Filtro.eventos : _Filtro.noticias,
+        titulo: n.titulo,
+        subtitulo: n.autorNombre,
+        icono: n.tieneListado
+            ? Icons.event_rounded
+            : Icons.newspaper_rounded,
+        grupoId: kGrupoId,
+      ));
     }
+
+    // ── Personas (miembros)
+    final miembros = ref.watch(miembrosProvider(kGrupoId)).valueOrNull ?? [];
+    for (final m in miembros) {
+      if (!m.nombreCompleto.toLowerCase().contains(q)) continue;
+      final rolLabel = switch (m.rol) {
+        RolMiembro.administrador => 'Admin',
+        RolMiembro.moderador => 'Moderador',
+        RolMiembro.tesorero => 'Tesorero',
+        RolMiembro.delegado => 'Delegado',
+        RolMiembro.miembro => 'Miembro',
+      };
+      results.add(_SearchResult(
+        tipo: _Filtro.personas,
+        titulo: m.nombreCompleto,
+        subtitulo: rolLabel,
+        icono: Icons.person_rounded,
+        grupoId: kGrupoId,
+      ));
+    }
+
+    // ── Archivos (recursos) — módulo en pausa, excluido de la búsqueda.
 
     // Deduplicate personas by nombre+grupo (might appear in multiple role streams)
     final seen = <String>{};
@@ -199,7 +184,7 @@ class _BusquedaGlobalPageState extends ConsumerState<BusquedaGlobalPage> {
                                 border: InputBorder.none,
                                 isDense: true,
                                 contentPadding: EdgeInsets.zero,
-                                hintText: 'Buscar en mis grupos…',
+                                hintText: 'Buscar en Tacheros…',
                               ),
                               style: const TextStyle(
                                   fontSize: 15,

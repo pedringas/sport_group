@@ -106,7 +106,7 @@ class _SuscripcionesPageState extends ConsumerState<SuscripcionesPage> {
                       icon: const Icon(Icons.add_rounded),
                       tooltip: 'Nueva cuota',
                       onPressed: () => context
-                          .push('/group/${widget.grupoId}/cuotas/crear'),
+                          .push('/cuotas/crear'),
                     ),
                   ],
                 ),
@@ -138,8 +138,8 @@ class _SuscripcionesPageState extends ConsumerState<SuscripcionesPage> {
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
                   child: GestureDetector(
-                    onTap: () =>
-                        context.push('/group/${widget.grupoId}/tesorero'),
+                    // El rol Tesorero está en pausa: valida el administrador.
+                    onTap: () => context.push('/admin'),
                     child: Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
@@ -182,7 +182,7 @@ class _SuscripcionesPageState extends ConsumerState<SuscripcionesPage> {
                     const Spacer(),
                     GestureDetector(
                       onTap: () => context.push(
-                          '/group/${widget.grupoId}/cuotas/grupo/crear'),
+                          '/cuotas/grupo/crear'),
                       child: Container(
                         padding: const EdgeInsets.symmetric(
                             horizontal: 10, vertical: 5),
@@ -242,7 +242,7 @@ class _SuscripcionesPageState extends ConsumerState<SuscripcionesPage> {
                         const SizedBox(height: 12),
                         GestureDetector(
                           onTap: () => context.push(
-                              '/group/${widget.grupoId}/cuotas/grupo/crear'),
+                              '/cuotas/grupo/crear'),
                           child: Container(
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 16, vertical: 8),
@@ -333,7 +333,7 @@ class _SuscripcionesPageState extends ConsumerState<SuscripcionesPage> {
                         ),
                         GestureDetector(
                           onTap: () => context.push(
-                              '/group/${widget.grupoId}/cuotas/crear'),
+                              '/cuotas/crear'),
                           child: Text('Emitir cuota',
                               style: TextStyle(
                                   fontSize: 13,
@@ -370,7 +370,7 @@ class _SuscripcionesPageState extends ConsumerState<SuscripcionesPage> {
                       gc: gc,
                       fmt: fmt,
                       onTap: () => context.push(
-                          '/group/${widget.grupoId}/cuota/${c.id}'),
+                          '/cuota/${c.id}'),
                     );
                   },
                 ),
@@ -382,7 +382,7 @@ class _SuscripcionesPageState extends ConsumerState<SuscripcionesPage> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () =>
-            context.push('/group/${widget.grupoId}/cuotas/crear'),
+            context.push('/cuotas/crear'),
         backgroundColor: gc,
         foregroundColor: Colors.white,
         icon: const Icon(Icons.add_rounded),
@@ -583,7 +583,7 @@ class _CuotaGrupoCard extends StatelessWidget {
     return SGCard(
       padding: const EdgeInsets.all(14),
       onTap: () =>
-          context.push('/group/$grupoId/cuotas/grupo/$id'),
+          context.push('/cuotas/grupo/$id'),
       child: Row(
         children: [
           Container(

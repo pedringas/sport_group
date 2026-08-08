@@ -485,7 +485,7 @@ class _TopBar extends StatelessWidget {
               await Clipboard.setData(
                 ClipboardData(
                     text:
-                        'https://sports-groups-app.web.app/group/$grupoId'),
+                        'https://sports-groups-app.web.app'),
               );
               if (context.mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(

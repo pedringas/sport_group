@@ -745,7 +745,7 @@ class _TareaCard extends ConsumerWidget {
         ? '\n👥 ${tarea.asignadosA.map((a) => a.nombre).join(', ')}'
         : '';
     final msg = '📋 *${tarea.titulo}*$venc$asignados'
-        '\n\n🔗 $base/group/$grupoId';
+        '\n\n🔗 $base';
     launchUrl(
         Uri.parse('https://wa.me/?text=${Uri.encodeComponent(msg)}'),
         mode: LaunchMode.externalApplication);
@@ -857,7 +857,7 @@ class _TareaSheetState extends ConsumerState<_TareaSheet> {
                   ? '\n👥 ${asignados.map((a) => a.nombre).join(', ')}'
                   : '';
               final msg =
-                  '📋 *$titulo*$n\n🔗 $base/group/${widget.grupoId}';
+                  '📋 *$titulo*$n\n🔗 $base';
               launchUrl(
                   Uri.parse(
                       'https://wa.me/?text=${Uri.encodeComponent(msg)}'),

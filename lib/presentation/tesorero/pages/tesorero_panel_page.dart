@@ -194,7 +194,7 @@ class TesoreroPanelPage extends ConsumerWidget {
                     const Spacer(),
                     GestureDetector(
                       onTap: () =>
-                          context.push('/group/$grupoId/suscripciones'),
+                          context.push('/suscripciones'),
                       child: Text(
                         'Ver todas →',
                         style: TextStyle(
@@ -256,7 +256,7 @@ class TesoreroPanelPage extends ConsumerWidget {
                     const Spacer(),
                     GestureDetector(
                       onTap: () =>
-                          context.push('/group/$grupoId/campanas'),
+                          context.push('/campanas'),
                       child: Text(
                         'Ver todas →',
                         style: TextStyle(
@@ -660,7 +660,7 @@ class _CuotaRow extends StatelessWidget {
     final overdue =
         cuota.vencimiento.isBefore(DateTime.now()) && cuota.activa;
     return GestureDetector(
-      onTap: () => context.push('/group/$grupoId/cuota/${cuota.id}'),
+      onTap: () => context.push('/cuota/${cuota.id}'),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
         decoration: BoxDecoration(
@@ -736,7 +736,7 @@ class _CampanaRow extends StatelessWidget {
         : 0.0;
     return GestureDetector(
       onTap: () =>
-          context.push('/group/$grupoId/campana/${campana.id}'),
+          context.push('/campana/${campana.id}'),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
         decoration: BoxDecoration(

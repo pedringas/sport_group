@@ -197,7 +197,7 @@ class _GrupoGastoDetailPageState extends ConsumerState<GrupoGastoDetailPage> {
               foregroundColor: Colors.white,
               child: const Icon(Icons.add_rounded),
               onPressed: () => context.push(
-                '/group/${widget.grupoId}/gastos/crear',
+                '/gastos/crear',
                 extra: _esGeneral
                     ? null
                     : {
@@ -1468,7 +1468,7 @@ class _MovimientoRowState extends ConsumerState<_MovimientoRow> {
               onSelected: (val) {
                 if (val == 'editar') {
                   context.push(
-                    '/group/${widget.grupoId}/gastos/crear',
+                    '/gastos/crear',
                     extra: {'gastoExistente': gasto},
                   );
                 } else if (val == 'eliminar') {

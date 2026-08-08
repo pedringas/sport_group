@@ -44,36 +44,39 @@ class PagoModel {
     return diff <= montoEsperado * 0.05;
   }
 
+  /// Tolera documentos incompletos o con enums legacy. `byName` lanzaba ante
+  /// cualquier `estado` desconocido y tumbaba la lista entera de pagos —
+  /// en release eso se ve como una pantalla gris. `metodo` ya estaba blindado.
   factory PagoModel.fromFirestore(DocumentSnapshot doc) {
-    final d = doc.data() as Map<String, dynamic>;
+    final d = doc.data() as Map<String, dynamic>? ?? const {};
     return PagoModel(
       id: doc.id,
-      grupoId: d['grupoId'] ?? '',
-      cuotaId: d['cuotaId'] ?? '',
-      usuarioUid: d['usuarioUid'] ?? '',
-      usuarioNombre: d['usuarioNombre'] ?? '',
-      montoEsperado: (d['montoEsperado'] as num).toDouble(),
-      estado: EstadoPago.values.byName(d['estado'] ?? 'pendiente'),
+      grupoId: d['grupoId']?.toString() ?? '',
+      cuotaId: d['cuotaId']?.toString() ?? '',
+      usuarioUid: d['usuarioUid']?.toString() ?? '',
+      usuarioNombre: d['usuarioNombre']?.toString() ?? '',
+      montoEsperado: (d['montoEsperado'] as num?)?.toDouble() ?? 0,
+      estado: EstadoPago.values.firstWhere(
+        (e) => e.name == d['estado'],
+        orElse: () => EstadoPago.pendiente,
+      ),
       metodo: MetodoPago.values.firstWhere(
         (m) => m.name == (d['metodo'] ?? 'transferencia'),
         orElse: () => MetodoPago.transferencia, // handles legacy 'manual'/'mercadopago' docs
       ),
-      comprobanteUrl: d['comprobanteUrl'],
-      montoDetectado: d['montoDetectado'] != null
-          ? (d['montoDetectado'] as num).toDouble()
-          : null,
-      ocrRaw: d['ocrRaw'],
-      ocrConfianza: d['ocrConfianza'] != null
-          ? (d['ocrConfianza'] as num).toDouble()
-          : null,
-      mpPaymentId: d['mpPaymentId'],
-      nota: d['nota'] as String?,
-      createdAt: (d['createdAt'] as Timestamp).toDate(),
-      updatedAt: d['updatedAt'] != null
-          ? (d['updatedAt'] as Timestamp).toDate()
-          : null,
+      comprobanteUrl: d['comprobanteUrl']?.toString(),
+      montoDetectado: (d['montoDetectado'] as num?)?.toDouble(),
+      ocrRaw: d['ocrRaw']?.toString(),
+      ocrConfianza: (d['ocrConfianza'] as num?)?.toDouble(),
+      mpPaymentId: d['mpPaymentId']?.toString(),
+      nota: d['nota']?.toString(),
+      createdAt: _toDate(d['createdAt']) ?? DateTime.now(),
+      updatedAt: _toDate(d['updatedAt']),
     );
   }
+
+  static DateTime? _toDate(dynamic v) =>
+      v is Timestamp ? v.toDate() : (v is DateTime ? v : null);
 
   Map<String, dynamic> toMap() => {
         'grupoId': grupoId,

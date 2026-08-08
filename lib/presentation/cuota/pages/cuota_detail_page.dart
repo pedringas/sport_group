@@ -75,7 +75,7 @@ class CuotaDetailPage extends ConsumerWidget {
                   onBack: () => context.pop(),
                   onEdit: puedeConfirmar
                       ? () => context.push(
-                            '/group/$grupoId/cuota/$cuotaId/edit',
+                            '/cuota/$cuotaId/edit',
                             extra: cuota,
                           )
                       : null,
@@ -545,7 +545,7 @@ class _PaymentSection extends ConsumerWidget {
           tone: SGTone.outline,
           expand: true,
           onPressed: () =>
-              context.push('/group/$grupoId/cuota/$cuotaId/pay/manual'),
+              context.push('/cuota/$cuotaId/pay/manual'),
         ),
       ],
     );

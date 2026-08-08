@@ -1371,7 +1371,7 @@ class _NoticiaEditSheetState extends ConsumerState<NoticiaEditSheet> {
       if (!_isEdit && _notificarWhatsApp) {
         const base = 'https://sports-groups-app.web.app';
         final msg = '📢 *$titulo*\n\n$contenido\n\n'
-            '🔗 Ver: $base/group/${widget.grupoId}';
+            '🔗 Ver: $base';
         await launchUrl(
             Uri.parse('https://wa.me/?text=${Uri.encodeComponent(msg)}'),
             mode: LaunchMode.externalApplication);

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../config/app_config.dart';
 import '../theme/app_theme.dart';
 import '../../presentation/auth/pages/splash_page.dart';
 import '../../presentation/auth/pages/login_page.dart';
@@ -9,13 +10,9 @@ import '../../presentation/auth/pages/register_page.dart';
 import '../../presentation/auth/pages/otp_page.dart';
 import '../../presentation/auth/pages/forgot_password_page.dart';
 import '../../presentation/home/pages/home_shell.dart';
-import '../../presentation/home/pages/agenda_page.dart';
 import '../../presentation/perfil/pages/perfil_page.dart';
 import '../../presentation/perfil/pages/editar_perfil_page.dart';
-import '../../presentation/grupo/pages/crear_grupo_page.dart';
-import '../../presentation/grupo/pages/grupo_page.dart';
 import '../../presentation/grupo/pages/grupo_settings_page.dart';
-import '../../presentation/grupo/pages/buscar_grupo_page.dart';
 import '../../presentation/grupo/pages/crear_evento_page.dart';
 import '../../presentation/grupo/pages/comentarios_page.dart';
 import '../../presentation/cuota/pages/cuota_detail_page.dart';
@@ -44,7 +41,6 @@ import '../../presentation/mod/pages/moderador_panel_page.dart';
 import '../../presentation/delegado/pages/delegado_panel_page.dart';
 import '../../presentation/tesorero/pages/tesorero_panel_page.dart';
 import '../../presentation/faq/pages/faq_page.dart';
-import '../../presentation/grupo/pages/join_group_page.dart';
 import '../../presentation/grupo/pages/miembros_page.dart';
 import '../../presentation/busqueda/pages/busqueda_global_page.dart';
 import '../../presentation/shell/responsive_shell.dart';
@@ -76,6 +72,10 @@ class _TabPage extends StatelessWidget {
 }
 
 // ── Router ────────────────────────────────────────────────────────────────────
+//
+// App de grupo único: no existen rutas anidadas por grupo. Cada sección tiene
+// una ruta plana y las páginas reciben [kGrupoId] desde el builder, conservando
+// su parámetro `grupoId` original.
 
 final routerProvider = Provider<GoRouter>((ref) {
   final authNotifier = _AuthNotifier(ref);
@@ -85,14 +85,24 @@ final routerProvider = Provider<GoRouter>((ref) {
     initialLocation: '/splash',
     refreshListenable: authNotifier,
     redirect: (context, state) {
-      final isAuth = ref.read(authStateProvider).valueOrNull != null;
       final loc = state.matchedLocation;
-      if (loc.startsWith('/join/') || loc == '/onboarding') return null;
+
+      // Compatibilidad con enlaces del modelo multi-grupo: /group/<id>/x → /x
+      if (loc.startsWith('/group/')) {
+        final rest = loc.replaceFirst(RegExp(r'^/group/[^/]+'), '');
+        final query = state.uri.query;
+        final target = rest.isEmpty ? '/home' : rest;
+        return query.isEmpty ? target : '$target?$query';
+      }
+      // Los enlaces de invitación ya no aplican: el ingreso al grupo es automático.
+      if (loc.startsWith('/join/')) return '/home';
+
+      final isAuth = ref.read(authStateProvider).valueOrNull != null;
+      if (loc == '/onboarding') return null;
       final onAuthScreen =
           ['/splash', '/login', '/register', '/otp', '/forgot-password']
               .contains(loc);
       if (isAuth && onAuthScreen && loc != '/splash') {
-        // After login, honour a ?redirect param (e.g. /login?redirect=/join/abc)
         final redirectTo = state.uri.queryParameters['redirect'];
         return redirectTo ?? '/home';
       }
@@ -105,119 +115,51 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/onboarding', builder: (_, __) => const OnboardingPage()),
       GoRoute(path: '/login', builder: (_, __) => const LoginPage()),
       GoRoute(path: '/register', builder: (_, __) => const RegisterPage()),
-      GoRoute(path: '/forgot-password', builder: (_, __) => const ForgotPasswordPage()),
+      GoRoute(
+          path: '/forgot-password',
+          builder: (_, __) => const ForgotPasswordPage()),
       GoRoute(
         path: '/otp',
         builder: (_, state) =>
             OtpPage(extra: (state.extra as Map<String, dynamic>?) ?? const {}),
       ),
-      GoRoute(
-        path: '/join/:groupId',
-        builder: (_, state) =>
-            JoinGroupPage(grupoId: state.pathParameters['groupId']!),
-      ),
 
       // ── Authenticated shell (desktop sidebar + topbar on ≥900px)
       ShellRoute(
-        builder: (context, state, child) =>
-            ResponsiveShell(child: child),
+        builder: (context, state, child) => ResponsiveShell(child: child),
         routes: [
-          // ── Home (shell with bottom nav + 5 tabs)
-          GoRoute(
-            path: '/home',
-            builder: (_, __) => const HomeShell(),
-          ),
+          // ── Shell tabs: Inicio · Agenda · Caja · Miembros · Yo
+          GoRoute(path: '/home', builder: (_, __) => const HomeShell()),
+
+          // ── Cuenta
           GoRoute(
               path: '/notificaciones',
               builder: (_, __) => const NotificacionesPage()),
-          GoRoute(
-              path: '/profile',
-              builder: (_, __) => const PerfilPage()),
+          GoRoute(path: '/profile', builder: (_, __) => const PerfilPage()),
           GoRoute(
               path: '/profile/edit',
               builder: (_, __) => const EditarPerfilPage()),
           GoRoute(
-              path: '/search',
-              builder: (_, __) => const BuscarGrupoPage()),
-          GoRoute(
               path: '/busqueda',
               builder: (_, __) => const BusquedaGlobalPage()),
-          GoRoute(
-              path: '/create-group',
-              builder: (_, __) => const CrearGrupoPage()),
-          GoRoute(
-              path: '/faq', builder: (_, __) => const FaqPage()),
+          GoRoute(path: '/faq', builder: (_, __) => const FaqPage()),
 
-          // ── Grupo hub — curtain entry (slides up from bottom, 500ms)
+          // ── Grupo
           GoRoute(
-            path: '/group/:groupId',
-            pageBuilder: (_, state) => CustomTransitionPage(
-              key: state.pageKey,
-              child: GrupoPage(grupoId: state.pathParameters['groupId']!),
-              transitionDuration: const Duration(milliseconds: 500),
-              reverseTransitionDuration: const Duration(milliseconds: 380),
-              transitionsBuilder: (_, animation, __, child) {
-                final slide = animation.drive(
-                  Tween(begin: const Offset(0, 1), end: Offset.zero).chain(
-                    CurveTween(curve: const Cubic(0.2, 0.85, 0.25, 1)),
-                  ),
-                );
-                return SlideTransition(position: slide, child: child);
-              },
-            ),
-          ),
+              path: '/ajustes',
+              builder: (_, __) => const GrupoSettingsPage(grupoId: kGrupoId)),
           GoRoute(
-            path: '/group/:groupId/settings',
-            builder: (_, state) =>
-                GrupoSettingsPage(grupoId: state.pathParameters['groupId']!),
-          ),
+              path: '/miembros',
+              builder: (_, __) => const MiembrosPage(grupoId: kGrupoId)),
 
-          // ── Miembros
+          // ── Novedades + comentarios — slide in from right
           GoRoute(
-            path: '/group/:groupId/miembros',
-            builder: (_, state) =>
-                MiembrosPage(grupoId: state.pathParameters['groupId']!),
-          ),
-
-          // ── Noticias + comentarios — slide in from right
-          GoRoute(
-            path: '/group/:groupId/noticias',
-            pageBuilder: (_, state) => CustomTransitionPage(
-              key: state.pageKey,
-              child: _TabPage(
-                title: 'Novedades',
-                child: NoticiasTab(grupoId: state.pathParameters['groupId']!),
-              ),
-              transitionDuration: const Duration(milliseconds: 360),
-              reverseTransitionDuration: const Duration(milliseconds: 280),
-              transitionsBuilder: (_, animation, __, child) {
-                final slide = animation.drive(
-                  Tween(begin: const Offset(1, 0), end: Offset.zero).chain(
-                    CurveTween(curve: const Cubic(0.2, 0.85, 0.25, 1)),
-                  ),
-                );
-                return SlideTransition(position: slide, child: child);
-              },
-            ),
-          ),
-          GoRoute(
-            path: '/group/:groupId/noticias/:noticiaId/comentarios',
-            builder: (_, state) => ComentariosPage(
-              grupoId: state.pathParameters['groupId']!,
-              noticiaId: state.pathParameters['noticiaId']!,
-              noticiaTitle:
-                  state.uri.queryParameters['titulo'] ?? 'Noticia',
-            ),
-          ),
-
-          // ── Agenda del grupo (tab in group hub — uses global AgendaPage)
-          GoRoute(
-            path: '/group/:groupId/agenda',
+            path: '/novedades',
             pageBuilder: (_, state) => CustomTransitionPage(
               key: state.pageKey,
               child: const _TabPage(
-                title: 'Agenda',
-                child: AgendaPage(),
+                title: 'Novedades',
+                child: NoticiasTab(grupoId: kGrupoId),
               ),
               transitionDuration: const Duration(milliseconds: 360),
               reverseTransitionDuration: const Duration(milliseconds: 280),
@@ -231,65 +173,82 @@ final routerProvider = Provider<GoRouter>((ref) {
               },
             ),
           ),
-
-          // ── Cuotas
           GoRoute(
-            path: '/group/:groupId/cuotas',
-            builder: (_, state) => _TabPage(
-              title: 'Cuotas',
-              child: CuotasTab(
-                  grupoId: state.pathParameters['groupId']!),
+            path: '/novedades/:noticiaId/comentarios',
+            builder: (_, state) => ComentariosPage(
+              grupoId: kGrupoId,
+              noticiaId: state.pathParameters['noticiaId']!,
+              noticiaTitle: state.uri.queryParameters['titulo'] ?? 'Noticia',
             ),
           ),
           GoRoute(
-            path: '/group/:groupId/cuotas/crear',
-            builder: (_, state) =>
-                CrearCuotaPage(grupoId: state.pathParameters['groupId']!),
+              path: '/evento/crear',
+              builder: (_, __) => const CrearEventoPage(grupoId: kGrupoId)),
+
+          // ── Cuotas
+          GoRoute(
+            path: '/cuotas',
+            builder: (_, __) => const _TabPage(
+              title: 'Cuotas',
+              child: CuotasTab(grupoId: kGrupoId),
+            ),
           ),
           GoRoute(
-            path: '/group/:groupId/cuota/:cuotaId/edit',
+              path: '/cuotas/crear',
+              builder: (_, __) => const CrearCuotaPage(grupoId: kGrupoId)),
+          GoRoute(
+            path: '/cuota/:cuotaId/edit',
             builder: (_, state) => CrearCuotaPage(
-              grupoId: state.pathParameters['groupId']!,
+              grupoId: kGrupoId,
               cuotaParaEditar: state.extra as CuotaModel?,
             ),
           ),
           GoRoute(
-            path: '/group/:groupId/suscripciones',
-            builder: (_, state) =>
-                SuscripcionesPage(grupoId: state.pathParameters['groupId']!),
-          ),
+              path: '/suscripciones',
+              builder: (_, __) => const SuscripcionesPage(grupoId: kGrupoId)),
           GoRoute(
-            path: '/group/:groupId/cuotas/grupo/crear',
-            builder: (_, state) =>
-                CrearCuotaGrupoPage(grupoId: state.pathParameters['groupId']!),
-          ),
+              path: '/cuotas/grupo/crear',
+              builder: (_, __) =>
+                  const CrearCuotaGrupoPage(grupoId: kGrupoId)),
           GoRoute(
-            path: '/group/:groupId/cuotas/grupo/:cuotaGrupoId',
+            path: '/cuotas/grupo/:cuotaGrupoId',
             builder: (_, state) => CuotaGrupoDetailPage(
-              grupoId: state.pathParameters['groupId']!,
+              grupoId: kGrupoId,
               cuotaGrupoId: state.pathParameters['cuotaGrupoId']!,
             ),
           ),
           GoRoute(
-            path: '/group/:groupId/cuotas/grupo/:cuotaGrupoId/editar',
+            path: '/cuotas/grupo/:cuotaGrupoId/editar',
             builder: (_, state) => CrearCuotaGrupoPage(
-              grupoId: state.pathParameters['groupId']!,
+              grupoId: kGrupoId,
               para: state.extra as CuotaGrupoModel?,
+            ),
+          ),
+          GoRoute(
+            path: '/cuota/:cuotaId',
+            builder: (_, state) => CuotaDetailPage(
+              grupoId: kGrupoId,
+              cuotaId: state.pathParameters['cuotaId']!,
+            ),
+          ),
+          GoRoute(
+            path: '/cuota/:cuotaId/pay/manual',
+            builder: (_, state) => PagoManualPage(
+              grupoId: kGrupoId,
+              cuotaId: state.pathParameters['cuotaId']!,
             ),
           ),
 
           // ── Gastos
           GoRoute(
-            path: '/group/:groupId/gastos',
-            builder: (_, state) =>
-                GastosTab(grupoId: state.pathParameters['groupId']!),
-          ),
+              path: '/gastos',
+              builder: (_, __) => const GastosTab(grupoId: kGrupoId)),
           GoRoute(
-            path: '/group/:groupId/gastos/crear',
+            path: '/gastos/crear',
             builder: (_, state) {
               final extra = state.extra as Map<String, dynamic>?;
               return CrearGastoPage(
-                grupoId: state.pathParameters['groupId']!,
+                grupoId: kGrupoId,
                 grupoGastoId: extra?['grupoGastoId'] as String?,
                 grupoGastoNombre: extra?['grupoGastoNombre'] as String?,
                 gastoExistente: extra?['gastoExistente'] as GastoModel?,
@@ -297,106 +256,61 @@ final routerProvider = Provider<GoRouter>((ref) {
             },
           ),
           GoRoute(
-            path: '/group/:groupId/gastos/g/:grupoGastoId',
-            builder: (_, state) {
-              final raw = state.pathParameters['grupoGastoId']!;
-              return GrupoGastoDetailPage(
-                grupoId: state.pathParameters['groupId']!,
-                grupoGastoId: raw,
-              );
-            },
+            path: '/gastos/g/:grupoGastoId',
+            builder: (_, state) => GrupoGastoDetailPage(
+              grupoId: kGrupoId,
+              grupoGastoId: state.pathParameters['grupoGastoId']!,
+            ),
           ),
 
-          // ── Tareas
+          // ── Panel de administración
           GoRoute(
-            path: '/group/:groupId/tareas',
-            builder: (_, state) =>
-                TareasTab(grupoId: state.pathParameters['groupId']!),
-          ),
-          GoRoute(
-            path: '/group/:groupId/tareas/crear',
-            builder: (_, state) =>
-                CrearTareaPage(grupoId: state.pathParameters['groupId']!),
-          ),
+              path: '/admin',
+              builder: (_, __) => const AdminPanelPage(grupoId: kGrupoId)),
 
-          // ── Recursos + archivo preview
+          // ── Módulos y roles en pausa: rutas vivas, sin accesos desde la UI.
           GoRoute(
-            path: '/group/:groupId/recursos',
-            builder: (_, state) => _TabPage(
+              path: '/moderador',
+              builder: (_, __) => const ModeradorPanelPage(grupoId: kGrupoId)),
+          GoRoute(
+              path: '/tesorero',
+              builder: (_, __) => const TesoreroPanelPage(grupoId: kGrupoId)),
+          GoRoute(
+              path: '/delegado',
+              builder: (_, __) => const DelegadoPanelPage(grupoId: kGrupoId)),
+          GoRoute(
+              path: '/tareas',
+              builder: (_, __) => const TareasTab(grupoId: kGrupoId)),
+          GoRoute(
+              path: '/tareas/crear',
+              builder: (_, __) => const CrearTareaPage(grupoId: kGrupoId)),
+          GoRoute(
+            path: '/recursos',
+            builder: (_, __) => const _TabPage(
               title: 'Recursos',
-              child: RecursosTab(
-                  grupoId: state.pathParameters['groupId']!),
+              child: RecursosTab(grupoId: kGrupoId),
             ),
           ),
           GoRoute(
-            path: '/group/:groupId/recurso/:recursoId',
+            path: '/recurso/:recursoId',
             builder: (_, state) => ArchivoPreviewPage(
-              grupoId: state.pathParameters['groupId']!,
+              grupoId: kGrupoId,
               recursoId: state.pathParameters['recursoId']!,
             ),
           ),
-
-          // ── Campañas
           GoRoute(
-            path: '/group/:groupId/campanas',
-            builder: (_, state) => _TabPage(
+            path: '/campanas',
+            builder: (_, __) => const _TabPage(
               title: 'Campañas',
-              child: CampanasTab(
-                  grupoId: state.pathParameters['groupId']!),
-            ),
-          ),
-
-          // ── Eventos
-          GoRoute(
-            path: '/group/:groupId/evento/crear',
-            builder: (_, state) =>
-                CrearEventoPage(grupoId: state.pathParameters['groupId']!),
-          ),
-
-          // ── Cuota detail & payment
-          GoRoute(
-            path: '/group/:groupId/cuota/:cuotaId',
-            builder: (_, state) => CuotaDetailPage(
-              grupoId: state.pathParameters['groupId']!,
-              cuotaId: state.pathParameters['cuotaId']!,
+              child: CampanasTab(grupoId: kGrupoId),
             ),
           ),
           GoRoute(
-            path: '/group/:groupId/cuota/:cuotaId/pay/manual',
-            builder: (_, state) => PagoManualPage(
-              grupoId: state.pathParameters['groupId']!,
-              cuotaId: state.pathParameters['cuotaId']!,
-            ),
-          ),
-          // ── Campaña detail
-          GoRoute(
-            path: '/group/:groupId/campana/:campanaId',
+            path: '/campana/:campanaId',
             builder: (_, state) => CampanaDetailPage(
-              grupoId: state.pathParameters['groupId']!,
+              grupoId: kGrupoId,
               campanaId: state.pathParameters['campanaId']!,
             ),
-          ),
-
-          // ── Role panels
-          GoRoute(
-            path: '/group/:groupId/admin',
-            builder: (_, state) =>
-                AdminPanelPage(grupoId: state.pathParameters['groupId']!),
-          ),
-          GoRoute(
-            path: '/group/:groupId/moderador',
-            builder: (_, state) =>
-                ModeradorPanelPage(grupoId: state.pathParameters['groupId']!),
-          ),
-          GoRoute(
-            path: '/group/:groupId/tesorero',
-            builder: (_, state) =>
-                TesoreroPanelPage(grupoId: state.pathParameters['groupId']!),
-          ),
-          GoRoute(
-            path: '/group/:groupId/delegado',
-            builder: (_, state) =>
-                DelegadoPanelPage(grupoId: state.pathParameters['groupId']!),
           ),
         ],
       ),

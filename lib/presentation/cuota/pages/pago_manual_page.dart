@@ -98,7 +98,7 @@ class _PagoManualPageState extends ConsumerState<PagoManualPage> {
       if (mounted) {
         // Push a clean confirmation screen instead of just a snackbar.
         await _showConfirmationSheet();
-        if (mounted) context.go('/group/${widget.grupoId}');
+        if (mounted) context.go('/home');
       }
     } catch (e) {
       if (mounted) {

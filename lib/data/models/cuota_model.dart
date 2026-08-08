@@ -43,35 +43,50 @@ class CuotaModel {
     this.serieId,
     this.miembrosUids,
     this.excluidosUids,
-  })  : assert(monto > 0, 'CuotaModel.monto debe ser mayor a 0'),
-        assert(titulo.length > 0, 'CuotaModel.titulo no puede estar vacío');
+  });
 
+  /// Tolera documentos incompletos: un solo doc con un campo faltante o de otro
+  /// tipo hacía explotar el `.map()` de toda la lista de cuotas, y en release
+  /// eso se veía como una pantalla gris sin contenido.
   factory CuotaModel.fromFirestore(DocumentSnapshot doc) {
-    final d = doc.data() as Map<String, dynamic>;
+    final d = doc.data() as Map<String, dynamic>? ?? const {};
+
+    final createdAt = _toDate(d['createdAt']) ?? DateTime.now();
+
     return CuotaModel(
       id: doc.id,
-      grupoId: d['grupoId'] ?? '',
-      titulo: d['titulo'] ?? '',
-      descripcion: d['descripcion'],
-      monto: (d['monto'] as num).toDouble(),
-      vencimiento: (d['vencimiento'] as Timestamp).toDate(),
-      activa: d['activa'] ?? true,
-      createdAt: (d['createdAt'] as Timestamp).toDate(),
-      esRecurrente: d['esRecurrente'] ?? false,
-      frecuencia: d['frecuencia'] != null
-          ? FrecuenciaCuota.values.byName(d['frecuencia'] as String)
-          : null,
-      totalCuotas: d['totalCuotas'] as int?,
-      numeroCuota: d['numeroCuota'] as int?,
-      serieId: d['serieId'] as String?,
-      miembrosUids: (d['miembrosUids'] as List<dynamic>?)
-          ?.map((e) => e as String)
-          .toList(),
-      excluidosUids: (d['excluidosUids'] as List<dynamic>?)
-          ?.map((e) => e as String)
-          .toList(),
+      grupoId: d['grupoId']?.toString() ?? '',
+      titulo: d['titulo']?.toString() ?? 'Cuota sin título',
+      descripcion: d['descripcion']?.toString(),
+      monto: (d['monto'] as num?)?.toDouble() ?? 0,
+      vencimiento: _toDate(d['vencimiento']) ?? createdAt,
+      activa: d['activa'] as bool? ?? true,
+      createdAt: createdAt,
+      esRecurrente: d['esRecurrente'] as bool? ?? false,
+      frecuencia: _toFrecuencia(d['frecuencia']),
+      totalCuotas: (d['totalCuotas'] as num?)?.toInt(),
+      numeroCuota: (d['numeroCuota'] as num?)?.toInt(),
+      serieId: d['serieId']?.toString(),
+      miembrosUids: _toStringList(d['miembrosUids']),
+      excluidosUids: _toStringList(d['excluidosUids']),
     );
   }
+
+  static DateTime? _toDate(dynamic v) =>
+      v is Timestamp ? v.toDate() : (v is DateTime ? v : null);
+
+  static FrecuenciaCuota? _toFrecuencia(dynamic v) {
+    if (v == null) return null;
+    final name = v.toString();
+    for (final f in FrecuenciaCuota.values) {
+      if (f.name == name) return f;
+    }
+    return null;
+  }
+
+  static List<String>? _toStringList(dynamic v) => v is List
+      ? v.map((e) => e.toString()).toList()
+      : null;
 
   Map<String, dynamic> toMap() => {
         'grupoId': grupoId,

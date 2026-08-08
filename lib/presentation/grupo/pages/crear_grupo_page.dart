@@ -86,7 +86,7 @@ class _CrearGrupoPageState extends ConsumerState<CrearGrupoPage> {
             logoBytes: _logoBytes,
             portadaBytes: _portadaBytes,
           );
-      if (mounted) context.go('/group/$grupoId');
+      if (mounted) context.go('/home');
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

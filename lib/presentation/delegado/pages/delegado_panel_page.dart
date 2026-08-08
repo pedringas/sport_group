@@ -111,7 +111,7 @@ class DelegadoPanelPage extends ConsumerWidget {
                     const Spacer(),
                     GestureDetector(
                       onTap: () =>
-                          context.push('/group/$grupoId/noticias'),
+                          context.push('/novedades'),
                       child: Text(
                         'Ver todas →',
                         style: TextStyle(

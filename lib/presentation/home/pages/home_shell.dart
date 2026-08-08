@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/config/app_config.dart';
 import '../../../providers/grupo_provider.dart';
-import '../../grupo/widgets/noticias_tab.dart';
+import '../../grupo/pages/miembros_page.dart';
 import 'home_feed_page.dart';
 import 'agenda_page.dart';
 import 'caja_page.dart';
@@ -19,9 +19,9 @@ class HomeShell extends ConsumerWidget {
 
   static Widget _buildPage(int index) {
     switch (index) {
-      case 1: return const NoticiasTab(grupoId: kGrupoId);
-      case 2: return const AgendaPage();
-      case 3: return const CajaPage();
+      case 1: return const AgendaPage();
+      case 2: return const CajaPage();
+      case 3: return const MiembrosPage(grupoId: kGrupoId, showBackButton: false);
       case 4: return const PerfilPage(showBackButton: false);
       default: return const HomeFeedPage();
     }
@@ -63,9 +63,9 @@ class _BottomNav extends StatelessWidget {
 
   static const _items = [
     _NavItem(icon: Icons.home_rounded, label: 'Inicio'),
-    _NavItem(icon: Icons.newspaper_rounded, label: 'Novedades'),
     _NavItem(icon: Icons.calendar_month_rounded, label: 'Agenda'),
     _NavItem(icon: Icons.account_balance_wallet_outlined, label: 'Caja'),
+    _NavItem(icon: Icons.groups_rounded, label: 'Miembros'),
     _NavItem(icon: Icons.person_rounded, label: 'Yo'),
   ];
 

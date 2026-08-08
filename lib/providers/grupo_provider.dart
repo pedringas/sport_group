@@ -30,6 +30,29 @@ final ensureTacherosMembershipProvider = FutureProvider<void>((ref) async {
       );
 });
 
+// ── Atajos de grupo único ─────────────────────────────────────────────────────
+//
+// Evitan repetir `kGrupoId` en cada pantalla. Preferir estos sobre las familias
+// parametrizadas cuando la pantalla opera sobre el grupo de la app.
+
+/// El grupo Tacheros.
+final grupoActualProvider =
+    Provider<AsyncValue<GrupoModel?>>((ref) => ref.watch(grupoProvider(kGrupoId)));
+
+/// Mi ficha de miembro en Tacheros.
+final miMiembroProvider = Provider<AsyncValue<MiembroModel?>>(
+    (ref) => ref.watch(miembroActualProvider(kGrupoId)));
+
+/// Mi rol en Tacheros (null mientras carga).
+final miRolProvider =
+    Provider<RolMiembro?>((ref) => ref.watch(miMiembroProvider).valueOrNull?.rol);
+
+/// Color principal configurado del grupo.
+final colorGrupoProvider =
+    Provider<Color>((ref) => ref.watch(grupoColorProvider(kGrupoId)));
+
+// ── Multi-grupo (sin consumidores: la app opera sobre un solo grupo) ──────────
+
 final userGruposProvider = StreamProvider<List<GrupoModel>>((ref) {
   final user = ref.watch(authStateProvider).valueOrNull;
   if (user == null) return const Stream.empty();

@@ -184,7 +184,7 @@ class GastosTab extends ConsumerWidget {
                   allGastos: allGastos,
                   gc: gc,
                   onTap: () =>
-                      context.push('/group/$grupoId/gastos/g/${g.id}'),
+                      context.push('/gastos/g/${g.id}'),
                 ),
               )),
         ],
@@ -247,7 +247,7 @@ class GastosTab extends ConsumerWidget {
                   onTap: () {
                     Navigator.pop(context);
                     context.push(
-                      '/group/$grupoId/gastos/crear',
+                      '/gastos/crear',
                       extra: {
                         'grupoGastoId': g.id,
                         'grupoGastoNombre': g.nombre,

@@ -253,24 +253,19 @@ class _TacherosSection extends ConsumerWidget {
               child: SGChip(icon: icon, label: label, tone: tone),
             ),
           ),
-          const Divider(height: 1, indent: 56, endIndent: 12),
-          _SettingRow(
-            icon: Icons.group_outlined,
-            label: 'Miembros',
-            onTap: () => context.push('/group/$kGrupoId/miembros'),
-          ),
+          // "Miembros" ya no va acá: es una pestaña propia del shell.
           if (esAdmin) ...[
             const Divider(height: 1, indent: 56, endIndent: 12),
             _SettingRow(
               icon: Icons.admin_panel_settings_outlined,
               label: 'Panel de administración',
-              onTap: () => context.push('/group/$kGrupoId/admin'),
+              onTap: () => context.push('/admin'),
             ),
             const Divider(height: 1, indent: 56, endIndent: 12),
             _SettingRow(
               icon: Icons.settings_outlined,
               label: 'Ajustes del grupo',
-              onTap: () => context.push('/group/$kGrupoId/settings'),
+              onTap: () => context.push('/ajustes'),
             ),
           ],
         ],

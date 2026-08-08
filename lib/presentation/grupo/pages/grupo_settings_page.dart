@@ -661,45 +661,10 @@ class _GrupoSettingsPageState extends ConsumerState<GrupoSettingsPage> {
 
           const SizedBox(height: 20),
 
-          // â”€â”€ Acceso
-          const SGEyebrow('Acceso'),
-          const SizedBox(height: 8),
-          _SettingsCard(
-            children: [
-              _SettingsRow(
-                icon: Icons.qr_code_2_rounded,
-                label: 'Link / código de invitación',
-                value: inviteLink,
-                mono: true,
-                showDivider: true,
-                trailing: GestureDetector(
-                  onTap: () {
-                    Clipboard.setData(ClipboardData(text: inviteLink));
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                          content: Text('Link copiado al portapapeles')),
-                    );
-                  },
-                  child: const Icon(Icons.content_copy_rounded,
-                      size: 18, color: AppTheme.textMuted),
-                ),
-              ),
-              _ToggleSettingsRow(
-                icon: Icons.how_to_reg_rounded,
-                iconColor: AppTheme.good,
-                title: 'Aprobar pedidos manualmente',
-                subtitle:
-                    'Vos o el delegado confirman cada ingreso',
-                value: _aprobacionManual,
-                onChanged: (v) =>
-                    setState(() => _aprobacionManual = v),
-                showDivider: true,
-                gc: gc,
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 20),
+          // ── Acceso
+          // El link/código de invitación y la aprobación manual de ingresos ya
+          // no aplican: la app es de un solo grupo y el ingreso es automático
+          // al autenticarse (ver ensureMembership en grupo_datasource.dart).
 
           // â”€â”€ Solicitudes pendientes
           solicitudesAsync.whenData((solic) {
@@ -735,14 +700,14 @@ class _GrupoSettingsPageState extends ConsumerState<GrupoSettingsPage> {
                 label: 'Suscripciones',
                 value: 'Ver y gestionar cuotas del grupo',
                 onTap: () =>
-                    context.push('/group/${widget.grupoId}/cuotas'),
+                    context.push('/cuotas'),
               ),
               _SettingsRow(
                 icon: Icons.account_balance_wallet_rounded,
                 label: 'Gastos',
                 value: 'Ver gastos y caja del grupo',
                 onTap: () =>
-                    context.push('/group/${widget.grupoId}/gastos'),
+                    context.push('/gastos'),
                 showDivider: true,
               ),
             ],
@@ -760,32 +725,10 @@ class _GrupoSettingsPageState extends ConsumerState<GrupoSettingsPage> {
                 label: 'Administradores',
                 value: rolLabel(byRol(RolMiembro.administrador)),
                 onTap: () =>
-                    context.push('/group/${widget.grupoId}/miembros'),
+                    context.push('/miembros'),
               ),
-              _SettingsRow(
-                icon: Icons.assignment_ind_rounded,
-                label: 'Delegados',
-                value: rolLabel(byRol(RolMiembro.delegado)),
-                onTap: () =>
-                    context.push('/group/${widget.grupoId}/miembros'),
-                showDivider: true,
-              ),
-              _SettingsRow(
-                icon: Icons.account_balance_wallet_rounded,
-                label: 'Tesoreros',
-                value: rolLabel(byRol(RolMiembro.tesorero)),
-                onTap: () =>
-                    context.push('/group/${widget.grupoId}/miembros'),
-                showDivider: true,
-              ),
-              _SettingsRow(
-                icon: Icons.shield_rounded,
-                label: 'Moderadores',
-                value: rolLabel(byRol(RolMiembro.moderador)),
-                onTap: () =>
-                    context.push('/group/${widget.grupoId}/miembros'),
-                showDivider: true,
-              ),
+              // Delegados / Tesoreros / Moderadores: roles en pausa, ocultos.
+              // Ver `rolesAsignables` en data/models/enums.dart.
             ],
           ),
 
@@ -860,44 +803,12 @@ class _GrupoSettingsPageState extends ConsumerState<GrupoSettingsPage> {
                   showDivider: true,
                   onTap: _confirmarTransferir,
                 ),
-                _SettingsRow(
-                  icon: Icons.delete_forever_rounded,
-                  label: 'Eliminar grupo',
-                  value: 'Acción irreversible',
-                  danger: true,
-                  showDivider: true,
-                  onTap: () => _confirmarEliminar(grupo?.nombre ?? 'este grupo'),
-                ),
+                // "Eliminar grupo" y "Abandonar grupo" quedan ocultos: en una
+                // app de un solo grupo dejarían la aplicación sin contenido.
+                // Abandonar es inocuo (ensureMembership vuelve a sumarte en el
+                // próximo arranque) y eliminar recrearía el grupo vacío, con
+                // el siguiente usuario en entrar como administrador.
               ],
-            ),
-          ),
-
-          const SizedBox(height: 12),
-
-          // â”€â”€ Abandonar
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton.icon(
-              onPressed: () => showAbandonarDialog(
-                context,
-                grupoId: widget.grupoId,
-                grupoNombre: grupo?.nombre ?? 'este grupo',
-              ),
-              icon: const Icon(Icons.logout_rounded,
-                  size: 16, color: AppTheme.danger),
-              label: const Text(
-                'Abandonar grupo',
-                style: TextStyle(
-                    color: AppTheme.danger,
-                    fontWeight: FontWeight.w700),
-              ),
-              style: OutlinedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                side: BorderSide(
-                    color: AppTheme.danger.withValues(alpha: 0.4)),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(999)),
-              ),
             ),
           ),
         ],

@@ -104,7 +104,7 @@ class AdminPanelPage extends ConsumerWidget {
                       icon: const Icon(Icons.settings_rounded, size: 20),
                       tooltip: 'Configuración del grupo',
                       onPressed: () =>
-                          context.push('/group/$grupoId/settings'),
+                          context.push('/ajustes'),
                     ),
                   ],
                 ),
@@ -280,7 +280,7 @@ class AdminPanelPage extends ConsumerWidget {
                             label: 'Gestionar\nroles',
                             color: gc,
                             onTap: () =>
-                                context.push('/group/$grupoId/miembros'),
+                                context.push('/miembros'),
                           ),
                         ),
                         const SizedBox(width: 10),
@@ -290,7 +290,7 @@ class AdminPanelPage extends ConsumerWidget {
                             label: 'Configurar\ncuota',
                             color: AppTheme.good,
                             onTap: () =>
-                                context.push('/group/$grupoId/suscripciones'),
+                                context.push('/suscripciones'),
                           ),
                         ),
                       ],
@@ -304,7 +304,7 @@ class AdminPanelPage extends ConsumerWidget {
                             label: 'Crear\nevento',
                             color: AppTheme.accent,
                             onTap: () => context
-                                .push('/group/$grupoId/evento/crear'),
+                                .push('/evento/crear'),
                           ),
                         ),
                         const SizedBox(width: 10),
@@ -314,7 +314,7 @@ class AdminPanelPage extends ConsumerWidget {
                             label: 'Comunicado',
                             color: AppTheme.primary,
                             onTap: () => context
-                                .push('/group/$grupoId/noticias'),
+                                .push('/novedades'),
                           ),
                         ),
                         const SizedBox(width: 10),
@@ -324,7 +324,7 @@ class AdminPanelPage extends ConsumerWidget {
                             label: 'Archivar\ngrupo',
                             color: AppTheme.textMuted,
                             onTap: () => context
-                                .push('/group/$grupoId/settings'),
+                                .push('/ajustes'),
                           ),
                         ),
                       ],

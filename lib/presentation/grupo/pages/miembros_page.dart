@@ -10,7 +10,15 @@ import '../../../providers/grupo_provider.dart';
 
 class MiembrosPage extends ConsumerStatefulWidget {
   final String grupoId;
-  const MiembrosPage({super.key, required this.grupoId});
+
+  /// `false` cuando la página actúa como pestaña del shell (no hay a dónde volver).
+  final bool showBackButton;
+
+  const MiembrosPage({
+    super.key,
+    required this.grupoId,
+    this.showBackButton = true,
+  });
 
   @override
   ConsumerState<MiembrosPage> createState() => _MiembrosPageState();
@@ -31,10 +39,13 @@ class _MiembrosPageState extends ConsumerState<MiembrosPage> {
       appBar: isDesktop ? null : AppBar(
         backgroundColor: AppTheme.surf(context),
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
-          onPressed: () => context.pop(),
-        ),
+        leading: widget.showBackButton
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
+                onPressed: () => context.pop(),
+              )
+            : null,
+        automaticallyImplyLeading: widget.showBackButton,
         title: Text(
           'Miembros',
           style: GoogleFonts.bricolageGrotesque(

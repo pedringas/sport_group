@@ -1,43 +1,40 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../data/models/grupo_model.dart';
+import '../core/config/app_config.dart';
 import '../data/models/cuota_model.dart';
 import '../data/models/tarea_model.dart';
 import '../data/models/campana_model.dart';
 import '../data/models/noticia_model.dart';
-import 'grupo_provider.dart';
 import 'cuota_provider.dart';
 import 'noticia_provider.dart';
 import 'auth_provider.dart';
 
 // ── Dashboard item types ──────────────────────────────────────────────────────
+//
+// App de grupo único: los items ya no llevan el grupo al que pertenecen.
 
 sealed class DashboardItem {}
 
 class CuotaItem extends DashboardItem {
   final CuotaModel cuota;
-  final GrupoModel grupo;
-  CuotaItem({required this.cuota, required this.grupo});
+  CuotaItem({required this.cuota});
 }
 
 class TareaItem extends DashboardItem {
   final TareaModel tarea;
-  final GrupoModel grupo;
-  TareaItem({required this.tarea, required this.grupo});
+  TareaItem({required this.tarea});
 }
 
 class CampanaItem extends DashboardItem {
   final CampanaModel campana;
-  final GrupoModel grupo;
-  CampanaItem({required this.campana, required this.grupo});
+  CampanaItem({required this.campana});
 }
 
 class EventoItem extends DashboardItem {
   final NoticiaModel noticia;
-  final GrupoModel grupo;
-  EventoItem({required this.noticia, required this.grupo});
+  EventoItem({required this.noticia});
 }
 
-// ── Priority carousel — tareas asignadas al user de grupos favoritos ───────────
+// ── Priority carousel — tareas asignadas al user ──────────────────────────────
 
 // NOTE: Módulo "Tareas" en pausa — no se muestran tareas prioritarias en el
 // feed de inicio. Para reactivar, restaurar el cuerpo original de este provider.
@@ -47,39 +44,34 @@ final tareasPrioritariasProvider = Provider<List<TareaItem>>((ref) {
 
 // ── Próximos eventos confirmados ──────────────────────────────────────────────
 //
-// Shows noticias where:
-//   • tieneListado == true (event with attendance list)
-//   • !caducada (fechaCaducidad in the future, or no expiry)
-//   • current user confirmed attendance (estado == 'va')
-// Sorted by fechaEvento (if set) else fechaCaducidad ascending (soonest first).
+// Noticias donde:
+//   • tieneListado == true (evento con lista de asistencia)
+//   • !caducada y la fecha no pasó
+//   • el usuario confirmó asistencia (estado == 'va')
+// Ordenadas por fechaEvento (o fechaCaducidad) ascendente.
 
 final feedProximosEventosProvider = Provider<List<EventoItem>>((ref) {
-  final grupos = ref.watch(userGruposProvider).valueOrNull ?? [];
   final uid = ref.watch(authStateProvider).valueOrNull?.uid ?? '';
   if (uid.isEmpty) return [];
 
+  final noticias = ref.watch(noticiasProvider(kGrupoId)).valueOrNull ?? [];
+  final now = DateTime.now();
   final items = <EventoItem>[];
 
-  final now = DateTime.now();
-  for (final grupo in grupos) {
-    final noticias = ref.watch(noticiasProvider(grupo.id)).valueOrNull ?? [];
-    for (final n in noticias) {
-      if (!n.tieneListado || n.caducada) continue;
-      // Skip events whose date has already passed
-      final eventDate = n.fechaEvento ?? n.fechaCaducidad;
-      if (eventDate != null && eventDate.isBefore(now)) continue;
-      final asistencia = ref
-          .watch(miAsistenciaProvider(
-              (grupoId: grupo.id, noticiaId: n.id, uid: uid)))
-          .valueOrNull;
-      if (asistencia != null && asistencia.estado == 'va') {
-        items.add(EventoItem(noticia: n, grupo: grupo));
-      }
+  for (final n in noticias) {
+    if (!n.tieneListado || n.caducada) continue;
+    final eventDate = n.fechaEvento ?? n.fechaCaducidad;
+    if (eventDate != null && eventDate.isBefore(now)) continue;
+    final asistencia = ref
+        .watch(miAsistenciaProvider(
+            (grupoId: kGrupoId, noticiaId: n.id, uid: uid)))
+        .valueOrNull;
+    if (asistencia != null && asistencia.estado == 'va') {
+      items.add(EventoItem(noticia: n));
     }
   }
 
   items.sort((a, b) {
-    // Prefer fechaEvento (actual event date) over fechaCaducidad for sorting
     final af = a.noticia.fechaEvento ?? a.noticia.fechaCaducidad;
     final bf = b.noticia.fechaEvento ?? b.noticia.fechaCaducidad;
     if (af != null && bf != null) return af.compareTo(bf);
@@ -91,52 +83,39 @@ final feedProximosEventosProvider = Provider<List<EventoItem>>((ref) {
   return items;
 });
 
-// ── Featured event ────────────────────────────────────────────────────────────
+// ── Featured event — el próximo evento más cercano ────────────────────────────
 
 final featuredEventProvider = Provider<EventoItem?>((ref) {
-  final grupos = ref.watch(userGruposProvider).valueOrNull ?? [];
+  final noticias = ref.watch(noticiasProvider(kGrupoId)).valueOrNull ?? [];
   final now = DateTime.now();
-  // Collect all upcoming events across groups, then return the soonest one
+
   EventoItem? soonest;
   DateTime? soonestDate;
-  for (final grupo in grupos) {
-    final noticias = ref.watch(noticiasProvider(grupo.id)).valueOrNull ?? [];
-    for (final n in noticias) {
-      if (!n.tieneListado || n.caducada) continue;
-      final eventDate = n.fechaEvento ?? n.fechaCaducidad;
-      if (eventDate == null || eventDate.isBefore(now)) continue;
-      if (soonestDate == null || eventDate.isBefore(soonestDate)) {
-        soonest = EventoItem(noticia: n, grupo: grupo);
-        soonestDate = eventDate;
-      }
+  for (final n in noticias) {
+    if (!n.tieneListado || n.caducada) continue;
+    final eventDate = n.fechaEvento ?? n.fechaCaducidad;
+    if (eventDate == null || eventDate.isBefore(now)) continue;
+    if (soonestDate == null || eventDate.isBefore(soonestDate)) {
+      soonest = EventoItem(noticia: n);
+      soonestDate = eventDate;
     }
   }
   return soonest;
 });
 
-// ── Esta semana items (cuotas/suscripciones, tareas, campañas) ────────────────
+// ── Esta semana (cuotas por vencer) ───────────────────────────────────────────
 
 final thisWeekItemsProvider = Provider<List<DashboardItem>>((ref) {
-  final grupos = ref.watch(userGruposProvider).valueOrNull ?? [];
   final now = DateTime.now();
   final nextWeek = now.add(const Duration(days: 7));
 
-  final items = <DashboardItem>[];
-
   // Módulos "Tareas" y "Campañas" en pausa — sólo se muestran cuotas en el feed.
-  for (final grupo in grupos) {
-    final cuotas = ref.watch(cuotasProvider(grupo.id)).valueOrNull ?? [];
-    for (final c in cuotas) {
-      if (c.activa && c.vencimiento.isBefore(nextWeek)) {
-        items.add(CuotaItem(cuota: c, grupo: grupo));
-        break;
-      }
-    }
-  }
+  final cuotas = ref.watch(cuotasProvider(kGrupoId)).valueOrNull ?? [];
+  final items = cuotas
+      .where((c) => c.activa && c.vencimiento.isBefore(nextWeek))
+      .map((c) => CuotaItem(cuota: c))
+      .take(4)
+      .toList();
 
-  final cuotaItems = items.whereType<CuotaItem>().toList();
-
-  return [
-    ...cuotaItems.take(4),
-  ];
+  return items;
 });

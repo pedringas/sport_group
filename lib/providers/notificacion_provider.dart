@@ -2,29 +2,23 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/repositories/notificacion_repository.dart';
 import '../data/models/actividad_model.dart';
 import '../data/models/notificacion_rol_model.dart';
+import '../core/config/app_config.dart';
 import 'auth_provider.dart';
-import 'grupo_provider.dart';
 
 // ── Repository provider ───────────────────────────────────────────────────────
 
 final notificacionRepositoryProvider =
     Provider<NotificacionRepository>((ref) => NotificacionRepository());
 
-// ── Actividad agregada (multi-grupo, one-shot + refresh) ──────────────────────
+// ── Actividad del grupo (one-shot + refresh) ──────────────────────────────────
 
-/// Fetches recent actividad from all user groups in parallel and merges them.
+/// Actividad reciente de Tacheros.
 /// Use RefreshIndicator + ref.invalidate to reload.
 final actividadAgregadaProvider =
     FutureProvider.autoDispose<List<ActividadModel>>((ref) async {
-  final grupos = await ref.watch(userGruposProvider.future);
-  if (grupos.isEmpty) return [];
   final repo = ref.read(notificacionRepositoryProvider);
-  final results = await Future.wait(
-    grupos.map((g) => repo.getActividadOnce(g.id)),
-  );
-  final all = results.expand((l) => l).toList()
-    ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
-  return all;
+  final all = await repo.getActividadOnce(kGrupoId);
+  return all..sort((a, b) => b.createdAt.compareTo(a.createdAt));
 });
 
 // ── Rol notifications (live stream) ──────────────────────────────────────────

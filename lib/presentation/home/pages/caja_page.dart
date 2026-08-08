@@ -7,13 +7,11 @@ import '../../../core/config/app_config.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../data/models/campana_model.dart';
 import '../../../data/models/gasto_model.dart';
-import '../../../data/models/grupo_model.dart';
 import '../../../data/models/pago_model.dart';
 import '../../../providers/auth_provider.dart';
 import '../../../providers/campana_provider.dart';
 import '../../../providers/cuota_provider.dart';
 import '../../../providers/gasto_provider.dart';
-import '../../../providers/grupo_provider.dart';
 import '../../../data/repositories/gasto_repository.dart';
 
 // ── Caja page ─────────────────────────────────────────────────────────────────
@@ -31,74 +29,39 @@ class _CajaPageState extends ConsumerState<CajaPage> {
   @override
   Widget build(BuildContext context) {
     final uid = ref.watch(authStateProvider).valueOrNull?.uid ?? '';
-    final grupos = ref.watch(userGruposProvider).valueOrNull ?? [];
 
-    // ── Aggregate egresos ────────────────────────────────────────────────────
+    // ── Movimientos del grupo ────────────────────────────────────────────────
     // Suscripciones pagadas (PagoModel aprobados)
-    final List<({PagoModel pago, GrupoModel grupo})> suscs = [];
-    // Aportes de campañas
-    final List<({AporteModel aporte, GrupoModel grupo})> aportes = [];
-    // Liquidaciones como deudor (pagué a alguien)
-    final List<({LiquidacionModel liq, GrupoModel grupo})> liquidEgreso = [];
-    // Liquidaciones como acreedor (alguien me pagó)
-    final List<({LiquidacionModel liq, GrupoModel grupo})> liquidIngreso = [];
-    // Balance (existing)
-    final List<_BalanceItem> debenAMi = [];
-    final List<_BalanceItem> deboA = [];
-    double totalDebenA = 0;
-    double totalDeboA = 0;
-    final List<({GrupoModel grupo, double neto})> gruposConBalance = [];
+    final suscs = ref
+            .watch(misPagosAprobadosProvider((grupoId: kGrupoId, uid: uid)))
+            .valueOrNull ??
+        <PagoModel>[];
 
-    for (final grupo in grupos) {
-      // Suscripciones
-      final pagos = ref
-          .watch(misPagosAprobadosProvider((grupoId: grupo.id, uid: uid)))
-          .valueOrNull ?? [];
-      for (final p in pagos) {
-        suscs.add((pago: p, grupo: grupo));
-      }
+    // Aportes de campañas (módulo en pausa: se calcula pero no se muestra)
+    final aportes = ref
+            .watch(misAportesGrupoProvider((grupoId: kGrupoId, uid: uid)))
+            .valueOrNull ??
+        <AporteModel>[];
 
-      // Aportes a campañas
-      final misAportes = ref
-          .watch(misAportesGrupoProvider((grupoId: grupo.id, uid: uid)))
-          .valueOrNull ?? [];
-      for (final a in misAportes) {
-        aportes.add((aporte: a, grupo: grupo));
-      }
+    // Liquidaciones: como deudor (pagué) y como acreedor (me pagaron)
+    final liqs = ref.watch(liquidacionesProvider(kGrupoId)).valueOrNull ?? [];
+    final liquidEgreso =
+        liqs.where((l) => l.deudorUid == uid).toList();
+    final liquidIngreso =
+        liqs.where((l) => l.acreedorUid == uid).toList();
 
-      // Liquidaciones
-      final liqs = ref.watch(liquidacionesProvider(grupo.id)).valueOrNull ?? [];
-      for (final l in liqs) {
-        if (l.deudorUid == uid) {
-          liquidEgreso.add((liq: l, grupo: grupo));
-        }
-        if (l.acreedorUid == uid) {
-          liquidIngreso.add((liq: l, grupo: grupo));
-        }
-      }
-
-      // Balance de gastos (existing logic)
-      final balances = ref.watch(balancesProvider(grupo.id));
-      final debenVal = GastoRepository.totalDebenA(balances);
-      final deboVal = GastoRepository.totalDebeA(balances);
-      totalDebenA += debenVal;
-      totalDeboA += deboVal;
-      for (final b in balances) {
-        if (b.monto > 0.5) {
-          debenAMi.add(_BalanceItem(grupoId: grupo.id, grupoNombre: grupo.nombre, balance: b));
-        } else if (b.monto < -0.5) {
-          deboA.add(_BalanceItem(grupoId: grupo.id, grupoNombre: grupo.nombre, balance: b));
-        }
-      }
-      final neto = debenVal - deboVal;
-      if (neto.abs() > 0.5) gruposConBalance.add((grupo: grupo, neto: neto));
-    }
+    // Balance de gastos
+    final balances = ref.watch(balancesProvider(kGrupoId));
+    final totalDebenA = GastoRepository.totalDebenA(balances);
+    final totalDeboA = GastoRepository.totalDebeA(balances);
+    final debenAMi = balances.where((b) => b.monto > 0.5).toList();
+    final deboA = balances.where((b) => b.monto < -0.5).toList();
 
     // Totals
-    final totalSuscs  = suscs.fold<double>(0, (s, e) => s + e.pago.montoEsperado);
-    final totalAportes = aportes.fold<double>(0, (s, e) => s + e.aporte.monto);
-    final totalLiqEgreso = liquidEgreso.fold<double>(0, (s, e) => s + e.liq.monto);
-    final totalLiqIngreso = liquidIngreso.fold<double>(0, (s, e) => s + e.liq.monto);
+    final totalSuscs  = suscs.fold<double>(0, (s, e) => s + e.montoEsperado);
+    final totalAportes = aportes.fold<double>(0, (s, e) => s + e.monto);
+    final totalLiqEgreso = liquidEgreso.fold<double>(0, (s, e) => s + e.monto);
+    final totalLiqIngreso = liquidIngreso.fold<double>(0, (s, e) => s + e.monto);
     final totalEgresos = totalSuscs + totalAportes + totalLiqEgreso;
     final totalIngresos = totalLiqIngreso;
     final netBalance = totalDebenA - totalDeboA;
@@ -145,7 +108,7 @@ class _CajaPageState extends ConsumerState<CajaPage> {
                       label: 'Cuotas',
                       color: AppTheme.danger,
                       onTap: () =>
-                          context.push('/group/$kGrupoId/cuotas'),
+                          context.push('/cuotas'),
                     ),
                   ),
                   const SizedBox(width: 10),
@@ -155,7 +118,7 @@ class _CajaPageState extends ConsumerState<CajaPage> {
                       label: 'Gastos',
                       color: AppTheme.good,
                       onTap: () =>
-                          context.push('/group/$kGrupoId/gastos'),
+                          context.push('/gastos'),
                     ),
                   ),
                 ]),
@@ -217,9 +180,9 @@ class _CajaPageState extends ConsumerState<CajaPage> {
             const SliverToBoxAdapter(child: SizedBox(height: 12)),
 
             // ── Tab content ──────────────────────────────────────────────────
-            if (_tab == 0) ..._buildEgresos(context, suscs, aportes, liquidEgreso),
+            if (_tab == 0) ..._buildEgresos(context, suscs, liquidEgreso),
             if (_tab == 1) ..._buildIngresos(context, liquidIngreso),
-            if (_tab == 2) ..._buildBalance(context, debenAMi, deboA, netBalance, gruposConBalance),
+            if (_tab == 2) ..._buildBalance(context, debenAMi, deboA),
 
             const SliverToBoxAdapter(child: SizedBox(height: 100)),
           ],
@@ -232,9 +195,8 @@ class _CajaPageState extends ConsumerState<CajaPage> {
 
   List<Widget> _buildEgresos(
     BuildContext context,
-    List<({PagoModel pago, GrupoModel grupo})> suscs,
-    List<({AporteModel aporte, GrupoModel grupo})> aportes,
-    List<({LiquidacionModel liq, GrupoModel grupo})> liquidEgreso,
+    List<PagoModel> suscs,
+    List<LiquidacionModel> liquidEgreso,
   ) {
     final sections = <Widget>[];
 
@@ -243,16 +205,16 @@ class _CajaPageState extends ConsumerState<CajaPage> {
       child: _Section(
         title: 'Suscripciones',
         icon: Icons.receipt_long_rounded,
-        total: suscs.fold(0, (s, e) => s + e.pago.montoEsperado),
+        total: suscs.fold(0, (s, e) => s + e.montoEsperado),
         color: AppTheme.accent,
         emptyText: 'Ningún pago de cuota aprobado aún',
-        items: suscs.map((e) => _TxRow(
-          title: e.pago.cuotaId.isNotEmpty ? 'Pago de cuota' : 'Pago',
-          subtitle: e.grupo.nombre,
-          amount: e.pago.montoEsperado,
-          date: e.pago.createdAt,
+        items: suscs.map((p) => _TxRow(
+          title: p.cuotaId.isNotEmpty ? 'Pago de cuota' : 'Pago',
+          subtitle: p.metodo.name,
+          amount: p.montoEsperado,
+          date: p.createdAt,
           color: AppTheme.accent,
-          onTap: () => context.push('/group/${e.grupo.id}/cuotas'),
+          onTap: () => context.push('/cuotas'),
         )).toList(),
       ),
     ));
@@ -264,16 +226,16 @@ class _CajaPageState extends ConsumerState<CajaPage> {
       child: _Section(
         title: 'Gastos de grupo',
         icon: Icons.group_rounded,
-        total: liquidEgreso.fold(0, (s, e) => s + e.liq.monto),
+        total: liquidEgreso.fold(0, (s, e) => s + e.monto),
         color: AppTheme.danger,
         emptyText: 'Ninguna liquidación de gasto registrada',
-        items: liquidEgreso.map((e) => _TxRow(
-          title: 'Le pagué a ${e.liq.acreedorNombre}',
-          subtitle: e.grupo.nombre,
-          amount: e.liq.monto,
-          date: e.liq.createdAt,
+        items: liquidEgreso.map((l) => _TxRow(
+          title: 'Le pagué a ${l.acreedorNombre}',
+          subtitle: 'Liquidación',
+          amount: l.monto,
+          date: l.createdAt,
           color: AppTheme.danger,
-          onTap: () => context.push('/group/${e.grupo.id}/gastos'),
+          onTap: () => context.push('/gastos'),
         )).toList(),
       ),
     ));
@@ -285,23 +247,23 @@ class _CajaPageState extends ConsumerState<CajaPage> {
 
   List<Widget> _buildIngresos(
     BuildContext context,
-    List<({LiquidacionModel liq, GrupoModel grupo})> liquidIngreso,
+    List<LiquidacionModel> liquidIngreso,
   ) {
     return [
       SliverToBoxAdapter(
         child: _Section(
           title: 'Gastos de grupo',
           icon: Icons.group_rounded,
-          total: liquidIngreso.fold(0, (s, e) => s + e.liq.monto),
+          total: liquidIngreso.fold(0, (s, e) => s + e.monto),
           color: AppTheme.good,
           emptyText: 'Ningún ingreso por gastos registrado',
-          items: liquidIngreso.map((e) => _TxRow(
-            title: '${e.liq.deudorNombre} me pagó',
-            subtitle: e.grupo.nombre,
-            amount: e.liq.monto,
-            date: e.liq.createdAt,
+          items: liquidIngreso.map((l) => _TxRow(
+            title: '${l.deudorNombre} me pagó',
+            subtitle: 'Liquidación',
+            amount: l.monto,
+            date: l.createdAt,
             color: AppTheme.good,
-            onTap: () => context.push('/group/${e.grupo.id}/gastos'),
+            onTap: () => context.push('/gastos'),
           )).toList(),
         ),
       ),
@@ -312,13 +274,11 @@ class _CajaPageState extends ConsumerState<CajaPage> {
 
   List<Widget> _buildBalance(
     BuildContext context,
-    List<_BalanceItem> debenAMi,
-    List<_BalanceItem> deboA,
-    double netBalance,
-    List<({GrupoModel grupo, double neto})> gruposConBalance,
+    List<BalanceConMiembro> debenAMi,
+    List<BalanceConMiembro> deboA,
   ) {
-    final totalDebenA = debenAMi.fold<double>(0, (s, e) => s + e.balance.monto.abs());
-    final totalDeboA  = deboA.fold<double>(0, (s, e) => s + e.balance.monto.abs());
+    final totalDebenA = debenAMi.fold<double>(0, (s, e) => s + e.monto.abs());
+    final totalDeboA  = deboA.fold<double>(0, (s, e) => s + e.monto.abs());
 
     return [
       SliverToBoxAdapter(
@@ -349,10 +309,10 @@ class _CajaPageState extends ConsumerState<CajaPage> {
           total: totalDebenA,
           color: AppTheme.good,
           emptyText: '',
-          items: debenAMi.map((e) => _TxRow(
-            title: e.balance.nombre,
-            subtitle: e.grupoNombre,
-            amount: e.balance.monto.abs(),
+          items: debenAMi.map((b) => _TxRow(
+            title: b.nombre,
+            subtitle: 'Te debe',
+            amount: b.monto.abs(),
             date: null,
             color: AppTheme.good,
           )).toList(),
@@ -365,10 +325,10 @@ class _CajaPageState extends ConsumerState<CajaPage> {
           total: totalDeboA,
           color: AppTheme.danger,
           emptyText: '',
-          items: deboA.map((e) => _TxRow(
-            title: e.balance.nombre,
-            subtitle: e.grupoNombre,
-            amount: e.balance.monto.abs(),
+          items: deboA.map((b) => _TxRow(
+            title: b.nombre,
+            subtitle: 'Le debés',
+            amount: b.monto.abs(),
             date: null,
             color: AppTheme.danger,
           )).toList(),
@@ -394,15 +354,6 @@ class _CajaPageState extends ConsumerState<CajaPage> {
       ),
     ];
   }
-}
-
-// ── _BalanceItem (helper, kept for Balance tab) ───────────────────────────────
-
-class _BalanceItem {
-  final String grupoId;
-  final String grupoNombre;
-  final BalanceConMiembro balance;
-  const _BalanceItem({required this.grupoId, required this.grupoNombre, required this.balance});
 }
 
 // ── _AccesoBtn (acceso a Cuotas / Gastos) ─────────────────────────────────────
