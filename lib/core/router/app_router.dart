@@ -206,24 +206,9 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
               path: '/suscripciones',
               builder: (_, __) => const SuscripcionesPage(grupoId: kGrupoId)),
-          GoRoute(
-              path: '/cuotas/grupo/crear',
-              builder: (_, __) =>
-                  const CrearCuotaGrupoPage(grupoId: kGrupoId)),
-          GoRoute(
-            path: '/cuotas/grupo/:cuotaGrupoId',
-            builder: (_, state) => CuotaGrupoDetailPage(
-              grupoId: kGrupoId,
-              cuotaGrupoId: state.pathParameters['cuotaGrupoId']!,
-            ),
-          ),
-          GoRoute(
-            path: '/cuotas/grupo/:cuotaGrupoId/editar',
-            builder: (_, state) => CrearCuotaGrupoPage(
-              grupoId: kGrupoId,
-              para: state.extra as CuotaGrupoModel?,
-            ),
-          ),
+          // Rutas de "grupos de suscripción" (/cuotas/grupo/...) retiradas:
+          // el módulo está en pausa porque nada convierte esos grupos en
+          // cuotas reales. Sus páginas siguen en el repo.
           GoRoute(
             path: '/cuota/:cuotaId',
             builder: (_, state) => CuotaDetailPage(

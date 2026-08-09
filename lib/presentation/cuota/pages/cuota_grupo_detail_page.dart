@@ -338,7 +338,7 @@ class _CuotaGrupoDetailPageState
       builder: (_) => AlertDialog(
         title: const Text('Eliminar grupo de suscripción'),
         content: Text(
-            '¿Eliminás "${cuotaGrupo.nombre}"? Los miembros ya no tendrán esta suscripción asignada.'),
+            '¿Eliminás "${cuotaGrupo.nombre}"? Los miembros ya no tendrán esta cuota asignada.'),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(context),

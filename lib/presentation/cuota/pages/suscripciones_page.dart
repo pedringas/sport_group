@@ -94,7 +94,7 @@ class _SuscripcionesPageState extends ConsumerState<SuscripcionesPage> {
                     ),
                     Expanded(
                       child: Text(
-                        'Suscripciones',
+                        'Cobranza',
                         style: GoogleFonts.bricolageGrotesque(
                           fontWeight: FontWeight.w700,
                           fontSize: 20,
@@ -173,117 +173,9 @@ class _SuscripcionesPageState extends ConsumerState<SuscripcionesPage> {
                 ),
               ),
 
-            // Grupos de suscripción section
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
-                child: Row(
-                  children: [
-                    const SGEyebrow('Grupos de suscripción'),
-                    const Spacer(),
-                    GestureDetector(
-                      onTap: () => context.push(
-                          '/cuotas/grupo/crear'),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 5),
-                        decoration: BoxDecoration(
-                          color: gc.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.add_rounded, size: 14, color: gc),
-                            const SizedBox(width: 4),
-                            Text('Nuevo',
-                                style: TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w700,
-                                    color: gc)),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-
-            if (cuotaGrupos.isEmpty)
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                        vertical: 18, horizontal: 16),
-                    decoration: BoxDecoration(
-                      color: AppTheme.surface,
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: AppTheme.border),
-                    ),
-                    child: Column(
-                      children: [
-                        Icon(Icons.repeat_rounded,
-                            size: 32, color: gc.withValues(alpha: 0.5)),
-                        const SizedBox(height: 8),
-                        const Text(
-                          'Sin grupos de suscripción',
-                          style: TextStyle(
-                              fontWeight: FontWeight.w600,
-                              color: AppTheme.text),
-                        ),
-                        const SizedBox(height: 4),
-                        const Text(
-                          'Creá un grupo para gestionar cobros recurrentes a conjuntos de miembros',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                              fontSize: 12, color: AppTheme.textMuted),
-                        ),
-                        const SizedBox(height: 12),
-                        GestureDetector(
-                          onTap: () => context.push(
-                              '/cuotas/grupo/crear'),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 16, vertical: 8),
-                            decoration: BoxDecoration(
-                              color: gc.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(999),
-                            ),
-                            child: Text('Crear grupo de suscripción',
-                                style: TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w600,
-                                    color: gc)),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              )
-            else
-              SliverPadding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                sliver: SliverList.separated(
-                  itemCount: cuotaGrupos.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 8),
-                  itemBuilder: (_, i) {
-                    final cg = cuotaGrupos[i];
-                    return _CuotaGrupoCard(
-                      grupoId: widget.grupoId,
-                      id: cg.id,
-                      nombre: cg.nombre,
-                      monto: cg.montoMensual,
-                      miembros: cg.miembrosUids.length,
-                      diaVencimiento: cg.diaVencimiento,
-                      gc: gc,
-                      fmt: fmt,
-                    );
-                  },
-                ),
-              ),
+            // "Grupos de suscripción" en pausa: se pueden crear pero nada
+            // los convierte en cuotas, así que nunca cobran. Sección oculta
+            // hasta que exista la emisión automática.
 
             // Cuotas emitidas section
             SliverToBoxAdapter(

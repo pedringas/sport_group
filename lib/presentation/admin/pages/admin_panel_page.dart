@@ -1241,7 +1241,7 @@ String _rolLabel(RolMiembro rol) => switch (rol) {
 String _rolDesc(RolMiembro rol) => switch (rol) {
       RolMiembro.administrador => 'Control total del grupo',
       RolMiembro.moderador => 'Gestiona miembros y noticias',
-      RolMiembro.tesorero => 'Gestiona suscripciones y campañas',
+      RolMiembro.tesorero => 'Gestiona cuotas y campañas',
       RolMiembro.delegado => 'Puede publicar noticias',
       RolMiembro.miembro => 'Acceso básico',
     };

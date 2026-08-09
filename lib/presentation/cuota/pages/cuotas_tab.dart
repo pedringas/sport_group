@@ -62,7 +62,7 @@ class _CuotasTabState extends ConsumerState<CuotasTab> {
       backgroundColor: AppTheme.bg(context),
       body: cuotasAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => const SGErrorState(message: 'Error al cargar las suscripciones'),
+        error: (e, _) => const SGErrorState(message: 'Error al cargar las cuotas'),
         data: (cuotas) {
           final pagos = pagosAsync.valueOrNull ?? [];
           final misPagos = misPagosAsync.valueOrNull ?? [];
@@ -244,7 +244,10 @@ class _CuotasTabState extends ConsumerState<CuotasTab> {
                 ..._buildAdminCuotaRows(
                     context, cuotasMes, pagos, miembros, widget.grupoId, rol),
                 // Subscription groups section
-                _CuotaGruposSection(grupoId: widget.grupoId),
+                // "Grupos de suscripción" en pausa: se pueden crear pero nada
+                // los convierte en cuotas (no hay job ni Cloud Function), así
+                // que cobraban $0. Sección oculta hasta que se implemente la
+                // emisión automática. Ver _CuotaGruposSection más abajo.
                 if (cuotasMes.isEmpty) ...[
                   Padding(
                     padding: const EdgeInsets.fromLTRB(0, 32, 0, 8),
@@ -527,7 +530,7 @@ class _CuotasTabState extends ConsumerState<CuotasTab> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Eliminar suscripción'),
+        title: const Text('Eliminar cuota'),
         content: Text('¿Eliminás "$titulo"? Esta acción no se puede deshacer.'),
         actions: [
           TextButton(

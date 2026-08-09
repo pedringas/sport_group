@@ -698,7 +698,7 @@ class _GrupoSettingsPageState extends ConsumerState<GrupoSettingsPage> {
             children: [
               _SettingsRow(
                 icon: Icons.payments_rounded,
-                label: 'Suscripciones',
+                label: 'Cobranza',
                 value: 'Ver y gestionar cuotas del grupo',
                 onTap: () =>
                     context.push('/cuotas'),

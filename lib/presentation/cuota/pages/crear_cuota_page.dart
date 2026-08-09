@@ -44,7 +44,7 @@ class _CrearCuotaPageState extends ConsumerState<CrearCuotaPage> {
   void initState() {
     super.initState();
     final c = widget.cuotaParaEditar;
-    _conceptoCtrl = TextEditingController(text: c?.titulo ?? 'Suscripción mensual — Mayo 2026');
+    _conceptoCtrl = TextEditingController(text: c?.titulo ?? 'Cuota mensual — Mayo 2026');
     _montoCtrl = TextEditingController(text: c != null ? c.monto.toInt().toString() : '8500');
     _vencimiento = c?.vencimiento ?? DateTime.now().add(const Duration(days: 1));
   }
@@ -182,7 +182,7 @@ class _CrearCuotaPageState extends ConsumerState<CrearCuotaPage> {
           icon: const Icon(Icons.close_rounded, size: 22),
           onPressed: () => context.popOr(),
         ),
-        title: Text(_editMode ? 'Editar suscripción' : 'Nueva suscripción'),
+        title: Text(_editMode ? 'Editar cuota' : 'Nueva cuota'),
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 12),
@@ -512,7 +512,7 @@ class _CrearCuotaPageState extends ConsumerState<CrearCuotaPage> {
             icon: _editMode ? Icons.save_rounded : Icons.send_rounded,
             label: _editMode
                 ? 'Guardar cambios'
-                : 'Emitir suscripción a $efectivos miembros',
+                : 'Emitir cuota a $efectivos miembros',
             expand: true, size: SGSize.lg,
             onPressed: loading ? null : _emitir,
           ),

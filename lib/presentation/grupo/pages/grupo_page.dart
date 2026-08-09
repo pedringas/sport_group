@@ -310,7 +310,7 @@ class _GrupoPageState extends ConsumerState<GrupoPage>
       (Icons.event_rounded, gc.withValues(alpha: 0.12), gc,
           'Crear evento', '/evento/crear'),
       (Icons.payments_outlined, AppTheme.dangerSoft,
-          AppTheme.dangerInk, 'Emitir suscripción',
+          AppTheme.dangerInk, 'Emitir cuota',
           '/cuotas/crear'),
       (Icons.newspaper_outlined, AppTheme.goodSoft,
           AppTheme.goodInk, 'Noticias', '/novedades'),

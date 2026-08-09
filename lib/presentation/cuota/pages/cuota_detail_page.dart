@@ -46,10 +46,10 @@ class CuotaDetailPage extends ConsumerWidget {
       body: cuotaAsync.when(
         loading: () =>
             const Center(child: CircularProgressIndicator()),
-        error: (e, _) => SGErrorState(message: 'Error al cargar la suscripción'),
+        error: (e, _) => SGErrorState(message: 'Error al cargar la cuota'),
         data: (cuota) {
           if (cuota == null) {
-            return const SGErrorState(message: 'Suscripción no encontrada');
+            return const SGErrorState(message: 'Cuota no encontrada');
           }
           // Derive miPago from the user's group-wide pagos list
           final miPago = misPagosAsync.valueOrNull
@@ -150,9 +150,9 @@ class CuotaDetailPage extends ConsumerWidget {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('Eliminar suscripción'),
+        title: const Text('Eliminar cuota'),
         content: const Text(
-            '¿Eliminás esta suscripción? Esta acción no se puede deshacer.'),
+            '¿Eliminás esta cuota? Esta acción no se puede deshacer.'),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(context),
@@ -205,7 +205,7 @@ class _StatusBanner extends StatelessWidget {
     if (yaPago) {
       bannerColor = AppTheme.good;
       bannerIcon = Icons.check_circle_rounded;
-      bannerLabel = 'Suscripción pagada';
+      bannerLabel = 'Cuota pagada';
     } else if (esperandoTesorero) {
       bannerColor = AppTheme.warning;
       bannerIcon = Icons.hourglass_top_rounded;
@@ -217,7 +217,7 @@ class _StatusBanner extends StatelessWidget {
     } else if (vencida) {
       bannerColor = AppTheme.danger;
       bannerIcon = Icons.warning_amber_rounded;
-      bannerLabel = 'Suscripción vencida';
+      bannerLabel = 'Cuota vencida';
     } else {
       bannerColor = AppTheme.warning;
       bannerIcon = Icons.payments_outlined;
@@ -1372,7 +1372,7 @@ class _PaidCard extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           Text(
-            '¡Suscripción pagada!',
+            '¡Cuota pagada!',
             style: GoogleFonts.bricolageGrotesque(
               fontWeight: FontWeight.w700,
               fontSize: 18,

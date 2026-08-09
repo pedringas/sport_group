@@ -185,13 +185,13 @@ class TesoreroPanelPage extends ConsumerWidget {
                     ),
             ),
 
-            // â”€â”€ Suscripciones
+            // â”€â”€ Cuotas
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
                 child: Row(
                   children: [
-                    const SGEyebrow('Suscripciones'),
+                    const SGEyebrow('Cobranza'),
                     const Spacer(),
                     GestureDetector(
                       onTap: () =>
@@ -215,8 +215,8 @@ class TesoreroPanelPage extends ConsumerWidget {
               sliver: cuotas.isEmpty
                   ? SliverToBoxAdapter(
                       child: _EmptyAction(
-                        label: 'No hay suscripciones',
-                        btnLabel: 'Nueva suscripción',
+                        label: 'No hay cuotas',
+                        btnLabel: 'Nueva cuota',
                         gc: gc,
                         onTap: () =>
                             _showCrearCuota(context, ref),
@@ -238,7 +238,7 @@ class TesoreroPanelPage extends ConsumerWidget {
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
                 child: SGPillButton(
-                  label: 'Nueva suscripción',
+                  label: 'Nueva cuota',
                   icon: Icons.add_rounded,
                   tone: SGTone.outline,
                   expand: true,
@@ -940,7 +940,7 @@ class _CrearCuotaSheetState extends ConsumerState<_CrearCuotaSheet> {
               ),
             ),
             Center(
-              child: Text('Nueva suscripción',
+              child: Text('Nueva cuota',
                   style: GoogleFonts.bricolageGrotesque(
                     fontWeight: FontWeight.w700, fontSize: 18, color: AppTheme.text)),
             ),
@@ -949,7 +949,7 @@ class _CrearCuotaSheetState extends ConsumerState<_CrearCuotaSheet> {
               controller: _tituloCtrl,
               textCapitalization: TextCapitalization.sentences,
               decoration: const InputDecoration(
-                labelText: 'Nombre de la suscripción',
+                labelText: 'Nombre de la cuota',
                 prefixIcon: Icon(Icons.payments_outlined),
               ),
             ),
@@ -994,7 +994,7 @@ class _CrearCuotaSheetState extends ConsumerState<_CrearCuotaSheet> {
             const SizedBox(height: 8),
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
-              title: const Text('Suscripción recurrente', style: TextStyle(fontSize: 14)),
+              title: const Text('Cuota recurrente', style: TextStyle(fontSize: 14)),
               value: _esRecurrente,
               activeThumbColor: gc,
               onChanged: (v) => setState(() => _esRecurrente = v),
@@ -1024,15 +1024,15 @@ class _CrearCuotaSheetState extends ConsumerState<_CrearCuotaSheet> {
               ),
               const SizedBox(height: 4),
               Text(
-                'Se crearán $_totalCuotas suscripciones ${_frecuencia.label.toLowerCase()}s',
+                'Se crearán $_totalCuotas cuotas ${_frecuencia.label.toLowerCase()}s',
                 style: const TextStyle(color: AppTheme.textMuted, fontSize: 12),
               ),
             ],
             const SizedBox(height: 20),
             SGPillButton(
               label: _esRecurrente
-                  ? 'Crear serie de suscripciones'
-                  : 'Crear suscripción',
+                  ? 'Crear serie de cuotas'
+                  : 'Crear cuota',
               expand: true,
               onPressed: isLoading ? null : _guardar,
             ),

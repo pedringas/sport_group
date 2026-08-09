@@ -75,7 +75,7 @@ final novedadesFeedProvider = Provider<List<NovedadFeed>>((ref) {
   for (final c in cuotas.take(1)) {
     if (c.activa) {
       items.add(NovedadFeed(
-        titulo: 'Suscripción pendiente',
+        titulo: 'Cuota pendiente',
         subtitulo: '${c.titulo} · vence ${_formatDate(c.vencimiento)}',
         fecha: c.createdAt,
         tipo: NovedadTipo.cuota,

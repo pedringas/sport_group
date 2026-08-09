@@ -298,8 +298,7 @@ class _DeskTopBar extends ConsumerWidget {
     '/evento/crear': 'Nuevo evento',
     '/cuotas': 'Cuotas',
     '/cuotas/crear': 'Nueva cuota',
-    '/cuotas/grupo/crear': 'Nuevo grupo de suscripción',
-    '/suscripciones': 'Suscripciones',
+    '/suscripciones': 'Cobranza',
     '/gastos': 'Gastos',
     '/gastos/crear': 'Nuevo gasto',
     '/admin': 'Panel de administración',
@@ -329,8 +328,6 @@ class _DeskTopBar extends ConsumerWidget {
     if (location.endsWith('/comentarios')) return 'Comentarios';
     if (location.endsWith('/pay/manual')) return 'Subir comprobante';
     if (location.endsWith('/edit')) return 'Editar cuota';
-    if (location.endsWith('/editar')) return 'Editar grupo de suscripción';
-    if (location.startsWith('/cuotas/grupo/')) return 'Grupo de suscripción';
     if (location.startsWith('/cuota/')) return 'Detalle de cuota';
     if (location.startsWith('/gastos/g/')) return 'Detalle de gasto';
     if (location.startsWith('/recurso/')) return 'Archivo';
