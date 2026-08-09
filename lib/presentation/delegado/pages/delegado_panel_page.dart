@@ -167,7 +167,7 @@ class DelegadoPanelPage extends ConsumerWidget {
         icon: const Icon(Icons.edit_rounded),
         label: const Text('Publicar noticia'),
         backgroundColor: gc,
-        foregroundColor: Colors.white,
+        foregroundColor: AppTheme.onColor(gc),
       ),
     );
   }

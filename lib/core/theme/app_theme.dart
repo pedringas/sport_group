@@ -2,18 +2,23 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../data/models/enums.dart';
 
-/// SportGroups Theme — "Atardecer" warm community palette.
-/// Migrated from the previous indigo Material 3 theme to a coral + plum
-/// system with friendlier rounded type (Bricolage Grotesque + DM Sans).
+/// Tacheros Theme — amarillo taxi, negro y blanco, tomados del logo.
+///
+/// El amarillo es un color muy claro: texto blanco encima es ilegible
+/// (contraste ~1.7:1). Por eso todo lo que va sobre [primary] usa
+/// [onPrimary], que es negro. Usar `Colors.white` sobre amarillo es un bug.
 class AppTheme {
-  // ── Brand colours (Atardecer palette) ──────────────────────────────────────
-  static const Color primary       = Color(0xFFE2693F); // coral
-  static const Color primarySoft   = Color(0xFFFADBCC);
-  static const Color primaryInk    = Color(0xFF95371F);
+  // ── Marca ──────────────────────────────────────────────────────────────────
+  static const Color primary       = Color(0xFFFFC400); // amarillo taxi
+  static const Color primarySoft   = Color(0xFFFFF3C4); // fondo suave
+  static const Color primaryInk    = Color(0xFF7A5A00); // texto sobre primarySoft
+  /// Color de texto/iconos sobre [primary]. Negro: el amarillo es claro.
+  static const Color onPrimary     = Color(0xFF14110D);
 
-  static const Color accent        = Color(0xFF8868B8); // ciruela
-  static const Color accentSoft    = Color(0xFFECE2F1);
-  static const Color accentInk     = Color(0xFF553F86);
+  // Acento en familia negra (antes ciruela): la marca es amarillo/negro/blanco.
+  static const Color accent        = Color(0xFF3F3B36);
+  static const Color accentSoft    = Color(0xFFEFEDEA);
+  static const Color accentInk     = Color(0xFF262320);
 
   static const Color good          = Color(0xFF2DA67D);
   static const Color goodSoft      = Color(0xFFD9F1E5);
@@ -32,20 +37,20 @@ class AppTheme {
   static const Color infoInk       = Color(0xFF1D4ED8);
 
   static const Color surface       = Colors.white;
-  static const Color surfaceAlt    = Color(0xFFF1ECE7);
-  static const Color background    = Color(0xFFF8F5F3); // cream
+  static const Color surfaceAlt    = Color(0xFFF3F2EF);
+  static const Color background    = Color(0xFFFAFAF8); // casi blanco, neutro
 
-  static const Color text          = Color(0xFF2A211E);
-  static const Color textMuted     = Color(0xFF756864);
-  static const Color border        = Color(0xFFE8E2DD);
-  static const Color borderStrong  = Color(0xFFD6CFC8);
+  static const Color text          = Color(0xFF14110D); // negro
+  static const Color textMuted     = Color(0xFF6E6A63);
+  static const Color border        = Color(0xFFE6E4DF);
+  static const Color borderStrong  = Color(0xFFD1CEC8);
 
   // ── Role colours ──────────────────────────────────────────────────────────
-  static const Color roleAdmin      = primary;     // coral
+  static const Color roleAdmin      = primary;      // amarillo
   static const Color roleModerador  = info;         // blue
-  static const Color roleTesorero   = accent;       // plum
+  static const Color roleTesorero   = accent;       // negro
   static const Color roleDelegado   = warning;      // amber
-  static const Color roleMiembro    = textMuted;    // warm muted
+  static const Color roleMiembro    = textMuted;    // gris
 
   static Color roleColor(RolMiembro rol) {
     switch (rol) {
@@ -56,6 +61,13 @@ class AppTheme {
       case RolMiembro.miembro:       return roleMiembro;
     }
   }
+
+  /// Color de texto legible sobre [bg].
+  ///
+  /// El color del grupo es configurable, así que no se puede asumir blanco:
+  /// sobre el amarillo de marca el blanco queda ilegible.
+  static Color onColor(Color bg) =>
+      bg.computeLuminance() > 0.45 ? onPrimary : Colors.white;
 
   // ── Overlay helper ─────────────────────────────────────────────────────────
   static Color overlay(BuildContext ctx, {double opacity = 0.08}) =>
@@ -71,13 +83,13 @@ class AppTheme {
 
   // ── Dark palette ───────────────────────────────────────────────────────────
   // Warm dark equivalents of the light palette (same hue family, dark values)
-  static const Color darkBackground  = Color(0xFF1A1512); // deep warm black
-  static const Color darkSurface     = Color(0xFF26201C); // dark warm brown
-  static const Color darkSurfaceAlt  = Color(0xFF302822); // slightly lighter
-  static const Color darkText        = Color(0xFFF2EDE9); // off-white
-  static const Color darkTextMuted   = Color(0xFF9E908A); // warm muted
-  static const Color darkBorder      = Color(0xFF3A302A); // dark border
-  static const Color darkBorderStrong= Color(0xFF4A3E36); // stronger border
+  static const Color darkBackground  = Color(0xFF121110); // negro
+  static const Color darkSurface     = Color(0xFF1C1B19); // gris muy oscuro
+  static const Color darkSurfaceAlt  = Color(0xFF272522); // un paso más claro
+  static const Color darkText        = Color(0xFFF4F3F1); // casi blanco
+  static const Color darkTextMuted   = Color(0xFF9B9791); // gris
+  static const Color darkBorder      = Color(0xFF302E2A); // borde oscuro
+  static const Color darkBorderStrong= Color(0xFF413E39); // borde marcado
   static const Color darkGoodSoft    = Color(0xFF0F2E21); // dark green bg
   static const Color darkDangerSoft  = Color(0xFF2E1210); // dark red bg
 
@@ -111,18 +123,18 @@ class AppTheme {
 
   // ── Dark theme ─────────────────────────────────────────────────────────────
   static ThemeData get dark {
-    const Color dPrimary = Color(0xFFF07B52); // slightly lighter coral for dark
+    const Color dPrimary = primary; // el amarillo funciona igual sobre oscuro
 
     const base = ColorScheme(
       brightness: Brightness.dark,
       primary: dPrimary,
-      onPrimary: Colors.white,
-      primaryContainer: Color(0xFF6B2B12),
-      onPrimaryContainer: Color(0xFFFFCDB9),
+      onPrimary: onPrimary,
+      primaryContainer: Color(0xFF4A3800),
+      onPrimaryContainer: Color(0xFFFFE9A3),
       secondary: accent,
       onSecondary: Colors.white,
-      secondaryContainer: Color(0xFF4B3468),
-      onSecondaryContainer: Color(0xFFE8D7FF),
+      secondaryContainer: Color(0xFF3A3733),
+      onSecondaryContainer: Color(0xFFE6E3DE),
       tertiary: good,
       onTertiary: Colors.white,
       tertiaryContainer: Color(0xFF0A3D2B),
@@ -216,7 +228,7 @@ class AppTheme {
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
           backgroundColor: dPrimary,
-          foregroundColor: Colors.white,
+          foregroundColor: onPrimary,
           minimumSize: const Size(double.infinity, 52),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
           textStyle: GoogleFonts.dmSans(fontSize: 15, fontWeight: FontWeight.w600, letterSpacing: 0.2),
@@ -226,7 +238,7 @@ class AppTheme {
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: dPrimary,
-          foregroundColor: Colors.white,
+          foregroundColor: onPrimary,
           minimumSize: const Size(double.infinity, 52),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
           textStyle: GoogleFonts.dmSans(fontSize: 15, fontWeight: FontWeight.w600, letterSpacing: 0.2),
@@ -289,7 +301,7 @@ class AppTheme {
 
       floatingActionButtonTheme: const FloatingActionButtonThemeData(
         backgroundColor: dPrimary,
-        foregroundColor: Colors.white,
+        foregroundColor: onPrimary,
         elevation: 4,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.all(Radius.circular(28)),
@@ -329,7 +341,7 @@ class AppTheme {
     final base = ColorScheme.fromSeed(
       seedColor: primary,
       primary: primary,
-      onPrimary: Colors.white,
+      onPrimary: onPrimary,
       secondary: accent,
       onSecondary: Colors.white,
       tertiary: good,
@@ -431,7 +443,7 @@ class AppTheme {
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
           backgroundColor: primary,
-          foregroundColor: Colors.white,
+          foregroundColor: onPrimary,
           minimumSize: const Size(double.infinity, 52),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
           textStyle: GoogleFonts.dmSans(fontSize: 15, fontWeight: FontWeight.w600, letterSpacing: 0.2),
@@ -441,7 +453,7 @@ class AppTheme {
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: primary,
-          foregroundColor: Colors.white,
+          foregroundColor: onPrimary,
           minimumSize: const Size(double.infinity, 52),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
           textStyle: GoogleFonts.dmSans(fontSize: 15, fontWeight: FontWeight.w600, letterSpacing: 0.2),
@@ -505,7 +517,7 @@ class AppTheme {
       // ── FAB ───────────────────────────────────────────────────────────────
       floatingActionButtonTheme: const FloatingActionButtonThemeData(
         backgroundColor: primary,
-        foregroundColor: Colors.white,
+        foregroundColor: onPrimary,
         elevation: 4,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.all(Radius.circular(28)),

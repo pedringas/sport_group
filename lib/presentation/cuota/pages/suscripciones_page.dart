@@ -277,7 +277,7 @@ class _SuscripcionesPageState extends ConsumerState<SuscripcionesPage> {
         onPressed: () =>
             context.push('/cuotas/crear'),
         backgroundColor: gc,
-        foregroundColor: Colors.white,
+        foregroundColor: AppTheme.onColor(gc),
         icon: const Icon(Icons.add_rounded),
         label: const Text('Emitir cuota'),
       ),

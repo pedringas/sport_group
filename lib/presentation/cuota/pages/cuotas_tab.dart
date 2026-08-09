@@ -404,7 +404,7 @@ class _CuotasTabState extends ConsumerState<CuotasTab> {
             icon: const Icon(Icons.add_rounded),
             label: const Text('Emitir cuota'),
             backgroundColor: gc,
-            foregroundColor: Colors.white,
+            foregroundColor: AppTheme.onColor(gc),
           );
         }
         final allCuotas = cuotasAsync.valueOrNull ?? [];
@@ -421,7 +421,7 @@ class _CuotasTabState extends ConsumerState<CuotasTab> {
           icon: const Icon(Icons.payments_outlined),
           label: const Text('Pagar cuota'),
           backgroundColor: gc,
-          foregroundColor: Colors.white,
+          foregroundColor: AppTheme.onColor(gc),
         );
       }),
     );

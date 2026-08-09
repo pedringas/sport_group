@@ -107,7 +107,7 @@ class _BottomNav extends StatelessWidget {
                           item.icon,
                           size: 22,
                           color: selected
-                              ? AppTheme.primary
+                              ? AppTheme.primaryInk
                               : AppTheme.textMuted,
                         ),
                       ),
@@ -120,7 +120,7 @@ class _BottomNav extends StatelessWidget {
                               ? FontWeight.w700
                               : FontWeight.w500,
                           color: selected
-                              ? AppTheme.primary
+                              ? AppTheme.primaryInk
                               : AppTheme.textMuted,
                         ),
                       ),

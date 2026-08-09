@@ -194,7 +194,7 @@ class GastosTab extends ConsumerWidget {
       // â”€â”€ FAB â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
       floatingActionButton: FloatingActionButton(
         backgroundColor: gc,
-        foregroundColor: Colors.white,
+        foregroundColor: AppTheme.onColor(gc),
         onPressed: () {
           final active = gruposGasto.where((g) => !g.cerrado).toList();
           if (active.isEmpty) {

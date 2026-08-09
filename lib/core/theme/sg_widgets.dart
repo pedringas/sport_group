@@ -82,7 +82,7 @@ class SGPillButton extends StatelessWidget {
   static ({Color bg, Color fg, BoxBorder? border}) _toneConfig(SGTone t) {
     switch (t) {
       case SGTone.primary:
-        return (bg: AppTheme.primary, fg: Colors.white, border: null);
+        return (bg: AppTheme.primary, fg: AppTheme.onPrimary, border: null);
       case SGTone.soft:
         return (bg: AppTheme.primarySoft, fg: AppTheme.primaryInk, border: null);
       case SGTone.accent:
@@ -264,7 +264,7 @@ class SGAvatar extends StatelessWidget {
       child: Text(
         initial,
         style: GoogleFonts.bricolageGrotesque(
-          color: foreground ?? Colors.white,
+          color: foreground ?? AppTheme.onPrimary,
           fontWeight: FontWeight.w700,
           fontSize: size * 0.42,
         ),

@@ -68,31 +68,10 @@ class _SplashPageState extends ConsumerState<SplashPage>
               animation: _pulse,
               builder: (_, __) => Transform.scale(
                 scale: 1.0 + _pulse.value * 0.04,
-                child: Container(
-                  width: 80,
-                  height: 80,
-                  decoration: BoxDecoration(
-                    color: AppTheme.primary,
-                    borderRadius: BorderRadius.circular(24),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppTheme.primary.withValues(
-                            alpha: 0.35 + _pulse.value * 0.15),
-                        blurRadius: 24 + _pulse.value * 8,
-                        offset: const Offset(0, 6),
-                      ),
-                    ],
-                  ),
-                  child: Center(
-                    child: Text(
-                      'T',
-                      style: GoogleFonts.bricolageGrotesque(
-                        fontWeight: FontWeight.w800,
-                        fontSize: 34,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
+                child: Image.asset(
+                  'assets/logo/tacheros.png',
+                  width: 200,
+                  fit: BoxFit.contain,
                 ),
               ),
             ),

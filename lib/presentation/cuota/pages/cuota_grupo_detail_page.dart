@@ -324,7 +324,7 @@ class _CuotaGrupoDetailPageState
           ? FloatingActionButton.extended(
               onPressed: () => _enviarRecordatorio(membrosDelGrupo, statusMap),
               backgroundColor: gc,
-              foregroundColor: Colors.white,
+              foregroundColor: AppTheme.onColor(gc),
               icon: const Icon(Icons.notifications_outlined),
               label: const Text('Recordatorio'),
             )

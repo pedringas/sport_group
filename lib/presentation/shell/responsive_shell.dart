@@ -121,23 +121,12 @@ class _DeskSidebar extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
               child: Row(
                 children: [
-                  Container(
-                    width: 34, height: 34,
-                    decoration: BoxDecoration(
-                      color: AppTheme.primary,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    alignment: Alignment.center,
-                    child: Text(
-                      'T',
-                      style: GoogleFonts.bricolageGrotesque(
-                        fontWeight: FontWeight.w800,
-                        fontSize: 16,
-                        color: Colors.white,
-                      ),
-                    ),
+                  Image.asset(
+                    'assets/logo/tacheros.png',
+                    height: 52,
+                    fit: BoxFit.contain,
                   ),
-                  const SizedBox(width: 10),
+                  const SizedBox(width: 8),
                   Text(
                     'Tacheros',
                     style: GoogleFonts.bricolageGrotesque(

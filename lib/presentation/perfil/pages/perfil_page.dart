@@ -67,8 +67,8 @@ class PerfilPage extends ConsumerWidget {
                       name: user.nombreCompleto,
                       imageUrl: user.avatarUrl,
                       size: 72,
-                      background: Colors.white24,
-                      foreground: Colors.white,
+                      background: Colors.black12,
+                      foreground: AppTheme.onPrimary,
                     ),
                     const SizedBox(width: 14),
                     Expanded(
@@ -78,7 +78,7 @@ class PerfilPage extends ConsumerWidget {
                           Text(
                             user.nombreCompleto,
                             style: GoogleFonts.bricolageGrotesque(
-                              color: Colors.white,
+                              color: AppTheme.onPrimary,
                               fontWeight: FontWeight.w700,
                               fontSize: 20,
                               letterSpacing: -0.3,
@@ -87,16 +87,16 @@ class PerfilPage extends ConsumerWidget {
                           if (user.alias != null && user.alias!.isNotEmpty)
                             Text(
                               '@${user.alias}',
-                              style: const TextStyle(
-                                color: Colors.white70,
+                              style: TextStyle(
+                                color: AppTheme.onPrimary.withValues(alpha: 0.75),
                                 fontSize: 13,
                               ),
                             ),
                           if (user.telefono.isNotEmpty)
                             Text(
                               user.telefono,
-                              style: const TextStyle(
-                                color: Colors.white60,
+                              style: TextStyle(
+                                color: AppTheme.onPrimary.withValues(alpha: 0.6),
                                 fontSize: 12,
                               ),
                             ),

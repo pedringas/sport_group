@@ -4,8 +4,8 @@
     "start_url": ".",
     "display": "standalone",
     "background_color": "#FFFFFF",
-    "theme_color": "#6200EE",
-    "description": "Administrá tu grupo o equipo deportivo",
+    "theme_color": "#FFC400",
+    "description": "Cuotas, agenda y novedades del grupo Tacheros",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

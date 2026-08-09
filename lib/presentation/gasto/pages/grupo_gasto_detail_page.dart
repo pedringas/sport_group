@@ -195,7 +195,7 @@ class _GrupoGastoDetailPageState extends ConsumerState<GrupoGastoDetailPage> {
       floatingActionButton: canAdd
           ? FloatingActionButton(
               backgroundColor: gc,
-              foregroundColor: Colors.white,
+              foregroundColor: AppTheme.onColor(gc),
               child: const Icon(Icons.add_rounded),
               onPressed: () => context.push(
                 '/gastos/crear',

@@ -158,7 +158,7 @@ class HomeFeedPage extends ConsumerWidget {
                   padding: EdgeInsets.fromLTRB(16, 20, 16, 0),
                   child: _SectionDivider(
                     label: 'Hoy te toca',
-                    color: AppTheme.primary,
+                    color: AppTheme.primaryInk,
                   ),
                 ),
               ),
@@ -238,7 +238,7 @@ class HomeFeedPage extends ConsumerWidget {
                   padding: EdgeInsets.fromLTRB(16, 28, 16, 0),
                   child: _SectionDivider(
                     label: 'Destacadas',
-                    color: AppTheme.primary,
+                    color: AppTheme.primaryInk,
                   ),
                 ),
               ),
@@ -771,11 +771,12 @@ class _EventHeroCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: AppTheme.primary,
+          // Negro de marca: sobre el amarillo el texto blanco no se lee.
+          color: AppTheme.text,
           borderRadius: BorderRadius.circular(24),
           boxShadow: [
             BoxShadow(
-              color: AppTheme.primary.withValues(alpha: 0.38),
+              color: AppTheme.text.withValues(alpha: 0.28),
               blurRadius: 28,
               offset: const Offset(0, 10),
             ),
@@ -832,13 +833,13 @@ class _EventHeroCard extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 8, vertical: 3),
                       decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.2),
+                        color: AppTheme.primary,
                         borderRadius: BorderRadius.circular(99),
                       ),
                       child: Text(
                         noticia.categoria.label.toUpperCase(),
                         style: const TextStyle(
-                          color: Colors.white,
+                          color: AppTheme.onPrimary,
                           fontSize: 10,
                           fontWeight: FontWeight.w700,
                         ),
@@ -978,7 +979,7 @@ class _TareaHeroCard extends StatelessWidget {
     }
 
     final cardColor =
-        tarea.vencida ? AppTheme.danger : AppTheme.primary;
+        tarea.vencida ? AppTheme.danger : AppTheme.text;
 
     return Container(
       padding: const EdgeInsets.all(20),
