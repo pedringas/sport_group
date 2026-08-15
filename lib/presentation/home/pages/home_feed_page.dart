@@ -34,7 +34,7 @@ class HomeFeedPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final currentUserAsync = ref.watch(currentUserProvider);
-    final featuredEvent = ref.watch(featuredEventProvider);
+    final featuredEvents = ref.watch(featuredEventsProvider);
     final tareasPrioritarias = ref.watch(tareasPrioritariasProvider);
     final thisWeekItems = ref.watch(thisWeekItemsProvider);
     final feedNoticias = ref.watch(feedNoticiasProvider);
@@ -46,7 +46,7 @@ class HomeFeedPage extends ConsumerWidget {
         .split(' ')
         .first;
 
-    final hasHero = featuredEvent != null || tareasPrioritarias.isNotEmpty;
+    final hasHero = featuredEvents.isNotEmpty || tareasPrioritarias.isNotEmpty;
     final isDesktop = MediaQuery.sizeOf(context).width >= AppTheme.kResponsiveBreakpoint;
 
     return Scaffold(
@@ -153,11 +153,15 @@ class HomeFeedPage extends ConsumerWidget {
 
             // â”€â”€ “Hoy te toca” hero / carrusel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             if (hasHero) ...[
-              const SliverToBoxAdapter(
+              SliverToBoxAdapter(
                 child: Padding(
-                  padding: EdgeInsets.fromLTRB(16, 20, 16, 0),
+                  padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
                   child: _SectionDivider(
-                    label: 'Hoy te toca',
+                    // Ya no es "el próximo evento" sino todo lo de las próximas
+                    // dos semanas: "Hoy te toca" mentía para algo en 10 días.
+                    label: featuredEvents.length > 1
+                        ? 'Lo que se viene · ${featuredEvents.length}'
+                        : 'Lo que se viene',
                     color: AppTheme.primaryInk,
                   ),
                 ),
@@ -166,7 +170,7 @@ class HomeFeedPage extends ConsumerWidget {
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
                   child: _HeroCarousel(
-                    event: featuredEvent,
+                    eventos: featuredEvents,
                     tarea: tareasPrioritarias.isNotEmpty
                         ? tareasPrioritarias.first
                         : null,
@@ -346,10 +350,10 @@ class _GrupoStrip extends ConsumerWidget {
 // â”€â”€ Hero carousel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _HeroCarousel extends StatefulWidget {
-  final EventoItem? event;
+  final List<EventoItem> eventos;
   final TareaItem? tarea;
 
-  const _HeroCarousel({this.event, this.tarea});
+  const _HeroCarousel({this.eventos = const [], this.tarea});
 
   @override
   State<_HeroCarousel> createState() => _HeroCarouselState();
@@ -373,22 +377,26 @@ class _HeroCarouselState extends State<_HeroCarousel> {
 
   @override
   Widget build(BuildContext context) {
+    final varias = widget.eventos.length + (widget.tarea != null ? 1 : 0) > 1;
     final cards = <Widget>[
-      if (widget.event != null) _EventHeroCard(item: widget.event!),
+      // En carrusel el título se recorta a 2 líneas: las tarjetas comparten una
+      // altura fija y con 3 líneas + bajada + botones se desborda.
+      for (final e in widget.eventos) _EventHeroCard(item: e, compacta: varias),
       if (widget.tarea != null) _TareaHeroCard(item: widget.tarea!),
     ];
 
     if (cards.isEmpty) return const SizedBox.shrink();
-
-    // Single card ”” no carousel needed
     if (cards.length == 1) return cards.first;
 
-    // Two cards ”” wrap in PageView with dot indicator
+    // El índice puede quedar fuera de rango si el evento que estabas viendo
+    // caduca o se borra mientras el feed está abierto.
+    final page = _page.clamp(0, cards.length - 1);
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         SizedBox(
-          height: 260, // fixed height for hero cards
+          height: 268, // altura común de las tarjetas del carrusel
           child: PageView(
             controller: _ctrl,
             onPageChanged: (i) => setState(() => _page = i),
@@ -399,7 +407,7 @@ class _HeroCarouselState extends State<_HeroCarousel> {
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: List.generate(cards.length, (i) {
-            final active = i == _page;
+            final active = i == page;
             return AnimatedContainer(
               duration: const Duration(milliseconds: 220),
               margin: const EdgeInsets.symmetric(horizontal: 3),
@@ -760,11 +768,38 @@ class _DestacadaChip extends StatelessWidget {
 
 class _EventHeroCard extends StatelessWidget {
   final EventoItem item;
-  const _EventHeroCard({required this.item});
+  final bool compacta;
+  const _EventHeroCard({required this.item, this.compacta = false});
+
+  static const _dias = ['LUN', 'MAR', 'MIÉ', 'JUE', 'VIE', 'SÁB', 'DOM'];
+  static const _meses = [
+    'ENE', 'FEB', 'MAR', 'ABR', 'MAY', 'JUN',
+    'JUL', 'AGO', 'SEP', 'OCT', 'NOV', 'DIC'
+  ];
+
+  /// "SÁB 16 AGO · 16:00". Sin esto, dos eventos del mismo día se ven idénticos
+  /// en el carrusel salvo por el título.
+  String _cuando(DateTime f) {
+    final hh = f.hour.toString().padLeft(2, '0');
+    final mm = f.minute.toString().padLeft(2, '0');
+    return '${_dias[f.weekday - 1]} ${f.day} ${_meses[f.month - 1]} · $hh:$mm';
+  }
+
+  String _relativo(DateTime f) {
+    final hoy = DateTime.now();
+    final dias = DateTime(f.year, f.month, f.day)
+        .difference(DateTime(hoy.year, hoy.month, hoy.day))
+        .inDays;
+    if (dias < 0) return '';
+    if (dias == 0) return 'Hoy';
+    if (dias == 1) return 'Mañana';
+    return 'En $dias días';
+  }
 
   @override
   Widget build(BuildContext context) {
     final noticia = item.noticia;
+    final fecha = noticia.fechaEvento ?? noticia.fechaCaducidad;
 
     return GestureDetector(
       onTap: () => showNoticiaDetail(context, noticia, kGrupoId),
@@ -847,7 +882,47 @@ class _EventHeroCard extends StatelessWidget {
                     ),
                   ],
                 ),
-                const SizedBox(height: 14),
+                if (fecha != null) ...[
+                  const SizedBox(height: 12),
+                  Row(children: [
+                    const Icon(Icons.event_rounded,
+                        size: 13, color: Colors.white70),
+                    const SizedBox(width: 6),
+                    Flexible(
+                      child: Text(
+                        _cuando(fecha),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.5,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    if (_relativo(fecha).isNotEmpty) ...[
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 7, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.18),
+                          borderRadius: BorderRadius.circular(99),
+                        ),
+                        child: Text(
+                          _relativo(fecha),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ]),
+                ],
+                SizedBox(height: fecha != null ? 8 : 14),
                 // Title
                 Text(
                   noticia.titulo,
@@ -858,7 +933,7 @@ class _EventHeroCard extends StatelessWidget {
                     letterSpacing: -0.3,
                     height: 1.15,
                   ),
-                  maxLines: 3,
+                  maxLines: compacta ? 2 : 3,
                   overflow: TextOverflow.ellipsis,
                 ),
                 if (noticia.contenido.isNotEmpty) ...[
@@ -1202,12 +1277,16 @@ class _PendingRow extends StatelessWidget {
       _resolve(BuildContext context) {
     if (item is CuotaItem) {
       final c = item as CuotaItem;
-      final diff = c.cuota.vencimiento.difference(DateTime.now()).inDays;
-      final venceLabel = diff <= 0
+      // Días calendario: con el vencimiento a fin del día, `inDays` marcaba
+      // como "Vencida" una cuota que todavía se puede pagar hoy.
+      final diff = c.cuota.diasRestantes;
+      final venceLabel = diff < 0
           ? 'Vencida'
-          : diff == 1
-              ? 'Vence mañana'
-              : 'Vence en $diff días';
+          : diff == 0
+              ? 'Vence hoy'
+              : diff == 1
+                  ? 'Vence mañana'
+                  : 'Vence en $diff días';
       return (
         AppTheme.dangerSoft,
         const Color(0xFF8B2214),
