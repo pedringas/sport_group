@@ -109,4 +109,51 @@ class CuotaModel {
   String get tituloConNumero => esRecurrente && numeroCuota != null && totalCuotas != null
       ? '$titulo ($numeroCuota/$totalCuotas)'
       : titulo;
+
+  // ── Temporalidad ───────────────────────────────────────────────────────────
+  //
+  // `vencimiento` se guarda a fin del día, pero los documentos viejos lo tienen
+  // a las 00:00. Comparar el crudo contra `DateTime.now()` marcaba la cuota como
+  // vencida desde la medianoche del propio día de vencimiento. Todo el cálculo
+  // temporal pasa por acá para que las pantallas no vuelvan a divergir.
+
+  /// Último instante en que la cuota se puede pagar sin estar vencida.
+  DateTime get limitePago =>
+      DateTime(vencimiento.year, vencimiento.month, vencimiento.day, 23, 59, 59);
+
+  bool estaVencidaAl(DateTime ahora) => ahora.isAfter(limitePago);
+
+  bool get estaVencida => estaVencidaAl(DateTime.now());
+
+  /// Días calendario hasta el vencimiento: 0 = vence hoy, negativo = vencida.
+  /// Se compara por día, no por diferencia de instantes: `difference().inDays`
+  /// entre hoy 22:00 y mañana 00:00 da 0 y hacía decir "vence hoy" mañana.
+  int diasRestantesAl(DateTime ahora) {
+    final hoy = DateTime(ahora.year, ahora.month, ahora.day);
+    final vence = DateTime(vencimiento.year, vencimiento.month, vencimiento.day);
+    return vence.difference(hoy).inDays;
+  }
+
+  int get diasRestantes => diasRestantesAl(DateTime.now());
+
+  /// Mes al que pertenece la cuota — clave de agrupación temporal.
+  DateTime get periodo => DateTime(vencimiento.year, vencimiento.month);
+
+  // ── Alcance ────────────────────────────────────────────────────────────────
+
+  /// ¿Esta cuota le corresponde a [uid]?
+  ///
+  /// `miembrosUids` acota el cobro a una lista; `excluidosUids` exceptúa. Si no
+  /// hay ninguno de los dos, la cuota es para todo el grupo.
+  bool aplicaA(String uid) {
+    final incluidos = miembrosUids;
+    if (incluidos != null && incluidos.isNotEmpty) return incluidos.contains(uid);
+    final excluidos = excluidosUids;
+    if (excluidos != null && excluidos.contains(uid)) return false;
+    return true;
+  }
+
+  /// ¿Es un cobro acotado a algunos miembros?
+  bool get esSegmentada =>
+      (miembrosUids?.isNotEmpty ?? false) || (excluidosUids?.isNotEmpty ?? false);
 }

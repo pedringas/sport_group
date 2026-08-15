@@ -71,19 +71,44 @@ class CuotaRepository {
     required int totalCuotas,
     List<String>? miembrosUids,
     List<String>? excluidosUids,
-  }) =>
-      _ds.createCuotasSerie(
-        grupoId: grupoId,
-        serieId: _uuid.v4(),
-        titulo: titulo,
-        descripcion: descripcion,
-        monto: monto,
-        primerVencimiento: primerVencimiento,
-        frecuencia: frecuencia,
-        totalCuotas: totalCuotas,
-        miembrosUids: miembrosUids,
-        excluidosUids: excluidosUids,
+  }) async {
+    final serieId = await _ds.createCuotasSerie(
+      grupoId: grupoId,
+      serieId: _uuid.v4(),
+      titulo: titulo,
+      descripcion: descripcion,
+      monto: monto,
+      primerVencimiento: primerVencimiento,
+      frecuencia: frecuencia,
+      totalCuotas: totalCuotas,
+      miembrosUids: miembrosUids,
+      excluidosUids: excluidosUids,
+    );
+
+    // Las series no publicaban actividad: el grupo se enteraba de una cuota
+    // suelta pero no de una serie de 12.
+    try {
+      await NotificacionRepository().writeActividad(
+        grupoId,
+        ActividadModel(
+          id: '',
+          tipo: 'nueva_cuota',
+          titulo: 'Nuevas cuotas: $titulo',
+          mensaje:
+              '$totalCuotas cuotas de \$${monto.round()} (${frecuencia.label.toLowerCase()})',
+          actorNombre: '',
+          grupoId: grupoId,
+          grupoNombre: '',
+          referenciaId: serieId,
+          createdAt: DateTime.now(),
+        ),
       );
+    } catch (e) {
+      log('[Actividad] $e');
+    }
+
+    return serieId;
+  }
 
   Future<CuotaModel?> getCuota(String grupoId, String cuotaId) =>
       _ds.getCuota(grupoId, cuotaId);

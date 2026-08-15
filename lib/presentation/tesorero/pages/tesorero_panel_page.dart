@@ -658,8 +658,7 @@ class _CuotaRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final overdue =
-        cuota.vencimiento.isBefore(DateTime.now()) && cuota.activa;
+    final overdue = cuota.estaVencida && cuota.activa;
     return GestureDetector(
       onTap: () => context.push('/cuota/${cuota.id}'),
       child: Container(

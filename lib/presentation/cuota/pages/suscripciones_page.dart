@@ -553,8 +553,7 @@ class _CuotaRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final vencida =
-        cuota.vencimiento.isBefore(DateTime.now()) && cuota.activa;
+    final vencida = cuota.estaVencida && cuota.activa;
     final (iconColor, bgColor) = vencida
         ? (AppTheme.danger, AppTheme.dangerSoft)
         : aprobados == total && total > 0

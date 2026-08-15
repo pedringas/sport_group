@@ -1,4 +1,3 @@
-import 'dart:typed_data';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/foundation.dart';
@@ -32,7 +31,7 @@ class CuotaDatasource {
       'titulo': titulo,
       'descripcion': descripcion,
       'monto': monto,
-      'vencimiento': Timestamp.fromDate(vencimiento),
+      'vencimiento': Timestamp.fromDate(finDelDia(vencimiento)),
       'activa': true,
       'esRecurrente': false,
       'createdAt': Timestamp.now(),
@@ -67,7 +66,7 @@ class CuotaDatasource {
         'titulo': titulo,
         'descripcion': descripcion,
         'monto': monto,
-        'vencimiento': Timestamp.fromDate(venc),
+        'vencimiento': Timestamp.fromDate(finDelDia(venc)),
         'activa': true,
         'esRecurrente': true,
         'frecuencia': frecuencia.name,
@@ -85,6 +84,13 @@ class CuotaDatasource {
     await batch.commit();
     return serieId;
   }
+
+  /// El vencimiento se guarda al final del día elegido: una cuota que vence el
+  /// 10 se puede pagar todo el 10. Guardarlo a las 00:00 la dejaba vencida
+  /// durante su propio día de vencimiento.
+  @visibleForTesting
+  static DateTime finDelDia(DateTime d) =>
+      DateTime(d.year, d.month, d.day, 23, 59, 59);
 
   @visibleForTesting
   static DateTime addPeriods(DateTime base, FrecuenciaCuota freq, int n) {
@@ -125,7 +131,7 @@ class CuotaDatasource {
         'titulo': titulo,
         'descripcion': descripcion,
         'monto': monto,
-        'vencimiento': Timestamp.fromDate(vencimiento),
+        'vencimiento': Timestamp.fromDate(finDelDia(vencimiento)),
         'updatedAt': Timestamp.now(),
       });
 

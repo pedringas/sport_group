@@ -22,31 +22,47 @@ class CrearCuotaPage extends ConsumerStatefulWidget {
   ConsumerState<CrearCuotaPage> createState() => _CrearCuotaPageState();
 }
 
-enum _Recurrencia { unaVez, mensual, trimestral, anual, custom }
+enum _Recurrencia { unaVez, mensual, trimestral, anual }
 enum _AQuien { todos, algunos, exceptoAlgunos }
 
 class _CrearCuotaPageState extends ConsumerState<CrearCuotaPage> {
   late final TextEditingController _conceptoCtrl;
   late final TextEditingController _montoCtrl;
   late DateTime _vencimiento;
-  _Recurrencia _rec = _Recurrencia.mensual;
+  // Emitir una sola cuota es el caso normal. El default anterior era "Mensual",
+  // que sin avisar generaba una serie de 3 cuotas: el admin creía emitir la de
+  // este mes y aparecían también las de los dos meses siguientes.
+  _Recurrencia _rec = _Recurrencia.unaVez;
+  int _cantidad = 6;
   _AQuien _quien = _AQuien.todos;
-  bool _pagoParcial = true;
-  bool _avisarAlEmitir = true;
-  bool _recordatorio = true;
   // Member targeting: uid → nombreCompleto
   final Map<String, String> _seleccionados = {};
   bool _saving = false;
 
   bool get _editMode => widget.cuotaParaEditar != null;
+  bool get _esSerie => !_editMode && _rec != _Recurrencia.unaVez;
+  int get _cuotasAEmitir => _esSerie ? _cantidad : 1;
+
+  /// Día 10 del mes que viene: lo habitual es cobrar la cuota del mes
+  /// siguiente. El default anterior (mañana) hacía que toda cuota naciera
+  /// venciendo el día de su creación y apareciera vencida al día siguiente.
+  static DateTime _vencimientoPorDefecto() {
+    final hoy = DateTime.now();
+    return DateTime(hoy.year, hoy.month + 1, 10);
+  }
+
+  static String _tituloSugerido(DateTime v) =>
+      'Cuota ${_monthNameOf(v.month)} ${v.year}';
 
   @override
   void initState() {
     super.initState();
     final c = widget.cuotaParaEditar;
-    _conceptoCtrl = TextEditingController(text: c?.titulo ?? 'Cuota mensual — Mayo 2026');
-    _montoCtrl = TextEditingController(text: c != null ? c.monto.toInt().toString() : '8500');
-    _vencimiento = c?.vencimiento ?? DateTime.now().add(const Duration(days: 1));
+    _vencimiento = c?.vencimiento ?? _vencimientoPorDefecto();
+    _conceptoCtrl =
+        TextEditingController(text: c?.titulo ?? _tituloSugerido(_vencimiento));
+    _montoCtrl =
+        TextEditingController(text: c != null ? c.monto.toInt().toString() : '');
   }
 
   @override
@@ -56,14 +72,60 @@ class _CrearCuotaPageState extends ConsumerState<CrearCuotaPage> {
     super.dispose();
   }
 
-  Future<void> _pickFecha() async {
-    final d = await showDatePicker(
-      context: context, initialDate: _vencimiento,
-      firstDate: DateTime.now(),
-      lastDate: DateTime.now().add(const Duration(days: 365)),
-    );
-    if (d != null) setState(() => _vencimiento = d);
+  void _setVencimiento(DateTime d) {
+    setState(() {
+      // Si el concepto sigue siendo el sugerido para la fecha anterior, lo
+      // seguimos al mes nuevo; si el admin lo escribió a mano, no se toca.
+      if (_conceptoCtrl.text.trim() == _tituloSugerido(_vencimiento)) {
+        _conceptoCtrl.text = _tituloSugerido(d);
+      }
+      _vencimiento = d;
+    });
   }
+
+  Future<void> _pickFecha() async {
+    final hoy = DateTime.now();
+    // En alta no tiene sentido emitir con vencimiento pasado, pero al editar
+    // una cuota vieja sí: con `firstDate: now` el picker reventaba por
+    // assertion (initialDate < firstDate) y no abría.
+    final first = _editMode
+        ? DateTime(hoy.year - 2)
+        : DateTime(hoy.year, hoy.month, hoy.day);
+    final last = DateTime(hoy.year + 3, hoy.month, hoy.day);
+    final initial = _vencimiento.isBefore(first)
+        ? first
+        : _vencimiento.isAfter(last)
+            ? last
+            : _vencimiento;
+    final d = await showDatePicker(
+      context: context,
+      initialDate: initial,
+      firstDate: first,
+      lastDate: last,
+      helpText: 'Fecha de vencimiento',
+      confirmText: 'Listo',
+      cancelText: 'Cancelar',
+    );
+    if (d != null) _setVencimiento(d);
+  }
+
+  /// Vencimientos que generaría la serie — se muestran antes de emitir.
+  List<DateTime> _vencimientosSerie() {
+    if (!_esSerie) return [_vencimiento];
+    final saltoMeses = switch (_rec) {
+      _Recurrencia.trimestral => 3,
+      _Recurrencia.anual => 12,
+      _ => 1,
+    };
+    return List.generate(
+      _cantidad,
+      (i) => DateTime(_vencimiento.year, _vencimiento.month + saltoMeses * i,
+          _vencimiento.day),
+    );
+  }
+
+  double? _parseMonto() => double.tryParse(
+      _montoCtrl.text.replaceAll('.', '').replaceAll(',', '.'));
 
   Future<void> _guardarEdicion(String titulo, double monto) async {
     setState(() => _saving = true);
@@ -95,7 +157,7 @@ class _CrearCuotaPageState extends ConsumerState<CrearCuotaPage> {
 
   Future<void> _emitir() async {
     final titulo = _conceptoCtrl.text.trim();
-    final monto = double.tryParse(_montoCtrl.text.replaceAll('.', '').replaceAll(',', '.'));
+    final monto = _parseMonto();
     if (titulo.isEmpty || monto == null || monto <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Completá el concepto y el monto')),
@@ -108,6 +170,18 @@ class _CrearCuotaPageState extends ConsumerState<CrearCuotaPage> {
       return;
     }
 
+    if (_quien != _AQuien.todos && _seleccionados.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(_quien == _AQuien.algunos
+            ? 'Elegí a qué miembros cobrarles'
+            : 'Elegí a qué miembros excluir')),
+      );
+      return;
+    }
+
+    // Emitir una serie crea N cuotas de una: se confirma antes.
+    if (_esSerie && !await _confirmarSerie()) return;
+
     try {
       final notifier = ref.read(crearCuotaProvider.notifier);
       final uids = _seleccionados.keys.toList();
@@ -116,7 +190,7 @@ class _CrearCuotaPageState extends ConsumerState<CrearCuotaPage> {
       final excluidosUids = _quien == _AQuien.exceptoAlgunos && uids.isNotEmpty
           ? uids : null;
 
-      if (_rec == _Recurrencia.unaVez || _rec == _Recurrencia.custom) {
+      if (!_esSerie) {
         await notifier.crear(
           grupoId: widget.grupoId,
           titulo: titulo,
@@ -127,7 +201,6 @@ class _CrearCuotaPageState extends ConsumerState<CrearCuotaPage> {
         );
       } else {
         final frecuencia = switch (_rec) {
-          _Recurrencia.mensual     => FrecuenciaCuota.mensual,
           _Recurrencia.trimestral  => FrecuenciaCuota.trimestral,
           _Recurrencia.anual       => FrecuenciaCuota.anual,
           _                        => FrecuenciaCuota.mensual,
@@ -138,7 +211,7 @@ class _CrearCuotaPageState extends ConsumerState<CrearCuotaPage> {
           monto: monto,
           primerVencimiento: _vencimiento,
           frecuencia: frecuencia,
-          totalCuotas: _rec == _Recurrencia.anual ? 12 : 3,
+          totalCuotas: _cantidad,
           miembrosUids: miembrosUids,
           excluidosUids: excluidosUids,
         );
@@ -155,10 +228,37 @@ class _CrearCuotaPageState extends ConsumerState<CrearCuotaPage> {
     // Fuera del try: un fallo al navegar no debe reportarse como fallo al emitir.
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Cuota emitida ✓')),
+      SnackBar(content: Text(_esSerie
+          ? '$_cantidad cuotas emitidas ✓'
+          : 'Cuota emitida ✓')),
     );
     context.popOr('/cuotas');
   }
+
+  Future<bool> _confirmarSerie() async {
+    final fechas = _vencimientosSerie();
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('Emitir $_cantidad cuotas'),
+        content: Text(
+          'Se van a crear $_cantidad cuotas ${_rec == _Recurrencia.anual ? 'anuales' : _rec == _Recurrencia.trimestral ? 'trimestrales' : 'mensuales'}, '
+          'la primera vence el ${_fecha(fechas.first)} y la última el ${_fecha(fechas.last)}.',
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Cancelar')),
+          FilledButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('Emitir')),
+        ],
+      ),
+    );
+    return ok == true;
+  }
+
+  String _fecha(DateTime d) => '${d.day}/${d.month}/${d.year}';
 
   @override
   Widget build(BuildContext context) {
@@ -166,14 +266,16 @@ class _CrearCuotaPageState extends ConsumerState<CrearCuotaPage> {
     final loading = _editMode ? _saving : ref.watch(crearCuotaProvider).isLoading;
     final miembros = ref.watch(miembrosProvider(widget.grupoId)).valueOrNull ?? [];
     final miembrosTotales = miembros.isEmpty ? 0 : miembros.length;
-    final monto = int.tryParse(_montoCtrl.text) ?? 0;
+    // Con separador de miles ("8.500") `int.tryParse` devolvía null y el total
+    // estimado quedaba en $0.
+    final monto = _parseMonto()?.round() ?? 0;
     final monthsShort = ['ENE','FEB','MAR','ABR','MAY','JUN','JUL','AGO','SEP','OCT','NOV','DIC'];
     final efectivos = _quien == _AQuien.algunos
         ? _seleccionados.length
         : _quien == _AQuien.exceptoAlgunos
             ? (miembrosTotales - _seleccionados.length).clamp(0, miembrosTotales)
             : miembrosTotales;
-    final total = monto * efectivos;
+    final total = monto * efectivos * _cuotasAEmitir;
 
     final isDesktop = MediaQuery.sizeOf(context).width >= AppTheme.kResponsiveBreakpoint;
     return Scaffold(
@@ -257,6 +359,8 @@ class _CrearCuotaPageState extends ConsumerState<CrearCuotaPage> {
                             color: Colors.white, fontWeight: FontWeight.w700),
                       ),
                       TextSpan(text: ' · $efectivos miembros'),
+                      if (_cuotasAEmitir > 1)
+                        TextSpan(text: ' · $_cuotasAEmitir cuotas'),
                     ],
                   )),
                 ],
@@ -271,7 +375,7 @@ class _CrearCuotaPageState extends ConsumerState<CrearCuotaPage> {
             ),
 
             // Vencimiento
-            const SGEyebrow('Vencimiento'),
+            SGEyebrow(_esSerie ? 'Vence la primera cuota' : 'Vencimiento'),
             SGCard(
               padding: const EdgeInsets.all(12),
               onTap: _pickFecha,
@@ -309,7 +413,7 @@ class _CrearCuotaPageState extends ConsumerState<CrearCuotaPage> {
                             fontWeight: FontWeight.w700, fontSize: 14),
                       ),
                       const SizedBox(height: 2),
-                      Text(_diffDays(_vencimiento),
+                      Text('${_diffDays(_vencimiento)} · tocá para cambiar',
                           style: const TextStyle(
                               fontSize: 12, color: AppTheme.textMuted)),
                     ],
@@ -320,39 +424,87 @@ class _CrearCuotaPageState extends ConsumerState<CrearCuotaPage> {
               ]),
             ),
 
+            // Atajos de fecha — el vencimiento es el dato que más se toca y
+            // antes había que abrir el calendario para cualquier cambio.
+            const SizedBox(height: 8),
+            Wrap(spacing: 6, runSpacing: 6, children: [
+              for (final atajo in _atajosVencimiento())
+                _PillChip(
+                  label: atajo.$1,
+                  selected: _mismaFecha(_vencimiento, atajo.$2),
+                  onTap: () => _setVencimiento(atajo.$2),
+                ),
+            ]),
+
             // Recurrencia — oculta en modo edición
             if (!_editMode) const SGEyebrow('Repetición'),
             if (!_editMode)
             Wrap(spacing: 6, runSpacing: 6, children: [
-              _PillChip(label: 'Una vez',     selected: _rec == _Recurrencia.unaVez,     onTap: () => setState(() => _rec = _Recurrencia.unaVez)),
-              _PillChip(label: 'Mensual',     selected: _rec == _Recurrencia.mensual,    onTap: () => setState(() => _rec = _Recurrencia.mensual)),
-              _PillChip(label: 'Trimestral',  selected: _rec == _Recurrencia.trimestral, onTap: () => setState(() => _rec = _Recurrencia.trimestral)),
-              _PillChip(label: 'Anual',       selected: _rec == _Recurrencia.anual,      onTap: () => setState(() => _rec = _Recurrencia.anual)),
-              _PillChip(label: 'Personalizado',selected: _rec == _Recurrencia.custom,    onTap: () => setState(() => _rec = _Recurrencia.custom)),
+              _PillChip(label: 'Una vez',     selected: _rec == _Recurrencia.unaVez,     onTap: () => _setRecurrencia(_Recurrencia.unaVez)),
+              _PillChip(label: 'Mensual',     selected: _rec == _Recurrencia.mensual,    onTap: () => _setRecurrencia(_Recurrencia.mensual)),
+              _PillChip(label: 'Trimestral',  selected: _rec == _Recurrencia.trimestral, onTap: () => _setRecurrencia(_Recurrencia.trimestral)),
+              _PillChip(label: 'Anual',       selected: _rec == _Recurrencia.anual,      onTap: () => _setRecurrencia(_Recurrencia.anual)),
             ]),
-            if (!_editMode && _rec == _Recurrencia.mensual)
-              Padding(
-                padding: const EdgeInsets.only(top: 8),
-                child: Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: gc.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Row(children: [
-                    Icon(Icons.info_outline, size: 18,
-                        color: gc),
-                    const SizedBox(width: 10),
+            // Cuántas cuotas genera la serie: antes era un número fijo oculto
+            // (3, o 12 para "anual") y el admin no sabía cuántas emitía.
+            if (_esSerie) ...[
+              const SizedBox(height: 10),
+              SGCard(
+                padding: const EdgeInsets.all(12),
+                child: Column(children: [
+                  Row(children: [
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Cantidad de cuotas',
+                              style: TextStyle(
+                                  fontSize: 14, fontWeight: FontWeight.w600)),
+                          Text(
+                            'Se emiten todas ahora, con vencimientos escalonados',
+                            style: TextStyle(
+                                fontSize: 11, color: AppTheme.textMuted),
+                          ),
+                        ],
+                      ),
+                    ),
+                    _StepperBtn(
+                      icon: Icons.remove_rounded,
+                      onTap: _cantidad > 2
+                          ? () => setState(() => _cantidad--)
+                          : null,
+                    ),
+                    SizedBox(
+                      width: 36,
+                      child: Text('$_cantidad',
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.bricolageGrotesque(
+                              fontSize: 20, fontWeight: FontWeight.w700)),
+                    ),
+                    _StepperBtn(
+                      icon: Icons.add_rounded,
+                      onTap: _cantidad < 24
+                          ? () => setState(() => _cantidad++)
+                          : null,
+                    ),
+                  ]),
+                  const Divider(height: 20),
+                  Row(children: [
+                    const Icon(Icons.event_repeat_outlined,
+                        size: 16, color: AppTheme.textMuted),
+                    const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        'Se emite automáticamente cada mes el día 5, con vencimiento el día 20.',
-                        style: TextStyle(fontSize: 12,
-                            color: gc, height: 1.4),
+                        'Vencen del ${_fecha(_vencimientosSerie().first)} '
+                        'al ${_fecha(_vencimientosSerie().last)}',
+                        style: const TextStyle(
+                            fontSize: 12, color: AppTheme.textMuted),
                       ),
                     ),
                   ]),
-                ),
+                ]),
               ),
+            ],
 
             // A quien — oculta en modo edición
             if (!_editMode) const SGEyebrow('A quién se le cobra'),
@@ -457,50 +609,54 @@ class _CrearCuotaPageState extends ConsumerState<CrearCuotaPage> {
                 ),
             ],
 
-            // Opciones — ocultas en modo edición
-            if (!_editMode) const SGEyebrow('Opciones'),
-            if (!_editMode)
-            SGCard(
-              padding: const EdgeInsets.symmetric(vertical: 4),
-              child: Column(children: [
-                SwitchListTile(
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-                  activeThumbColor: gc,
-                  secondary: const Icon(Icons.splitscreen_outlined,
-                      color: AppTheme.good),
-                  title: const Text('Permitir pago parcial',
-                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-                  subtitle: const Text('Los miembros pueden mandar varios comprobantes',
-                      style: TextStyle(fontSize: 11, color: AppTheme.textMuted)),
-                  value: _pagoParcial,
-                  onChanged: (v) => setState(() => _pagoParcial = v),
-                ),
-                SwitchListTile(
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-                  activeThumbColor: gc,
-                  secondary: Icon(Icons.campaign_outlined,
-                      color: gc),
-                  title: const Text('Avisar al emitir',
-                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-                  subtitle: const Text('Notificación push a todos los miembros',
-                      style: TextStyle(fontSize: 11, color: AppTheme.textMuted)),
-                  value: _avisarAlEmitir,
-                  onChanged: (v) => setState(() => _avisarAlEmitir = v),
-                ),
-                SwitchListTile(
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-                  activeThumbColor: gc,
-                  secondary: const Icon(Icons.warning_amber_outlined,
-                      color: AppTheme.danger),
-                  title: const Text('Recordatorio si está por vencer',
-                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-                  subtitle: const Text('48hs antes y el día del vencimiento',
-                      style: TextStyle(fontSize: 11, color: AppTheme.textMuted)),
-                  value: _recordatorio,
-                  onChanged: (v) => setState(() => _recordatorio = v),
+            // "Opciones" tenía tres switches (pago parcial, avisar al emitir,
+            // recordatorio) que no se guardaban ni hacían nada. Se retiraron
+            // hasta que exista la funcionalidad detrás; en su lugar va el
+            // resumen real de lo que se va a emitir.
+            if (!_editMode) ...[
+              const SGEyebrow('Resumen'),
+              SGCard(
+                padding: const EdgeInsets.all(12),
+                child: Column(children: [
+                  _ResumenRow(
+                    icon: Icons.receipt_long_outlined,
+                    label: _cuotasAEmitir == 1
+                        ? '1 cuota'
+                        : '$_cuotasAEmitir cuotas',
+                    value: '\$ ${_fmt(monto)} c/u',
+                  ),
+                  const SizedBox(height: 8),
+                  _ResumenRow(
+                    icon: Icons.groups_outlined,
+                    label: _quien == _AQuien.todos
+                        ? 'Todo el grupo'
+                        : _quien == _AQuien.algunos
+                            ? 'Miembros elegidos'
+                            : 'Todos menos los excluidos',
+                    value: '$efectivos ${efectivos == 1 ? 'miembro' : 'miembros'}',
+                  ),
+                  const SizedBox(height: 8),
+                  _ResumenRow(
+                    icon: Icons.event_outlined,
+                    label: _esSerie ? 'Primer vencimiento' : 'Vencimiento',
+                    value: _fecha(_vencimiento),
+                  ),
+                ]),
+              ),
+              const SizedBox(height: 10),
+              const Row(children: [
+                Icon(Icons.notifications_none_rounded,
+                    size: 15, color: AppTheme.textMuted),
+                SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Al emitir, la cuota aparece en la novedades del grupo y en '
+                    '"Mis cuotas" de cada miembro alcanzado.',
+                    style: TextStyle(fontSize: 12, color: AppTheme.textMuted),
+                  ),
                 ),
               ]),
-            ),
+            ],
           ],
         ),
       ),
@@ -512,7 +668,9 @@ class _CrearCuotaPageState extends ConsumerState<CrearCuotaPage> {
             icon: _editMode ? Icons.save_rounded : Icons.send_rounded,
             label: _editMode
                 ? 'Guardar cambios'
-                : 'Emitir cuota a $efectivos miembros',
+                : _esSerie
+                    ? 'Emitir $_cuotasAEmitir cuotas a $efectivos ${efectivos == 1 ? 'miembro' : 'miembros'}'
+                    : 'Emitir cuota a $efectivos ${efectivos == 1 ? 'miembro' : 'miembros'}',
             expand: true, size: SGSize.lg,
             onPressed: loading ? null : _emitir,
           ),
@@ -521,20 +679,104 @@ class _CrearCuotaPageState extends ConsumerState<CrearCuotaPage> {
     );
   }
 
+  void _setRecurrencia(_Recurrencia r) {
+    setState(() {
+      _rec = r;
+      // Un default por frecuencia: 12 anuales eran 12 años de cuotas.
+      _cantidad = switch (r) {
+        _Recurrencia.mensual => 6,
+        _Recurrencia.trimestral => 4,
+        _Recurrencia.anual => 2,
+        _Recurrencia.unaVez => 1,
+      };
+    });
+  }
+
+  /// (etiqueta, fecha) — atajos habituales de vencimiento.
+  List<(String, DateTime)> _atajosVencimiento() {
+    final hoy = DateTime.now();
+    return [
+      ('Fin de mes', DateTime(hoy.year, hoy.month + 1, 0)),
+      ('10 del próximo', DateTime(hoy.year, hoy.month + 1, 10)),
+      ('Fin del próximo', DateTime(hoy.year, hoy.month + 2, 0)),
+      ('En 7 días', DateTime(hoy.year, hoy.month, hoy.day + 7)),
+    ];
+  }
+
+  bool _mismaFecha(DateTime a, DateTime b) =>
+      a.year == b.year && a.month == b.month && a.day == b.day;
+
+  /// Días calendario, no diferencia de instantes: con el vencimiento a fin del
+  /// día, `difference().inDays` decía "en 1 día" para algo que vence hoy.
   String _diffDays(DateTime d) {
-    final diff = d.difference(DateTime.now()).inDays;
-    if (diff <= 0) return 'hoy';
-    if (diff == 1) return 'en 1 día';
+    final hoy = DateTime.now();
+    final diff = DateTime(d.year, d.month, d.day)
+        .difference(DateTime(hoy.year, hoy.month, hoy.day))
+        .inDays;
+    if (diff < 0) return 'venció hace ${-diff} ${-diff == 1 ? 'día' : 'días'}';
+    if (diff == 0) return 'vence hoy';
+    if (diff == 1) return 'vence mañana';
     return 'en $diff días';
   }
 
-  String _monthName(int m) => const [
-        'enero','febrero','marzo','abril','mayo','junio',
-        'julio','agosto','septiembre','octubre','noviembre','diciembre',
-      ][m - 1];
+  String _monthName(int m) => _monthNameOf(m);
 
   String _fmt(int n) =>
       n.toString().replaceAllMapped(RegExp(r'\B(?=(\d{3})+(?!\d))'), (m) => '.');
+}
+
+String _monthNameOf(int m) => const [
+      'enero','febrero','marzo','abril','mayo','junio',
+      'julio','agosto','septiembre','octubre','noviembre','diciembre',
+    ][m - 1];
+
+// ─────────────────────────────────────────────────────────────────────────────
+class _StepperBtn extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback? onTap;
+  const _StepperBtn({required this.icon, this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final enabled = onTap != null;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(999),
+      child: Container(
+        width: 32, height: 32,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          border: Border.all(
+              color: enabled ? AppTheme.borderStrong : AppTheme.border),
+        ),
+        child: Icon(icon,
+            size: 18,
+            color: enabled ? AppTheme.text : AppTheme.border),
+      ),
+    );
+  }
+}
+
+class _ResumenRow extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+  const _ResumenRow(
+      {required this.icon, required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(children: [
+      Icon(icon, size: 16, color: AppTheme.textMuted),
+      const SizedBox(width: 10),
+      Expanded(
+        child: Text(label,
+            style: const TextStyle(fontSize: 13, color: AppTheme.textMuted)),
+      ),
+      Text(value,
+          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
+    ]);
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

@@ -13,6 +13,7 @@ import '../../../data/models/grupo_model.dart';
 import '../../../providers/grupo_provider.dart';
 import '../../../providers/noticia_provider.dart';
 import '../../../providers/cuota_provider.dart';
+import '../../../providers/auth_provider.dart';
 
 /// Group hub with design-handoff curtain transition.
 /// Entry: slides up from bottom (handled in router).
@@ -1191,18 +1192,29 @@ class _BentoGrid extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final cuotas = ref.watch(cuotasProvider(grupoId)).valueOrNull ?? [];
+    final uid = ref.watch(authStateProvider).valueOrNull?.uid ?? '';
+    final misPagos = ref
+            .watch(misPagosGrupoProvider((grupoId: grupoId, uid: uid)))
+            .valueOrNull ??
+        const [];
 
-    // Next active unpaid cuota
-    final now = DateTime.now();
-    final cuotasPendientes = cuotas.where((c) => c.activa).toList();
-    cuotasPendientes.sort((a, b) => a.vencimiento.compareTo(b.vencimiento));
+    // La próxima cuota impaga *mía*: antes tomaba la primera cuota activa del
+    // grupo, aunque ya estuviera pagada o fuera un cobro a otros miembros.
+    final cuotasPendientes = cuotas
+        .where((c) =>
+            c.activa &&
+            c.aplicaA(uid) &&
+            !misPagos.any(
+                (p) => p.cuotaId == c.id && p.estado == EstadoPago.aprobado))
+        .toList()
+      ..sort((a, b) => a.vencimiento.compareTo(b.vencimiento));
     final proxCuota = cuotasPendientes.isNotEmpty ? cuotasPendientes.first : null;
     String cuotaBig, cuotaSub;
     if (proxCuota == null) {
-      cuotaBig = 'Sin cuotas';
+      cuotaBig = cuotas.isEmpty ? 'Sin cuotas' : 'Al día';
       cuotaSub = '';
     } else {
-      final diff = proxCuota.vencimiento.difference(now).inDays;
+      final diff = proxCuota.diasRestantes;
       cuotaBig = diff < 0 ? 'Vencida' : diff == 0 ? 'Vence hoy' : diff == 1 ? 'Vence mañana' : 'Vence en $diff días';
       cuotaSub = proxCuota.titulo;
     }

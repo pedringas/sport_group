@@ -20,18 +20,6 @@ import '../../../providers/grupo_provider.dart';
 // (ingresos, gastos, balances entre miembros) es de administración y vive en
 // el panel de admin, no acá.
 
-/// ¿Esta cuota me corresponde a mí?
-///
-/// `miembrosUids` acota el cobro a una lista; `excluidosUids` exceptúa. Si no
-/// hay ninguno de los dos, la cuota es para todo el grupo.
-bool _meCorresponde(CuotaModel c, String uid) {
-  final incluidos = c.miembrosUids;
-  if (incluidos != null && incluidos.isNotEmpty) return incluidos.contains(uid);
-  final excluidos = c.excluidosUids;
-  if (excluidos != null && excluidos.contains(uid)) return false;
-  return true;
-}
-
 class CajaPage extends ConsumerStatefulWidget {
   const CajaPage({super.key});
 
@@ -61,34 +49,38 @@ class _CajaPageState extends ConsumerState<CajaPage> {
           error: (e, _) =>
               const SGErrorState(message: 'Error al cargar tus cuotas'),
           data: (todas) {
-            final mias = todas.where((c) => _meCorresponde(c, uid)).toList()
-              ..sort((a, b) => b.vencimiento.compareTo(a.vencimiento));
+            final mias = todas.where((c) => c.aplicaA(uid)).toList();
 
-            // Estado de pago propio por cuota.
+            // Estado de pago propio por cuota. Un pago aprobado manda sobre
+            // cualquier otro; si no hay ninguno vale el más reciente (el stream
+            // no viene ordenado, así que `last` a secas era arbitrario).
             EstadoPago? estadoDe(CuotaModel c) {
               final pagos = misPagos.where((p) => p.cuotaId == c.id).toList();
               if (pagos.isEmpty) return null;
               if (pagos.any((p) => p.estado == EstadoPago.aprobado)) {
                 return EstadoPago.aprobado;
               }
+              pagos.sort((a, b) => a.createdAt.compareTo(b.createdAt));
               return pagos.last.estado;
             }
 
+            // Lo que falta pagar se ordena por urgencia (lo que vence primero);
+            // el historial, de lo más reciente a lo más viejo.
             final pagadas = mias
                 .where((c) => estadoDe(c) == EstadoPago.aprobado)
-                .toList();
+                .toList()
+              ..sort((a, b) => b.vencimiento.compareTo(a.vencimiento));
             final pendientes = mias
                 .where((c) =>
                     c.activa && estadoDe(c) != EstadoPago.aprobado)
-                .toList();
+                .toList()
+              ..sort((a, b) => a.vencimiento.compareTo(b.vencimiento));
 
             final totalPendiente =
                 pendientes.fold<double>(0, (s, c) => s + c.monto);
             final totalPagado =
                 pagadas.fold<double>(0, (s, c) => s + c.monto);
-            final vencidas = pendientes
-                .where((c) => c.vencimiento.isBefore(DateTime.now()))
-                .length;
+            final vencidas = pendientes.where((c) => c.estaVencida).length;
 
             final lista = _tab == 0 ? pendientes : pagadas;
 
@@ -292,15 +284,16 @@ class _CuotaRow extends StatelessWidget {
       case EstadoPago.revision:
         return ('Rechazada', SGChipTone.danger, Icons.error_outline_rounded);
       case null:
-        final vencida = cuota.vencimiento.isBefore(DateTime.now());
-        return vencida
+        return cuota.estaVencida
             ? ('Vencida', SGChipTone.danger, Icons.error_outline_rounded)
             : ('A pagar', SGChipTone.neutral, Icons.payments_outlined);
     }
   }
 
   String _vence() {
-    final dias = cuota.vencimiento.difference(DateTime.now()).inDays;
+    // Días calendario: `difference().inDays` entre hoy 22:00 y mañana 00:00 da
+    // 0, y una cuota que vencía mañana decía "Vence hoy".
+    final dias = cuota.diasRestantes;
     if (estado == EstadoPago.aprobado) {
       return DateFormat('d MMM yyyy', 'es_AR').format(cuota.vencimiento);
     }

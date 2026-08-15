@@ -62,7 +62,7 @@ class CuotaDetailPage extends ConsumerWidget {
           final esperandoTesorero =
               miPago?.estado == EstadoPago.pendiente &&
                   miPago?.metodo == MetodoPago.efectivo;
-          final vencida = cuota.vencimiento.isBefore(DateTime.now());
+          final vencida = cuota.estaVencida;
 
           return CustomScrollView(
             slivers: [
@@ -111,7 +111,11 @@ class CuotaDetailPage extends ConsumerWidget {
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-                  child: uid.isNotEmpty && misPagosAsync.isLoading
+                  child: !cuota.aplicaA(uid)
+                      // Cuota segmentada que no incluye a quien la mira: no
+                      // tiene sentido ofrecerle pagarla.
+                      ? const _NoTeCorrespondeCard()
+                      : uid.isNotEmpty && misPagosAsync.isLoading
                       ? const Center(
                           child: CircularProgressIndicator(strokeWidth: 2))
                       : _PaymentSection(
@@ -568,6 +572,32 @@ class _PaymentSection extends ConsumerWidget {
   }
 }
 
+class _NoTeCorrespondeCard extends StatelessWidget {
+  const _NoTeCorrespondeCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppTheme.surfaceAlt,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppTheme.border),
+      ),
+      child: const Row(children: [
+        Icon(Icons.info_outline_rounded, size: 18, color: AppTheme.textMuted),
+        SizedBox(width: 10),
+        Expanded(
+          child: Text(
+            'Esta cuota no te corresponde: el cobro está dirigido a otros miembros.',
+            style: TextStyle(fontSize: 13, color: AppTheme.textMuted),
+          ),
+        ),
+      ]),
+    );
+  }
+}
+
 // â”€â”€ Registrar Efectivo Sheet â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 class _RegistrarEfectivoSheet extends ConsumerStatefulWidget {
@@ -864,9 +894,14 @@ class _PagosPendientesPanel extends ConsumerWidget {
     }
 
     final pagos = pagosAsync.valueOrNull ?? [];
-    final miembros = miembrosAsync.valueOrNull ?? [];
     final cuota = cuotaAsync.valueOrNull;
-    final vencida = cuota?.vencimiento.isBefore(DateTime.now()) ?? false;
+    // Sólo los miembros a los que esta cuota les corresponde. Antes se listaba
+    // el padrón entero: en un cobro a 3 personas el resto del grupo aparecía
+    // como "Sin pagar" / "Adeudan".
+    final miembros = (miembrosAsync.valueOrNull ?? <MiembroModel>[])
+        .where((m) => cuota?.aplicaA(m.uid) ?? true)
+        .toList();
+    final vencida = cuota?.estaVencida ?? false;
 
     if (miembros.isEmpty) return const SizedBox.shrink();
 
